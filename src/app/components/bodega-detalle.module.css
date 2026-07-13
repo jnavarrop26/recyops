@@ -1,0 +1,134 @@
+.contenedor {
+  font-family: var(--font-sans);
+}
+
+.volver {
+  margin-bottom: 16px;
+}
+
+.cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.titulo {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin: 0 0 6px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tarjeta {
+  background-color: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.tarjetaTitulo {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--brand);
+  margin: 0 0 16px;
+}
+
+.datos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 24px;
+}
+
+.dato {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.datoEtiqueta {
+  font-size: 12px;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.datoValor {
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.mapa {
+  margin-top: 18px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  height: 220px;
+}
+
+.mapa iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.sinMapa {
+  margin-top: 18px;
+  padding: 24px;
+  text-align: center;
+  color: var(--ink-muted);
+  font-size: 14px;
+  background-color: var(--surface);
+  border-radius: 10px;
+}
+
+.listaUsuarios {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.usuario {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.usuarioNombre {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.usuarioMeta {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+.estado {
+  padding: 32px;
+  text-align: center;
+  color: var(--ink-muted);
+}

@@ -1,0 +1,26 @@
+.page {
+  font-family: var(--font-sans);
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin: 0;
+}
+
+.subtitle {
+  margin: 6px 0 0;
+  color: var(--ink-muted);
+  font-size: 15px;
+}
+
+.body {
+  margin-top: 28px;
+  background-color: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 32px;
+  color: var(--ink-muted);
+}

@@ -1,0 +1,244 @@
+.contenedor {
+  font-family: var(--font-sans);
+}
+
+.cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.titulo {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin: 0;
+}
+
+.subtitulo {
+  margin: 6px 0 0;
+  color: var(--ink-muted);
+  font-size: 15px;
+}
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+  background-color: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}
+
+.campoFiltro {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 160px;
+}
+
+.campoFiltroAncho {
+  min-width: 220px;
+}
+
+.accionesFiltro {
+  display: flex;
+  gap: 8px;
+  align-self: flex-end;
+  padding-bottom: 1px;
+}
+
+.tarjeta {
+  background-color: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.tabla thead tr {
+  background-color: var(--surface);
+  text-align: left;
+  color: var(--ink-muted);
+}
+
+.tabla thead th {
+  padding: 11px 16px;
+  font-weight: 500;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.tabla tbody td {
+  padding: 13px 16px;
+  border-top: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.tabla tbody tr:hover {
+  background-color: var(--brand-soft);
+}
+
+.codigo {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+.nombreConvenio {
+  font-weight: 500;
+  color: var(--ink);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.parteNombre {
+  font-size: 13px;
+  color: var(--ink-muted);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fecha {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.valor {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.chip {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.chipActivo {
+  background-color: #dcf2e3;
+  color: #166534;
+}
+
+.chipInactivo {
+  background-color: #f1efe9;
+  color: #6b6257;
+}
+
+.chipVencido {
+  background-color: #fbe3e0;
+  color: #b42318;
+}
+
+.chipSuspendido {
+  background-color: #fdf0d5;
+  color: #92600a;
+}
+
+.chipTipo {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background-color: #e8f0fe;
+  color: #1a56db;
+}
+
+.acciones {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.estado {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--ink-muted);
+  font-size: 14px;
+}
+
+.paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+.controlesPagina {
+  display: flex;
+  gap: 8px;
+}
+
+.sinDato {
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+.modalCambioEstado {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modalCambioEstado p {
+  font-size: 14px;
+  color: var(--ink-muted);
+  margin: 0;
+}
+
+.opcionesEstado {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.botonEstado {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: var(--font-sans);
+  color: var(--ink);
+  transition: background 0.15s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.botonEstado:hover {
+  background-color: var(--brand-soft);
+}

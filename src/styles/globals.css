@@ -1,0 +1,61 @@
+/* ═══════════════════════════════════════════════════════════
+   Spinner / Stepper — inputs numéricos
+   Aplica a todos los <input type="number"> del sistema
+   ═══════════════════════════════════════════════════════════ */
+
+/* Firefox: oculta los spinners nativos (los reemplazamos visualmente) */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* WebKit (Chrome, Edge, Safari) — contenedor exterior */
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* WebKit — botones arriba/abajo */
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: inner-spin-button;
+  opacity: 1;
+
+  /* Dimensiones */
+  width: 26px;
+  min-height: 100%;
+
+  /* Fondo verde corporativo */
+  background-color: #0F5132;
+
+  /* Separador izquierdo */
+  border-left: 1px solid rgba(255, 255, 255, 0.18);
+
+  /* Bordes redondeados solo en la esquina derecha */
+  border-radius: 0 5px 5px 0;
+
+  /* Cursor interactivo */
+  cursor: pointer;
+
+  /* Transición suave */
+  transition: background-color 0.14s ease;
+}
+
+input[type="number"]::-webkit-inner-spin-button:hover {
+  background-color: #146C43;
+}
+
+input[type="number"]::-webkit-inner-spin-button:active {
+  background-color: #0A3D26;
+}
+
+/* Cuando el input tiene foco, acentúa el spinner también */
+input[type="number"]:focus-visible::-webkit-inner-spin-button {
+  background-color: #146C43;
+  border-left-color: rgba(255, 255, 255, 0.28);
+}
+
+/* Cuando el input está deshabilitado, desatura el spinner */
+input[type="number"]:disabled::-webkit-inner-spin-button {
+  background-color: #5A6B62;
+  opacity: 0.45;
+  cursor: not-allowed;
+}

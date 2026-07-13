@@ -1,0 +1,116 @@
+.contenedor {
+  font-family: var(--font-sans);
+}
+
+.titulo {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin: 0;
+}
+
+.subtitulo {
+  margin: 6px 0 28px;
+  color: var(--ink-muted);
+  font-size: 15px;
+}
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+  background-color: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.acciones {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.tarjeta {
+  background-color: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.seccionTitulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 10px;
+}
+
+.seccionConteo {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 1px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.tabla thead tr {
+  background-color: var(--surface);
+  text-align: left;
+  color: var(--ink-muted);
+}
+
+.tabla th {
+  padding: 12px 20px;
+  font-weight: 500;
+}
+
+.tabla td {
+  padding: 12px 20px;
+  border-top: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.tabla tbody tr:hover {
+  background-color: var(--brand-soft);
+}
+
+.derecha {
+  text-align: right;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.estado {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  color: var(--ink-muted);
+  font-size: 14px;
+}
+
+.error {
+  color: var(--destructive);
+}

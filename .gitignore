@@ -1,0 +1,16 @@
+node_modules/
+guidelines/
+graphify-out/
+
+dist/
+
+
+# Variables de entorno locales
+.env
+.env.*
+!.env.example
+
+# Sistema / editor
+.DS_Store
+.vscode/
+*.local

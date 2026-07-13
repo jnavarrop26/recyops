@@ -1,0 +1,99 @@
+.contenedor {
+  font-family: var(--font-sans);
+}
+
+.cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.titulo {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin: 0;
+}
+
+.subtitulo {
+  margin: 6px 0 0;
+  color: var(--ink-muted);
+  font-size: 15px;
+}
+
+.tarjeta {
+  background-color: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.tabla thead tr {
+  background-color: var(--surface);
+  text-align: left;
+  color: var(--ink-muted);
+}
+
+.tabla th {
+  padding: 12px 20px;
+  font-weight: 500;
+}
+
+.tabla td {
+  padding: 12px 20px;
+  border-top: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.tabla tbody tr:hover {
+  background-color: var(--brand-soft);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.estado {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--ink-muted);
+  font-size: 14px;
+}
+
+.credenciales {
+  background-color: var(--brand-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.credLinea {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--brand-dark);
+}
+
+.credLinea span:first-child {
+  color: var(--ink-muted);
+}
+
+.aviso {
+  font-size: 13px;
+  color: var(--ink-muted);
+}

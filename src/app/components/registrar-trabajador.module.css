@@ -1,0 +1,71 @@
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-family: var(--font-sans);
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fila {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.errorCampo {
+  font-size: 12px;
+  color: var(--destructive);
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkbox label {
+  font-weight: 400;
+  color: var(--ink-muted);
+}
+
+.alertaError {
+  background-color: #fdecea;
+  border: 1px solid #f3b9b3;
+  color: #8a1c12;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+}
+
+.credenciales {
+  background-color: var(--brand-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.credLinea {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--brand-dark);
+}
+
+.credLinea span:first-child {
+  color: var(--ink-muted);
+}
+
+.avisoCredenciales {
+  font-size: 13px;
+  color: var(--ink-muted);
+}

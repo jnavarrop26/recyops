@@ -1,0 +1,296 @@
+.pagina {
+  font-family: var(--font-sans);
+  max-width: 780px;
+}
+
+/* ── Cabecera ─────────────────────────────────── */
+.cabecera {
+  margin-bottom: 32px;
+}
+
+.titulo {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin: 0 0 4px;
+}
+
+.subtitulo {
+  font-size: 15px;
+  color: var(--ink-muted);
+  margin: 0;
+}
+
+/* ── Perfil hero ──────────────────────────────── */
+.tarjetaPerfil {
+  background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand) 100%);
+  border-radius: 16px;
+  padding: 28px 32px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 24px;
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+}
+
+.tarjetaPerfil::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+.avatarGrande {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.2);
+  border: 3px solid rgba(255, 255, 255, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.perfilDatos {
+  flex: 1;
+}
+
+.perfilNombreGrande {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 4px;
+  letter-spacing: -0.01em;
+}
+
+.perfilUsername {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  opacity: 0.75;
+  margin: 0 0 10px;
+}
+
+.badgeRol {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background-color: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-family: var(--font-mono);
+}
+
+.badgeAdmin {
+  background-color: rgba(110, 232, 154, 0.2);
+  border-color: rgba(110, 232, 154, 0.5);
+  color: #6ee89a;
+}
+
+/* ── Secciones ────────────────────────────────── */
+.seccion {
+  background-color: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.seccionCabecera {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.icono {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background-color: var(--brand-soft);
+  color: var(--brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.iconoDanger {
+  background-color: #fdecea;
+  color: #b42318;
+}
+
+.seccionTitulo {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 2px;
+}
+
+.seccionDesc {
+  font-size: 13px;
+  color: var(--ink-muted);
+  margin: 0;
+}
+
+.badgeAdmin2 {
+  margin-left: 8px;
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background-color: var(--brand-soft);
+  color: var(--brand-dark);
+  font-family: var(--font-mono);
+  vertical-align: middle;
+}
+
+.seccionCuerpo {
+  padding: 24px;
+}
+
+/* ── Formulario usuario ───────────────────────── */
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fila {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.errorCampo {
+  font-size: 12px;
+  color: var(--destructive);
+}
+
+.alertaError {
+  background-color: #fdecea;
+  border: 1px solid #f3b9b3;
+  color: #8a1c12;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+}
+
+.alertaOk {
+  background-color: #dcf2e3;
+  border: 1px solid #a7d9b8;
+  color: #166534;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+}
+
+.acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+/* ── Credenciales generadas ───────────────────── */
+.credenciales {
+  background-color: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.credItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.credLabel {
+  font-size: 12px;
+  color: var(--ink-muted);
+  min-width: 100px;
+  font-weight: 500;
+}
+
+.credValor {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  background-color: #fff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 10px;
+  flex: 1;
+}
+
+.credPassword {
+  color: var(--brand);
+}
+
+/* ── Sesión ───────────────────────────────────── */
+.filaAccion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.accionDesc {
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+/* ── Info de sistema ──────────────────────────── */
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.infoItem {
+  background-color: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.infoItemLabel {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin-bottom: 4px;
+  font-family: var(--font-mono);
+}
+
+.infoItemValor {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+}

@@ -1,0 +1,64 @@
+.contenedor {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.estrella {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  color: #d8d8d8;
+  display: inline-block;
+}
+
+.estrellaGrande {
+  width: 30px;
+  height: 30px;
+}
+
+.relleno {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  overflow: hidden;
+  color: #f2b705;
+  white-space: nowrap;
+}
+
+.svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.interactivo {
+  cursor: pointer;
+}
+
+.valor {
+  margin-left: 6px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+.botonMitad {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 50%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.mitadIzq {
+  left: 0;
+}
+
+.mitadDer {
+  right: 0;
+}

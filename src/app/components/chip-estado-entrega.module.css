@@ -1,0 +1,13 @@
+.chip {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.recibida { background-color: #dde8fb; color: #1e40af; }
+.enProceso { background-color: #fdf0d5; color: #92600a; }
+.procesada { background-color: #dcf2e3; color: #166534; }
+.despachada { background-color: #ececec; color: #4b5563; }
