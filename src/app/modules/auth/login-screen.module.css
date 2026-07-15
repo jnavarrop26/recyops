@@ -1,0 +1,185 @@
+/* ── Contenedor raíz ───────────────────────────────────────── */
+.shell {
+  position: relative;
+  min-height: 100svh;
+  width: 100%;
+  overflow: hidden;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── FASE 1: Splash ────────────────────────────────────────── */
+.splash {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(20px, 4vh, 48px);
+  padding: 40px;
+
+  /* transición de salida */
+  transition: opacity 0.55s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.splash.saliendo {
+  opacity: 0;
+  transform: scale(1.04);
+  pointer-events: none;
+}
+
+.logoWrap {
+  width: min(480px, 80vw, 42svh);
+  aspect-ratio: 423 / 464;
+
+  /* entrada suave al montar */
+  animation: logoEntrada 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes logoEntrada {
+  from { opacity: 0; transform: translateY(24px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+.tagline {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #6b8c77;
+  animation: fadeUp 1s 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.btnEntrar {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 40px;
+  background: #0F5132;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow: 0 4px 24px rgba(15, 81, 50, 0.28);
+  transition: background 0.18s, transform 0.14s, box-shadow 0.18s;
+  animation: fadeUp 1s 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.btnEntrar:hover {
+  background: #146C43;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(15, 81, 50, 0.36);
+}
+
+.btnEntrar:active {
+  background: #0A3D26;
+  transform: translateY(0);
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+/* ── FASE 2: Formulario ────────────────────────────────────── */
+.formPanel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s 0.15s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.5s 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.formPanel.visible {
+  pointer-events: auto;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Volver */
+.btnVolver {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  background: none;
+  border: none;
+  font-size: 0.85rem;
+  color: #9eb8a6;
+  cursor: pointer;
+  padding: 8px 10px;
+  border-radius: 8px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btnVolver:hover {
+  background: #e7f0eb;
+  color: #0F5132;
+}
+
+/* Cuerpo centrado del formulario */
+.formBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  overflow-y: auto;
+}
+
+.formCard {
+  width: 100%;
+  max-width: 420px;
+}
+
+/* Footer */
+.formFooter {
+  padding: 16px 32px;
+  border-top: 1px solid #e8ede9;
+  background: #fafcfb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.footerCopy {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9eb8a6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.footerLinks {
+  display: flex;
+  gap: 16px;
+}
+
+.footerLink {
+  font-size: 0.78rem;
+  color: #9eb8a6;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.footerLink:hover {
+  color: #0F5132;
+}

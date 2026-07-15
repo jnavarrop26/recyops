@@ -1,22 +1,24 @@
 import { createBrowserRouter, Navigate } from "react-router";
-import { LoginScreen } from "./components/login-screen";
-import { RestablecerScreen } from "./components/restablecer-screen";
-import { DashboardLayout } from "./components/dashboard-layout";
-import { HomeView } from "./components/home-view";
-import { TareasVista } from "./components/tareas-vista";
-import { MisTareasVista } from "./components/mis-tareas-vista";
-import { HistorialIngresos } from "./components/historial-ingresos";
-import { TrabajadoresVista } from "./components/trabajadores-vista";
-import { MaterialesVista } from "./components/materiales-vista";
-import { BodegasVista } from "./components/bodegas-vista";
-import { BodegaDetalle } from "./components/bodega-detalle";
-import { ProveedoresVista } from "./components/proveedores-vista";
-import { InventarioVista } from "./components/inventario-vista";
-import { InventarioDetalle } from "./components/inventario-detalle";
-import { EntregasVista } from "./components/entregas-vista";
-import { EntregaDetalle } from "./components/entrega-detalle";
-import { HistorialEntregasVista } from "./components/historial-entregas-vista";
-import { RutaAdmin } from "./components/ruta-admin";
+import { LoginScreen } from "@/app/modules/auth/login-screen";
+import { RestablecerScreen } from "@/app/modules/auth/restablecer-screen";
+import { DashboardLayout } from "@/app/shared/layout/dashboard-layout";
+import { HomeView } from "@/app/modules/home/home-view";
+import { TareasVista } from "@/app/modules/tareas/tareas-vista";
+import { MisTareasVista } from "@/app/modules/tareas/mis-tareas-vista";
+import { HistorialIngresos } from "@/app/modules/ingresos/historial-ingresos";
+import { TrabajadoresVista } from "@/app/modules/trabajadores/trabajadores-vista";
+import { MaterialesVista } from "@/app/modules/materiales/materiales-vista";
+import { BodegasVista } from "@/app/modules/bodega/bodegas-vista";
+import { BodegaDetalle } from "@/app/modules/bodega/bodega-detalle";
+import { ProveedoresVista } from "@/app/modules/proveedores/proveedores-vista";
+import { InventarioVista } from "@/app/modules/inventario/inventario-vista";
+import { InventarioDetalle } from "@/app/modules/inventario/inventario-detalle";
+import { EntregasVista } from "@/app/modules/entregas/entregas-vista";
+import { EntregaDetalle } from "@/app/modules/entregas/entrega-detalle";
+import { HistorialEntregasVista } from "@/app/modules/entregas/historial-entregas-vista";
+import { RutaAdmin } from "@/app/shared/layout/ruta-admin";
+import { RutaSuperAdmin } from "@/app/shared/layout/ruta-super-admin";
+import { PlataformaVista } from "@/app/modules/platform/plataforma-vista";
 import {
   IngresoPage,
   ConveniosPage,
@@ -24,10 +26,14 @@ import {
   ConfiguracionPage,
   ReportesPage,
   ServiciosExternosPage,
-} from "./components/pages";
+} from "@/app/shared/components/pages";
 
 function Admin({ children }: { children: React.ReactNode }) {
   return <RutaAdmin>{children}</RutaAdmin>;
+}
+
+function SuperAdmin({ children }: { children: React.ReactNode }) {
+  return <RutaSuperAdmin>{children}</RutaSuperAdmin>;
 }
 
 export const router = createBrowserRouter([
@@ -55,6 +61,7 @@ export const router = createBrowserRouter([
       { path: "convenios", element: <Admin><ConveniosPage /></Admin> },
       { path: "reportes", element: <Admin><ReportesPage /></Admin> },
       { path: "logs", element: <Admin><LogsPage /></Admin> },
+      { path: "plataforma", element: <SuperAdmin><PlataformaVista /></SuperAdmin> },
       { path: "configuracion", Component: ConfiguracionPage },
       { path: "servicios-externos", element: <Admin><ServiciosExternosPage /></Admin> },
     ],

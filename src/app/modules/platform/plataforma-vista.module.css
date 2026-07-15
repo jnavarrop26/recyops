@@ -1,0 +1,131 @@
+.pagina {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.encabezado h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--brand-dark, #0F5132);
+  margin: 0 0 4px;
+}
+
+.encabezado p {
+  font-size: 0.875rem;
+  color: var(--ink-muted, #6b8c77);
+  margin: 0;
+}
+
+.tarjeta {
+  background: #fff;
+  border: 1px solid var(--line, #e2e8e4);
+  border-radius: 12px;
+  padding: 28px;
+}
+
+.tarjeta h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--brand-dark, #0F5132);
+  margin: 0 0 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line, #e2e8e4);
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.seccion {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-muted, #6b8c77);
+  margin: 8px 0 4px;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fila {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.errorCampo {
+  font-size: 12px;
+  color: var(--destructive, #ef4444);
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.alertaError {
+  background-color: #fdecea;
+  border: 1px solid #f3b9b3;
+  color: #8a1c12;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+}
+
+.resultado {
+  background: var(--brand-soft, #f0f9f3);
+  border: 1px solid #b7dcc4;
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.resultado h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--brand-dark, #0F5132);
+  margin: 0 0 4px;
+}
+
+.fila-dato {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  padding: 6px 0;
+  border-bottom: 1px solid #d4edda;
+}
+
+.fila-dato:last-child {
+  border-bottom: none;
+}
+
+.fila-dato span:first-child {
+  color: var(--ink-muted, #6b8c77);
+  font-weight: 500;
+}
+
+.fila-dato span:last-child {
+  font-family: var(--font-mono, monospace);
+  color: var(--brand-dark, #0F5132);
+  word-break: break-all;
+}
+
+.aviso {
+  font-size: 13px;
+  color: var(--ink-muted, #6b8c77);
+  margin-top: 4px;
+}

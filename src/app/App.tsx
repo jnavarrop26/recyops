@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { RouterProvider } from "react-router";
-import faviconHref from "./public/icons/favicon-recyops.svg";
-import { router } from "./routes";
+import faviconHref from "@/app/public/icons/favicon-recyops.svg";
+import { router } from "@/app/routes";
 
 export default function App() {
   useEffect(() => {
