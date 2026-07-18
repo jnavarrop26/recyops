@@ -1,4 +1,5 @@
 import { clienteApi } from "@/app/http/clienteApi";
+import { normalizarPagina, type Pagina } from "@/app/http/paginacion";
 
 export interface Material {
   id: string;
@@ -20,13 +21,7 @@ export interface Material {
   fechaCreacion: string;
 }
 
-export interface PaginaMateriales {
-  content: Material[];
-  totalElements: number;
-  totalPages: number;
-  number: number;
-  size: number;
-}
+export type PaginaMateriales = Pagina<Material>;
 
 export interface FiltrosMateriales {
   categoria?: string;
@@ -63,6 +58,7 @@ export const CATEGORIA_PLASTICO = "PLASTICO";
 export async function listarMateriales(
   filtros: FiltrosMateriales = {},
 ): Promise<PaginaMateriales> {
+  const size = filtros.size ?? 20;
   const { data } = await clienteApi.get("/materiales", {
     params: {
       categoria: filtros.categoria || undefined,
@@ -71,19 +67,10 @@ export async function listarMateriales(
       empaque: filtros.empaque || undefined,
       activo: filtros.activo || undefined,
       page: filtros.page ?? 0,
-      size: filtros.size ?? 20,
+      size,
     },
   });
-  if (Array.isArray(data)) {
-    return { content: data, totalElements: data.length, totalPages: 1, number: 0, size: data.length };
-  }
-  return {
-    content: Array.isArray(data?.content) ? data.content : [],
-    totalElements: data?.totalElements ?? 0,
-    totalPages: data?.totalPages ?? 0,
-    number: data?.number ?? 0,
-    size: data?.size ?? (filtros.size ?? 20),
-  };
+  return normalizarPagina<Material>(data, size);
 }
 
 // GET /api/materiales/categorias

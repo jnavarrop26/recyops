@@ -26,6 +26,7 @@ import {
   type Material,
   type OpcionCatalogo,
 } from "@/app/modules/materiales/materialesApi";
+import { interpretarErrorHttp } from "@/app/http/errores";
 import styles from "@/app/modules/materiales/materiales-vista.module.css";
 
 const TAMANO_PAGINA = 20;
@@ -148,11 +149,10 @@ export function MaterialesVista() {
       setMateriales((previos) =>
         previos.map((m) => (m.id === material.id ? { ...m, activo: !m.activo } : m)),
       );
-    } catch (e: any) {
-      const estado = e?.response?.status;
-      if (estado === 403) setError("No tienes permisos para esta acción.");
-      else if (estado === 404) setError("El material no existe o fue eliminado.");
-      else setError("No se pudo cambiar el estado del material.");
+    } catch (e) {
+      setError(interpretarErrorHttp(e, {
+        404: "El material no existe o fue eliminado.",
+      }, "No se pudo cambiar el estado del material."));
     }
   }
 

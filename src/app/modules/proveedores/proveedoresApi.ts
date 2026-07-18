@@ -1,4 +1,5 @@
 import { clienteApi } from "@/app/http/clienteApi";
+import { normalizarPagina, type Pagina } from "@/app/http/paginacion";
 
 export type EstadoProveedor = "ACTIVO" | "INACTIVO" | "BLOQUEADO";
 
@@ -15,13 +16,7 @@ export interface Proveedor {
   fechaCreacion: string;
 }
 
-export interface PaginaProveedores {
-  content: Proveedor[];
-  totalElements: number;
-  totalPages: number;
-  number: number;
-  size: number;
-}
+export type PaginaProveedores = Pagina<Proveedor>;
 
 export interface FiltrosProveedores {
   estado?: string;
@@ -55,25 +50,17 @@ export const ESTADOS_PROVEEDOR: EstadoProveedor[] = ["ACTIVO", "INACTIVO", "BLOQ
 export async function listarProveedores(
   filtros: FiltrosProveedores = {},
 ): Promise<PaginaProveedores> {
+  const size = filtros.size ?? 20;
   const { data } = await clienteApi.get("/proveedores", {
     params: {
       estado: filtros.estado || undefined,
       nombre: filtros.nombre || undefined,
       calificacionMin: filtros.calificacionMin || undefined,
       page: filtros.page ?? 0,
-      size: filtros.size ?? 20,
+      size,
     },
   });
-  if (Array.isArray(data)) {
-    return { content: data, totalElements: data.length, totalPages: 1, number: 0, size: data.length };
-  }
-  return {
-    content: Array.isArray(data?.content) ? data.content : [],
-    totalElements: data?.totalElements ?? 0,
-    totalPages: data?.totalPages ?? 0,
-    number: data?.number ?? 0,
-    size: data?.size ?? (filtros.size ?? 20),
-  };
+  return normalizarPagina<Proveedor>(data, size);
 }
 
 // POST /api/proveedores

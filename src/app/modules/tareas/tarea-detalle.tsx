@@ -10,6 +10,7 @@ import {
   type Avance,
   type Tarea,
 } from "@/app/modules/tareas/tareasApi";
+import { mensajeDelServidor } from "@/app/http/errores";
 import styles from "@/app/modules/tareas/tareas-vista.module.css";
 
 const fmtCantidad = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 });
@@ -79,8 +80,8 @@ export function TareaDetalle({
       setAvances((lista) => [...lista, nuevo]);
       setCantidad("");
       setDescripcion("");
-    } catch (err: any) {
-      setError(err?.response?.data?.mensaje ?? "No se pudo registrar el avance.");
+    } catch (err) {
+      setError(mensajeDelServidor(err) ?? "No se pudo registrar el avance.");
     } finally {
       setEnviando(false);
     }

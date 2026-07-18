@@ -8,6 +8,7 @@ import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Checkbox } from "@/app/components/ui/checkbox";
 import { login, guardarSesion, solicitarRecuperacion } from "@/app/modules/auth/authApi";
+import { estadoHttp, mensajeDelServidor } from "@/app/http/errores";
 import styles from "@/app/modules/auth/login-screen.module.css";
 
 export function LoginScreen() {
@@ -41,8 +42,8 @@ export function LoginScreen() {
       const resp = await login({ username: username.trim(), password });
       guardarSesion(resp);
       navigate(resp.rol.toUpperCase() === "SUPERADMIN" ? "/plataforma" : "/inicio");
-    } catch (err: any) {
-      const estado = err?.response?.status;
+    } catch (err) {
+      const estado = estadoHttp(err);
       if (estado === 401 || estado === 403) {
         setError("Usuario o contraseña incorrectos.");
       } else if (estado === undefined || estado === 0) {
@@ -67,9 +68,8 @@ export function LoginScreen() {
     try {
       await solicitarRecuperacion(correo);
       setInfo(`Si ${correo} está registrado, te llegará un enlace para restablecer la contraseña.`);
-    } catch (err: any) {
-      const mensaje = err?.response?.data?.mensaje;
-      setError(mensaje ?? "No se pudo enviar el correo de recuperación. Intenta de nuevo.");
+    } catch (err) {
+      setError(mensajeDelServidor(err) ?? "No se pudo enviar el correo de recuperación. Intenta de nuevo.");
     } finally {
       setEnviandoRecuperacion(false);
     }

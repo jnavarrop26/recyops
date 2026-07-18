@@ -7,6 +7,7 @@ import {
   provisionarEmpresa,
   type RespuestaEmpresaCreada,
 } from "@/app/modules/platform/plataformaApi";
+import { estadoHttp, mensajeDelServidor } from "@/app/http/errores";
 import styles from "@/app/modules/platform/plataforma-vista.module.css";
 
 interface Errores {
@@ -67,13 +68,12 @@ export function PlataformaVista() {
       });
       setResultado(resp);
       resetFormulario();
-    } catch (error: any) {
-      const estado = error?.response?.status;
-      const mensaje = error?.response?.data?.mensaje;
+    } catch (error) {
+      const estado = estadoHttp(error);
       if (estado === 409) {
-        setErrorGeneral(mensaje ?? "Ya existe una empresa con ese NIT o nombre de esquema.");
+        setErrorGeneral(mensajeDelServidor(error) ?? "Ya existe una empresa con ese NIT o nombre de esquema.");
       } else if (estado === 400) {
-        setErrorGeneral(mensaje ?? "Datos inválidos. Revisa los campos.");
+        setErrorGeneral(mensajeDelServidor(error) ?? "Datos inválidos. Revisa los campos.");
       } else {
         setErrorGeneral("Error al crear la empresa. Intenta de nuevo.");
       }

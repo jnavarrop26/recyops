@@ -1,4 +1,5 @@
 import { clienteApi } from "@/app/http/clienteApi";
+import { normalizarPagina, type Pagina } from "@/app/http/paginacion";
 
 export type EstadoEntrega = "RECIBIDA" | "EN_PROCESO" | "PROCESADA" | "DESPACHADA";
 
@@ -18,13 +19,7 @@ export interface Entrega {
   usuarioRegistroNombre: string;
 }
 
-export interface PaginaEntregas {
-  content: Entrega[];
-  totalElements: number;
-  totalPages: number;
-  number: number;
-  size: number;
-}
+export type PaginaEntregas = Pagina<Entrega>;
 
 export interface FiltrosEntregas {
   bodegaId?: string;
@@ -72,16 +67,7 @@ export async function listarEntregas(filtros: FiltrosEntregas = {}): Promise<Pag
       size,
     },
   });
-  if (Array.isArray(data)) {
-    return { content: data, totalElements: data.length, totalPages: 1, number: 0, size: data.length };
-  }
-  return {
-    content: Array.isArray(data?.content) ? data.content : [],
-    totalElements: data?.totalElements ?? 0,
-    totalPages: data?.totalPages ?? 0,
-    number: data?.number ?? 0,
-    size: data?.size ?? size,
-  };
+  return normalizarPagina<Entrega>(data, size);
 }
 
 // GET /api/entregas/{id}

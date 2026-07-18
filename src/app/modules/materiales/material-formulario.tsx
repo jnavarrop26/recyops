@@ -21,6 +21,7 @@ import {
   type OpcionCatalogo,
   type CuerpoMaterial,
 } from "@/app/modules/materiales/materialesApi";
+import { interpretarErrorHttp } from "@/app/http/errores";
 import styles from "@/app/modules/materiales/material-formulario.module.css";
 
 const UNIDADES_MEDIDA = ["KILOGRAMO", "TONELADA", "UNIDAD"];
@@ -162,12 +163,10 @@ export function MaterialFormulario({
         ? await actualizarMaterial(material!.id, cuerpo)
         : await crearMaterial(cuerpo);
       alGuardar(resultado);
-    } catch (error: any) {
-      const estado = error?.response?.status;
-      if (estado === 400) setErrorGeneral("Revisa los datos del formulario.");
-      else if (estado === 403) setErrorGeneral("No tienes permisos para esta acción.");
-      else if (estado === 404) setErrorGeneral("El material no existe o fue eliminado.");
-      else setErrorGeneral("Ocurrió un error al guardar el material. Intenta de nuevo.");
+    } catch (error) {
+      setErrorGeneral(interpretarErrorHttp(error, {
+        404: "El material no existe o fue eliminado.",
+      }, "Ocurrió un error al guardar el material. Intenta de nuevo."));
     } finally {
       setEnviando(false);
     }

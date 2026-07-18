@@ -8,6 +8,7 @@ import {
   type MovimientoInventario,
   type TipoOperacion,
 } from "@/app/modules/inventario/inventarioApi";
+import { interpretarErrorHttp } from "@/app/http/errores";
 import styles from "@/app/modules/inventario/inventario-detalle.module.css";
 
 const TAMANO_PAGINA = 20;
@@ -60,8 +61,8 @@ export function InventarioDetalle() {
         const datosLinea = await obtenerLinea(id);
         setLinea(datosLinea);
         await cargarMovimientos(0);
-      } catch (e: any) {
-        setError(e?.response?.status === 404 ? "Registro no encontrado." : "No se pudo cargar la línea de inventario.");
+      } catch (e) {
+        setError(interpretarErrorHttp(e, {}, "No se pudo cargar la línea de inventario."));
       } finally {
         setCargando(false);
       }

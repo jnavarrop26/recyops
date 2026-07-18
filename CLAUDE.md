@@ -87,9 +87,13 @@ Tailwind CSS 4 (via `@tailwindcss/vite`) plus **CSS Modules** for per-component 
 - Excel exports: `xlsx` (SheetJS)
 - Printable receipts: `src/app/components/recibo-ingreso.ts` generates HTML opened via `window.print()`
 
-### Figma Make integration
-
-`vite.config.ts` includes a `figma-asset-resolver` plugin that maps `figma:asset/<filename>` imports to `src/assets/<filename>`. The React and Tailwind plugins must both remain in the config even if Tailwind is not actively used.
-
 
 ### Springboot Comunication
+
+All integratioon with backend are in /home/janp/Projects/recyops-backend
+
+
+
+### Graphify for know on project
+
+Review GRAPH_REPORT.md for have bets idea or graphify-out/

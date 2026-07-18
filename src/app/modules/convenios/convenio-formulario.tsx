@@ -20,6 +20,7 @@ import {
 } from "@/app/modules/convenios/conveniosApi";
 import { listarProveedores, type Proveedor } from "@/app/modules/proveedores/proveedoresApi";
 import { listarBodegas, type Bodega } from "@/app/modules/bodega/bodegasApi";
+import { interpretarErrorHttp } from "@/app/http/errores";
 import styles from "@/app/modules/materiales/material-formulario.module.css";
 
 interface Errores {
@@ -108,13 +109,11 @@ export function ConvenioFormulario({
         ? await actualizarConvenio(convenio!.id, cuerpo)
         : await crearConvenio(cuerpo);
       alGuardar(resultado);
-    } catch (error: any) {
-      const estado = error?.response?.status;
-      if (estado === 409) setErrorGeneral("Ya existe un convenio con ese código.");
-      else if (estado === 400) setErrorGeneral("Revisa los datos del formulario.");
-      else if (estado === 403) setErrorGeneral("No tienes permisos para esta acción.");
-      else if (estado === 404) setErrorGeneral("El convenio no existe o fue eliminado.");
-      else setErrorGeneral("Ocurrió un error al guardar el convenio. Intenta de nuevo.");
+    } catch (error) {
+      setErrorGeneral(interpretarErrorHttp(error, {
+        409: "Ya existe un convenio con ese código.",
+        404: "El convenio no existe o fue eliminado.",
+      }, "Ocurrió un error al guardar el convenio. Intenta de nuevo."));
     } finally {
       setEnviando(false);
     }

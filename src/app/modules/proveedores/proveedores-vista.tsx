@@ -29,6 +29,7 @@ import {
   type EstadoProveedor,
   type EntregaProveedor,
 } from "@/app/modules/proveedores/proveedoresApi";
+import { interpretarErrorHttp } from "@/app/http/errores";
 import styles from "@/app/modules/proveedores/proveedores-vista.module.css";
 
 const TAMANO_PAGINA = 20;
@@ -143,11 +144,10 @@ export function ProveedoresVista() {
       setProveedores((prev) =>
         prev.map((x) => (x.id === p.id ? { ...x, estado: actualizado.estado } : x)),
       );
-    } catch (e: any) {
-      const s = e?.response?.status;
-      if (s === 403) setError("No tienes permisos para esta acción.");
-      else if (s === 404) setError("El proveedor no existe o fue eliminado.");
-      else setError("No se pudo cambiar el estado del proveedor.");
+    } catch (e) {
+      setError(interpretarErrorHttp(e, {
+        404: "El proveedor no existe o fue eliminado.",
+      }, "No se pudo cambiar el estado del proveedor."));
     }
   }
 
@@ -164,12 +164,10 @@ export function ProveedoresVista() {
         prev.map((x) => (x.id === modalCalificar.id ? { ...x, calificacion: actualizado.calificacion } : x)),
       );
       setModalCalificar(null);
-    } catch (e: any) {
-      const s = e?.response?.status;
-      if (s === 400) setError("Revisa los datos del formulario.");
-      else if (s === 403) setError("No tienes permisos para esta acción.");
-      else if (s === 404) setError("El proveedor no existe o fue eliminado.");
-      else setError("No se pudo guardar la calificación.");
+    } catch (e) {
+      setError(interpretarErrorHttp(e, {
+        404: "El proveedor no existe o fue eliminado.",
+      }, "No se pudo guardar la calificación."));
       setModalCalificar(null);
     }
   }

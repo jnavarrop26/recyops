@@ -13,11 +13,17 @@ import {
 } from "@/app/components/ui/select";
 import { registrarIngreso } from "@/app/modules/ingresos/ingresosApi";
 import { listarBodegas } from "@/app/modules/bodega/bodegasApi";
-import { obtenerCategorias } from "@/app/modules/materiales/materialesApi";
+import {
+  listarMateriales,
+  obtenerCategorias,
+  type Material as MaterialCatalogo,
+} from "@/app/modules/materiales/materialesApi";
 import styles from "@/app/modules/ingresos/ingreso-form.module.css";
 
 type Material = {
   id: number;
+  // id del material del catálogo; "" cuando se usa el respaldo de categorías
+  materialId: string;
   categoria: string;
   pesoBruto: string;
   tara: string;
@@ -38,7 +44,15 @@ const CATEGORIAS_RESPALDO = [
 ];
 
 function nuevoMaterial(id: number): Material {
-  return { id, categoria: "", pesoBruto: "", tara: "", precioKilo: "", observaciones: "" };
+  return {
+    id,
+    materialId: "",
+    categoria: "",
+    pesoBruto: "",
+    tara: "",
+    precioKilo: "",
+    observaciones: "",
+  };
 }
 
 const num = (v: string) => parseFloat(v) || 0;
@@ -63,6 +77,9 @@ export function IngresoForm() {
 
   // Catálogos que vienen del backend
   const [bodegas, setBodegas] = useState<string[]>([]);
+  // Materiales reales de la empresa (módulo Materiales); si está vacío se
+  // cae al respaldo de categorías genéricas.
+  const [catalogo, setCatalogo] = useState<MaterialCatalogo[]>([]);
   const [categorias, setCategorias] = useState<string[]>(CATEGORIAS_RESPALDO);
 
   const [enviando, setEnviando] = useState(false);
@@ -73,6 +90,9 @@ export function IngresoForm() {
     listarBodegas({ estado: "ACTIVA", size: 100 })
       .then((pagina) => setBodegas(pagina.content.map((b) => b.nombre)))
       .catch(() => setBodegas([]));
+    listarMateriales({ activo: "true", size: 100 })
+      .then((pagina) => setCatalogo(pagina.content))
+      .catch(() => setCatalogo([]));
     obtenerCategorias()
       .then((opciones) => {
         if (opciones.length > 0) setCategorias(opciones.map((o) => o.nombre));
@@ -89,6 +109,15 @@ export function IngresoForm() {
   }
   function removeMaterial(id: number) {
     setMateriales((ms) => (ms.length > 1 ? ms.filter((m) => m.id !== id) : ms));
+  }
+  // Elegir un material del catálogo precarga su precio base (editable).
+  function seleccionarMaterial(fila: number, materialId: string) {
+    const mat = catalogo.find((c) => c.id === materialId);
+    update(fila, {
+      materialId,
+      categoria: mat?.nombre ?? "",
+      precioKilo: mat ? String(mat.precioBase) : "",
+    });
   }
 
   const granTotal = materiales.reduce((acc, m) => acc + total(m), 0);
@@ -116,9 +145,11 @@ export function IngresoForm() {
       return;
     }
 
-    const materialesValidos = materiales.filter((m) => m.categoria && neto(m) > 0);
+    const materialesValidos = materiales.filter(
+      (m) => (m.materialId || m.categoria) && neto(m) > 0,
+    );
     if (materialesValidos.length === 0) {
-      setError("Cada material necesita una categoría y un peso neto mayor a cero.");
+      setError("Cada material necesita un material del catálogo y un peso neto mayor a cero.");
       return;
     }
 
@@ -133,6 +164,7 @@ export function IngresoForm() {
         pesoNetoTotal: Number(pesoNetoTotal.toFixed(2)),
         total: Number(granTotal.toFixed(2)),
         materiales: materialesValidos.map((m) => ({
+          materialId: m.materialId || null,
           categoria: m.categoria,
           pesoBruto: num(m.pesoBruto),
           tara: num(m.tara),
@@ -280,19 +312,45 @@ export function IngresoForm() {
             </div>
             <div className={styles.grid}>
               <div className={styles.field}>
-                <Label>Categoría</Label>
-                <Select value={m.categoria} onValueChange={(v) => update(m.id, { categoria: v })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona categoría" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categorias.map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {catalogo.length > 0 ? (
+                  <>
+                    <Label>Material</Label>
+                    <Select
+                      value={m.materialId}
+                      onValueChange={(v) => seleccionarMaterial(m.id, v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona material" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {catalogo.map((mat) => (
+                          <SelectItem key={mat.id} value={mat.id}>
+                            {mat.nombre}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </>
+                ) : (
+                  <>
+                    <Label>Categoría</Label>
+                    <Select
+                      value={m.categoria}
+                      onValueChange={(v) => update(m.id, { categoria: v })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona categoría" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categorias.map((c) => (
+                          <SelectItem key={c} value={c}>
+                            {c}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </>
+                )}
               </div>
               <div className={styles.field}>
                 <Label>Peso bruto (kg)</Label>

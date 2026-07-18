@@ -22,6 +22,16 @@ const TINTAS_ESTADO: Record<string, string> = {
   RECHAZADO: "#C0392B",
 };
 
+const ETIQUETAS_PAGO: Record<string, string> = {
+  POR_PAGAR: "Por pagar",
+  PAGADO: "Pagado",
+};
+
+const ETIQUETAS_METODO: Record<string, string> = {
+  EFECTIVO: "Efectivo",
+  TRANSFERENCIA: "Transferencia",
+};
+
 const escapar = (valor: string | null | undefined) =>
   (valor ?? "—").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -321,6 +331,14 @@ export function plantillaReciboIngreso(ingreso: Ingreso): string {
         <div class="grupo">
           <div class="etiqueta">Fecha y hora de ingreso</div>
           <div class="valor">${escapar(fechaLarga(ingreso.fecha))}</div>
+        </div>
+        <div class="grupo">
+          <div class="etiqueta">Estado de pago</div>
+          <div class="valor">${escapar(ETIQUETAS_PAGO[ingreso.estadoPago] ?? ingreso.estadoPago)}</div>
+        </div>
+        <div class="grupo">
+          <div class="etiqueta">Método de pago</div>
+          <div class="valor">${escapar(ingreso.metodoPago ? (ETIQUETAS_METODO[ingreso.metodoPago] ?? ingreso.metodoPago) : null)}</div>
         </div>
       </div>
 

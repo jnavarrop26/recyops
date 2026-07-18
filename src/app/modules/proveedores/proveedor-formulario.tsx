@@ -8,6 +8,7 @@ import {
   type Proveedor,
   type CuerpoProveedor,
 } from "@/app/modules/proveedores/proveedoresApi";
+import { estadoHttp, interpretarErrorHttp } from "@/app/http/errores";
 import styles from "@/app/modules/materiales/material-formulario.module.css";
 
 interface Errores {
@@ -68,15 +69,14 @@ export function ProveedorFormulario({
         ? await actualizarProveedor(proveedor!.id, cuerpo)
         : await crearProveedor(cuerpo);
       alGuardar(resultado);
-    } catch (error: any) {
-      const estado = error?.response?.status;
-      if (estado === 409) {
+    } catch (error) {
+      if (estadoHttp(error) === 409) {
         setErrores((prev) => ({ ...prev, nit: "Ya existe un proveedor con ese NIT." }));
-        setErrorGeneral("Ya existe un proveedor con ese NIT.");
-      } else if (estado === 400) setErrorGeneral("Revisa los datos del formulario.");
-      else if (estado === 403) setErrorGeneral("No tienes permisos para esta acción.");
-      else if (estado === 404) setErrorGeneral("El proveedor no existe o fue eliminado.");
-      else setErrorGeneral("Ocurrió un error al guardar el proveedor. Intenta de nuevo.");
+      }
+      setErrorGeneral(interpretarErrorHttp(error, {
+        409: "Ya existe un proveedor con ese NIT.",
+        404: "El proveedor no existe o fue eliminado.",
+      }, "Ocurrió un error al guardar el proveedor. Intenta de nuevo."));
     } finally {
       setEnviando(false);
     }

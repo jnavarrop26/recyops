@@ -24,6 +24,7 @@ import {
 } from "@/app/modules/inventario/inventarioApi";
 import { listarBodegas, type Bodega } from "@/app/modules/bodega/bodegasApi";
 import { listarMateriales, type Material } from "@/app/modules/materiales/materialesApi";
+import { interpretarErrorHttp } from "@/app/http/errores";
 import styles from "@/app/modules/materiales/material-formulario.module.css";
 
 export function LineaConfigurarModal({
@@ -90,13 +91,11 @@ export function LineaConfigurarModal({
         ? await actualizarTopes(linea!.id, { stockMinimo: min, stockMaximo: max })
         : await crearLinea({ bodegaId, tipoMaterialId, stockMinimo: min, stockMaximo: max });
       alGuardar(resultado);
-    } catch (error: any) {
-      const s = error?.response?.status;
-      if (s === 409) setErrorGeneral("Ese material ya está registrado en esta bodega.");
-      else if (s === 400) setErrorGeneral("Revisa los datos.");
-      else if (s === 403) setErrorGeneral("No tienes permisos para esta acción.");
-      else if (s === 404) setErrorGeneral("Registro no encontrado.");
-      else setErrorGeneral("No se pudo guardar la configuración.");
+    } catch (error) {
+      setErrorGeneral(interpretarErrorHttp(error, {
+        409: "Ese material ya está registrado en esta bodega.",
+        400: "Revisa los datos.",
+      }, "No se pudo guardar la configuración."));
     } finally {
       setEnviando(false);
     }

@@ -27,6 +27,7 @@ import {
   type Bodega,
   type EstadoBodega,
 } from "@/app/modules/bodega/bodegasApi";
+import { interpretarErrorHttp } from "@/app/http/errores";
 import styles from "@/app/modules/bodega/bodegas-vista.module.css";
 
 const TAMANO_PAGINA = 20;
@@ -119,11 +120,10 @@ export function BodegasVista() {
       setBodegas((previas) =>
         previas.map((b) => (b.id === bodega.id ? { ...b, estado: actualizada.estado } : b)),
       );
-    } catch (e: any) {
-      const estado = e?.response?.status;
-      if (estado === 403) setError("No tienes permisos para esta acción.");
-      else if (estado === 404) setError("La bodega no existe o fue eliminada.");
-      else setError("No se pudo cambiar el estado de la bodega.");
+    } catch (e) {
+      setError(interpretarErrorHttp(e, {
+        404: "La bodega no existe o fue eliminada.",
+      }, "No se pudo cambiar el estado de la bodega."));
     }
   }
 

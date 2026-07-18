@@ -18,6 +18,7 @@ import {
   type Rol,
   type RespuestaTrabajadorCreado,
 } from "@/app/modules/trabajadores/trabajadoresApi";
+import { interpretarErrorHttp } from "@/app/http/errores";
 import styles from "@/app/modules/trabajadores/registrar-trabajador.module.css";
 
 interface Errores {
@@ -113,17 +114,12 @@ export function RegistrarTrabajador({
         password: generarAutomatico || !password ? undefined : password,
       });
       alRegistrar(resultado);
-    } catch (error: any) {
-      const estado = error?.response?.status;
-      if (estado === 409) {
-        setErrorGeneral("Ya existe un usuario con ese correo/usuario.");
-      } else if (estado === 400) {
-        setErrorGeneral("La bodega o el rol seleccionado no son válidos.");
-      } else if (estado === 403) {
-        setErrorGeneral("No tienes permisos de administrador para registrar trabajadores.");
-      } else {
-        setErrorGeneral("Ocurrió un error al registrar el trabajador. Intenta de nuevo.");
-      }
+    } catch (error) {
+      setErrorGeneral(interpretarErrorHttp(error, {
+        409: "Ya existe un usuario con ese correo/usuario.",
+        400: "La bodega o el rol seleccionado no son válidos.",
+        403: "No tienes permisos de administrador para registrar trabajadores.",
+      }, "Ocurrió un error al registrar el trabajador. Intenta de nuevo."));
     } finally {
       setEnviando(false);
     }

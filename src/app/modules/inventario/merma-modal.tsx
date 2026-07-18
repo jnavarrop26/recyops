@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/app/components/ui/dialog";
 import { registrarMerma, type LineaInventario } from "@/app/modules/inventario/inventarioApi";
+import { interpretarErrorHttp } from "@/app/http/errores";
 import styles from "@/app/modules/materiales/material-formulario.module.css";
 
 export function MermaModal({
@@ -51,13 +52,11 @@ export function MermaModal({
         motivo: motivo.trim(),
       });
       alGuardar(resultado);
-    } catch (error: any) {
-      const s = error?.response?.status;
-      if (s === 409) setErrorGeneral("La merma supera el stock disponible.");
-      else if (s === 400) setErrorGeneral("Revisa los datos.");
-      else if (s === 403) setErrorGeneral("No tienes permisos para esta acción.");
-      else if (s === 404) setErrorGeneral("Registro no encontrado.");
-      else setErrorGeneral("No se pudo registrar la merma.");
+    } catch (error) {
+      setErrorGeneral(interpretarErrorHttp(error, {
+        409: "La merma supera el stock disponible.",
+        400: "Revisa los datos.",
+      }, "No se pudo registrar la merma."));
     } finally {
       setEnviando(false);
     }

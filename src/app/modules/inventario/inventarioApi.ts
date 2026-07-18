@@ -1,4 +1,5 @@
 import { clienteApi } from "@/app/http/clienteApi";
+import { normalizarPagina, type Pagina } from "@/app/http/paginacion";
 
 export type TipoOperacion = "ENTRADA" | "SALIDA" | "AJUSTE" | "MERMA" | "TRANSFORMACION";
 
@@ -28,21 +29,9 @@ export interface MovimientoInventario {
   fechaRegistro: string;
 }
 
-export interface PaginaInventario {
-  content: LineaInventario[];
-  totalElements: number;
-  totalPages: number;
-  number: number;
-  size: number;
-}
+export type PaginaInventario = Pagina<LineaInventario>;
 
-export interface PaginaMovimientos {
-  content: MovimientoInventario[];
-  totalElements: number;
-  totalPages: number;
-  number: number;
-  size: number;
-}
+export type PaginaMovimientos = Pagina<MovimientoInventario>;
 
 export interface FiltrosInventario {
   bodegaId: string;
@@ -72,19 +61,6 @@ export interface CuerpoAjuste {
 export interface CuerpoMerma {
   cantidad: number;
   motivo: string;
-}
-
-function normalizarPagina<T>(data: any, size: number) {
-  if (Array.isArray(data)) {
-    return { content: data as T[], totalElements: data.length, totalPages: 1, number: 0, size: data.length };
-  }
-  return {
-    content: (Array.isArray(data?.content) ? data.content : []) as T[],
-    totalElements: data?.totalElements ?? 0,
-    totalPages: data?.totalPages ?? 0,
-    number: data?.number ?? 0,
-    size: data?.size ?? size,
-  };
 }
 
 // GET /api/inventario?bodegaId=

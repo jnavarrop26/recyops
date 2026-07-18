@@ -20,6 +20,7 @@ import {
   type RespuestaTrabajadorCreado,
 } from "@/app/modules/trabajadores/trabajadoresApi";
 import { cerrarSesion } from "@/app/modules/auth/authApi";
+import { interpretarErrorHttp } from "@/app/http/errores";
 import styles from "@/app/modules/configuracion/configuracion-vista.module.css";
 
 interface Errores {
@@ -125,11 +126,11 @@ function FormularioCrearOperario() {
       setBodegaId("");
       setRolId("");
       setErrores({});
-    } catch (err: any) {
-      const estado = err?.response?.status;
-      if (estado === 409) setErrorGeneral("Ya existe un usuario con ese nombre de usuario o correo.");
-      else if (estado === 403) setErrorGeneral("No tienes permisos para crear usuarios.");
-      else setErrorGeneral("No se pudo crear el usuario. Verifica los datos e intenta de nuevo.");
+    } catch (err) {
+      setErrorGeneral(interpretarErrorHttp(err, {
+        409: "Ya existe un usuario con ese nombre de usuario o correo.",
+        403: "No tienes permisos para crear usuarios.",
+      }, "No se pudo crear el usuario. Verifica los datos e intenta de nuevo."));
     } finally {
       setEnviando(false);
     }

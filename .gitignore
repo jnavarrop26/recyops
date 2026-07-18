@@ -14,3 +14,9 @@ dist/
 .DS_Store
 .vscode/
 *.local
+
+
+# Claude
+
+CLAUDE.md
+.claude/

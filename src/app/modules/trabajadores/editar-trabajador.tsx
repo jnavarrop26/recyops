@@ -17,6 +17,7 @@ import {
   type Rol,
   type Trabajador,
 } from "@/app/modules/trabajadores/trabajadoresApi";
+import { interpretarErrorHttp } from "@/app/http/errores";
 import styles from "@/app/modules/trabajadores/registrar-trabajador.module.css";
 
 interface Errores {
@@ -84,12 +85,12 @@ export function EditarTrabajador({
         rolId,
       });
       alGuardar(actualizado);
-    } catch (error: any) {
-      const estado = error?.response?.status;
-      if (estado === 404) setErrorGeneral("El trabajador ya no existe.");
-      else if (estado === 403) setErrorGeneral("No tienes permisos para editar trabajadores.");
-      else if (estado === 502) setErrorGeneral("No se pudo sincronizar con Supabase. Intenta de nuevo.");
-      else setErrorGeneral("Ocurrió un error al guardar los cambios. Intenta de nuevo.");
+    } catch (error) {
+      setErrorGeneral(interpretarErrorHttp(error, {
+        404: "El trabajador ya no existe.",
+        403: "No tienes permisos para editar trabajadores.",
+        502: "No se pudo sincronizar con Supabase. Intenta de nuevo.",
+      }, "Ocurrió un error al guardar los cambios. Intenta de nuevo."));
     } finally {
       setEnviando(false);
     }

@@ -6,6 +6,7 @@ import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { AuthLayout } from "@/app/modules/auth/auth-layout";
 import { restablecerPassword } from "@/app/modules/auth/authApi";
+import { estadoHttp, mensajeDelServidor } from "@/app/http/errores";
 
 /**
  * Pantalla a la que llega el enlace del correo de recuperación de Supabase:
@@ -44,13 +45,11 @@ export function RestablecerScreen() {
       await restablecerPassword(accessToken, password);
       setListo(true);
       setTimeout(() => navigate("/"), 2500);
-    } catch (err: any) {
-      const estado = err?.response?.status;
-      const mensaje = err?.response?.data?.mensaje;
-      if (estado === 401) {
+    } catch (err) {
+      if (estadoHttp(err) === 401) {
         setError("El enlace ya venció o fue usado. Pide uno nuevo desde el login.");
       } else {
-        setError(mensaje ?? "No se pudo restablecer la contraseña. Intenta de nuevo.");
+        setError(mensajeDelServidor(err) ?? "No se pudo restablecer la contraseña. Intenta de nuevo.");
       }
     } finally {
       setEnviando(false);

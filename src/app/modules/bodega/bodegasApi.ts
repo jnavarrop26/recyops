@@ -1,5 +1,6 @@
 
 import { clienteApi } from "@/app/http/clienteApi";
+import { normalizarPagina, type Pagina } from "@/app/http/paginacion";
 
 export type EstadoBodega = "ACTIVA" | "INACTIVA" | "MANTENIMIENTO";
 
@@ -17,13 +18,7 @@ export interface Bodega {
   fechaCreacion: string;
 }
 
-export interface PaginaBodegas {
-  content: Bodega[];
-  totalElements: number;
-  totalPages: number;
-  number: number;
-  size: number;
-}
+export type PaginaBodegas = Pagina<Bodega>;
 
 export interface FiltrosBodegas {
   estado?: string;
@@ -57,25 +52,17 @@ export const TIPOS_ORGANIZACION = ["PROPIA", "ALIADA", "TERCERIZADA"];
 
 // GET /api/bodegas
 export async function listarBodegas(filtros: FiltrosBodegas = {}): Promise<PaginaBodegas> {
+  const size = filtros.size ?? 20;
   const { data } = await clienteApi.get("/bodegas", {
     params: {
       estado: filtros.estado || undefined,
       tipoOrganizacion: filtros.tipoOrganizacion || undefined,
       nombre: filtros.nombre || undefined,
       page: filtros.page ?? 0,
-      size: filtros.size ?? 20,
+      size,
     },
   });
-  if (Array.isArray(data)) {
-    return { content: data, totalElements: data.length, totalPages: 1, number: 0, size: data.length };
-  }
-  return {
-    content: Array.isArray(data?.content) ? data.content : [],
-    totalElements: data?.totalElements ?? 0,
-    totalPages: data?.totalPages ?? 0,
-    number: data?.number ?? 0,
-    size: data?.size ?? (filtros.size ?? 20),
-  };
+  return normalizarPagina<Bodega>(data, size);
 }
 
 // GET /api/bodegas/{id}

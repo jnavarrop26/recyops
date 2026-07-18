@@ -13,6 +13,7 @@ import { registrarEntrega, type Entrega, type CuerpoEntrega } from "@/app/module
 import { listarProveedores, type Proveedor } from "@/app/modules/proveedores/proveedoresApi";
 import { listarBodegas, type Bodega } from "@/app/modules/bodega/bodegasApi";
 import { listarMateriales, type Material } from "@/app/modules/materiales/materialesApi";
+import { interpretarErrorHttp } from "@/app/http/errores";
 import styles from "@/app/modules/materiales/material-formulario.module.css";
 
 export function EntregaFormulario({
@@ -83,13 +84,10 @@ export function EntregaFormulario({
     try {
       const resultado = await registrarEntrega(cuerpo);
       alGuardar(resultado);
-    } catch (error: any) {
-      const s = error?.response?.status;
-      if (s === 409) setErrorGeneral("El proveedor no está activo o la operación no es válida.");
-      else if (s === 400) setErrorGeneral("Revisa los datos del formulario.");
-      else if (s === 403) setErrorGeneral("No tienes permisos para esta acción.");
-      else if (s === 404) setErrorGeneral("Registro no encontrado.");
-      else setErrorGeneral("No se pudo registrar la entrega. Intenta de nuevo.");
+    } catch (error) {
+      setErrorGeneral(interpretarErrorHttp(error, {
+        409: "El proveedor no está activo o la operación no es válida.",
+      }, "No se pudo registrar la entrega. Intenta de nuevo."));
     } finally {
       setEnviando(false);
     }

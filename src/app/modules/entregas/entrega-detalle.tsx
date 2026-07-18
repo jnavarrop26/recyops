@@ -9,6 +9,7 @@ import {
   siguienteEstado,
   type Entrega,
 } from "@/app/modules/entregas/entregasApi";
+import { interpretarErrorHttp } from "@/app/http/errores";
 import styles from "@/app/modules/bodega/bodega-detalle.module.css";
 
 const formatearFecha = (iso: string) => {
@@ -31,8 +32,8 @@ export function EntregaDetalle() {
       setError(null);
       try {
         setEntrega(await obtenerEntrega(id));
-      } catch (e: any) {
-        setError(e?.response?.status === 404 ? "Registro no encontrado." : "No se pudo cargar la entrega.");
+      } catch (e) {
+        setError(interpretarErrorHttp(e, {}, "No se pudo cargar la entrega."));
       } finally {
         setCargando(false);
       }
@@ -46,10 +47,11 @@ export function EntregaDetalle() {
     try {
       const actualizada = await cambiarEstadoEntrega(entrega.id, siguiente);
       setEntrega(actualizada);
-    } catch (e: any) {
-      const s = e?.response?.status;
-      if (s === 409 || s === 400) setError("Transición de estado no permitida.");
-      else setError("No se pudo cambiar el estado de la entrega.");
+    } catch (e) {
+      setError(interpretarErrorHttp(e, {
+        409: "Transición de estado no permitida.",
+        400: "Transición de estado no permitida.",
+      }, "No se pudo cambiar el estado de la entrega."));
     }
   }
 

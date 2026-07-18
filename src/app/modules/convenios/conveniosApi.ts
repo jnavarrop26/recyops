@@ -1,4 +1,5 @@
 import { clienteApi } from "@/app/http/clienteApi";
+import { normalizarPagina, type Pagina } from "@/app/http/paginacion";
 
 export type EstadoConvenio = "ACTIVO" | "INACTIVO" | "VENCIDO" | "SUSPENDIDO";
 export type TipoConvenio = "COMPRA" | "VENTA" | "INTERCAMBIO" | "SERVICIO";
@@ -21,13 +22,7 @@ export interface Convenio {
   fechaCreacion: string;
 }
 
-export interface PaginaConvenios {
-  content: Convenio[];
-  totalElements: number;
-  totalPages: number;
-  number: number;
-  size: number;
-}
+export type PaginaConvenios = Pagina<Convenio>;
 
 export interface FiltrosConvenios {
   estado?: string;
@@ -54,25 +49,17 @@ export const TIPOS_CONVENIO: TipoConvenio[] = ["COMPRA", "VENTA", "INTERCAMBIO",
 
 // GET /api/convenios
 export async function listarConvenios(filtros: FiltrosConvenios = {}): Promise<PaginaConvenios> {
+  const size = filtros.size ?? 20;
   const { data } = await clienteApi.get("/convenios", {
     params: {
       estado: filtros.estado || undefined,
       tipo: filtros.tipo || undefined,
       nombre: filtros.nombre || undefined,
       page: filtros.page ?? 0,
-      size: filtros.size ?? 20,
+      size,
     },
   });
-  if (Array.isArray(data)) {
-    return { content: data, totalElements: data.length, totalPages: 1, number: 0, size: data.length };
-  }
-  return {
-    content: Array.isArray(data?.content) ? data.content : [],
-    totalElements: data?.totalElements ?? 0,
-    totalPages: data?.totalPages ?? 0,
-    number: data?.number ?? 0,
-    size: data?.size ?? (filtros.size ?? 20),
-  };
+  return normalizarPagina<Convenio>(data, size);
 }
 
 // GET /api/convenios/{id}

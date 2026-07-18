@@ -31,6 +31,7 @@ import {
 } from "@/app/modules/entregas/entregasApi";
 import { listarProveedores, type Proveedor } from "@/app/modules/proveedores/proveedoresApi";
 import { listarBodegas, type Bodega } from "@/app/modules/bodega/bodegasApi";
+import { interpretarErrorHttp } from "@/app/http/errores";
 import styles from "@/app/modules/entregas/entregas-vista.module.css";
 
 const TAMANO_PAGINA = 20;
@@ -139,12 +140,11 @@ export function EntregasVista() {
     try {
       const actualizada = await cambiarEstadoEntrega(entrega.id, siguiente);
       setEntregas((prev) => prev.map((e) => (e.id === entrega.id ? { ...e, estado: actualizada.estado } : e)));
-    } catch (e: any) {
-      const s = e?.response?.status;
-      if (s === 409 || s === 400) setError("Transición de estado no permitida.");
-      else if (s === 403) setError("No tienes permisos para esta acción.");
-      else if (s === 404) setError("Registro no encontrado.");
-      else setError("No se pudo cambiar el estado de la entrega.");
+    } catch (e) {
+      setError(interpretarErrorHttp(e, {
+        409: "Transición de estado no permitida.",
+        400: "Transición de estado no permitida.",
+      }, "No se pudo cambiar el estado de la entrega."));
     }
   }
 
@@ -162,12 +162,10 @@ export function EntregasVista() {
       await eliminarEntrega(entregaEliminar.id);
       setEntregaEliminar(null);
       cargar(pagina);
-    } catch (e: any) {
-      const s = e?.response?.status;
-      if (s === 409) setError("No se puede eliminar una entrega ya procesada.");
-      else if (s === 403) setError("No tienes permisos para esta acción.");
-      else if (s === 404) setError("Registro no encontrado.");
-      else setError("No se pudo eliminar la entrega.");
+    } catch (e) {
+      setError(interpretarErrorHttp(e, {
+        409: "No se puede eliminar una entrega ya procesada.",
+      }, "No se pudo eliminar la entrega."));
       setEntregaEliminar(null);
     }
   }

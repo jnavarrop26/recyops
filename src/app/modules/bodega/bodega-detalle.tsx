@@ -8,6 +8,7 @@ import {
   type Bodega,
   type UsuarioBodega,
 } from "@/app/modules/bodega/bodegasApi";
+import { interpretarErrorHttp } from "@/app/http/errores";
 import styles from "@/app/modules/bodega/bodega-detalle.module.css";
 
 export function BodegaDetalle() {
@@ -31,12 +32,10 @@ export function BodegaDetalle() {
         ]);
         setBodega(datosBodega);
         setUsuarios(datosUsuarios);
-      } catch (e: any) {
-        setError(
-          e?.response?.status === 404
-            ? "La bodega no existe o fue eliminada."
-            : "No se pudo cargar la información de la bodega.",
-        );
+      } catch (e) {
+        setError(interpretarErrorHttp(e, {
+          404: "La bodega no existe o fue eliminada.",
+        }, "No se pudo cargar la información de la bodega."));
       } finally {
         setCargando(false);
       }

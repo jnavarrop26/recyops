@@ -67,8 +67,14 @@
   color: var(--ink-muted);
 }
 
+/* La tabla ancha se desplaza dentro de su tarjeta, nunca la página entera */
+.tablaScroll {
+  overflow-x: auto;
+}
+
 .tabla {
   width: 100%;
+  min-width: 1180px;
   border-collapse: collapse;
   font-size: 14px;
 }
@@ -113,4 +119,122 @@
 
 .error {
   color: var(--destructive);
+}
+
+.accionesPago {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+/* Selects editables dentro de la tabla (estado y método de pago) */
+.selectFila {
+  appearance: none;
+  padding: 5px 26px 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background-color: #ffffff;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235A6B62' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.selectFila:hover {
+  border-color: var(--brand);
+}
+
+.selectFila:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 1px;
+}
+
+.selectFila:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+/* Marca de paso: chip Sí/No conmutable */
+.chipPaso {
+  min-width: 44px;
+  padding: 4px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background-color: #ffffff;
+  color: var(--ink-muted);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.chipPaso:hover {
+  border-color: var(--brand);
+}
+
+.chipPaso:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 1px;
+}
+
+.chipPaso:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.chipPasoSi {
+  background-color: var(--brand);
+  border-color: var(--brand);
+  color: #ffffff;
+}
+
+.chipPasoSi:hover {
+  background-color: var(--brand-hover);
+  border-color: var(--brand-hover);
+}
+
+/* ── Móvil ─────────────────────────────────────────────── */
+@media (max-width: 700px) {
+  .subtitulo {
+    margin-bottom: 20px;
+  }
+
+  .filtros {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .campo {
+    width: 100%;
+  }
+
+  .acciones {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .acciones > * {
+    flex: 1;
+  }
+
+  .tabla th,
+  .tabla td {
+    padding: 10px 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .selectFila,
+  .chipPaso {
+    transition: none;
+  }
 }

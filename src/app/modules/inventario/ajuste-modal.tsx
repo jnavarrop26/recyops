@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/app/components/ui/dialog";
 import { registrarAjuste, type LineaInventario } from "@/app/modules/inventario/inventarioApi";
+import { interpretarErrorHttp } from "@/app/http/errores";
 import styles from "@/app/modules/materiales/material-formulario.module.css";
 
 export function AjusteModal({
@@ -51,12 +52,10 @@ export function AjusteModal({
         motivo: motivo.trim(),
       });
       alGuardar(resultado);
-    } catch (error: any) {
-      const s = error?.response?.status;
-      if (s === 400) setErrorGeneral("Revisa los datos.");
-      else if (s === 403) setErrorGeneral("No tienes permisos para esta acción.");
-      else if (s === 404) setErrorGeneral("Registro no encontrado.");
-      else setErrorGeneral("No se pudo registrar el ajuste.");
+    } catch (error) {
+      setErrorGeneral(interpretarErrorHttp(error, {
+        400: "Revisa los datos.",
+      }, "No se pudo registrar el ajuste."));
     } finally {
       setEnviando(false);
     }

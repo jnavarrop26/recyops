@@ -1,0 +1,11 @@
+.chip {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.porPagar { background-color: #fdf0d5; color: #92600a; }
+.pagado { background-color: #dcf2e3; color: #166534; }

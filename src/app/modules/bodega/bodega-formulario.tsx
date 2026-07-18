@@ -16,6 +16,7 @@ import {
   type Bodega,
   type CuerpoBodega,
 } from "@/app/modules/bodega/bodegasApi";
+import { interpretarErrorHttp } from "@/app/http/errores";
 import styles from "@/app/modules/materiales/material-formulario.module.css";
 
 interface Errores {
@@ -83,12 +84,10 @@ export function BodegaFormulario({
         ? await actualizarBodega(bodega!.id, cuerpo)
         : await crearBodega(cuerpo);
       alGuardar(resultado);
-    } catch (error: any) {
-      const estado = error?.response?.status;
-      if (estado === 400) setErrorGeneral("Revisa los datos del formulario.");
-      else if (estado === 403) setErrorGeneral("No tienes permisos para esta acción.");
-      else if (estado === 404) setErrorGeneral("La bodega no existe o fue eliminada.");
-      else setErrorGeneral("Ocurrió un error al guardar la bodega. Intenta de nuevo.");
+    } catch (error) {
+      setErrorGeneral(interpretarErrorHttp(error, {
+        404: "La bodega no existe o fue eliminada.",
+      }, "Ocurrió un error al guardar la bodega. Intenta de nuevo."));
     } finally {
       setEnviando(false);
     }

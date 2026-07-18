@@ -1,8 +1,13 @@
-import axios from "axios";
+import axios, { type InternalAxiosRequestConfig } from "axios";
+
+// Config de Axios con la marca de reintento tras renovar el token.
+interface ConfigConReintento extends InternalAxiosRequestConfig {
+  _reintentada?: boolean;
+}
 
 // URL base del backend (Spring Boot). Configurable vía variable de entorno.
 // Define VITE_API_URL en tu entorno; por defecto apunta al proxy local "/api".
-const urlBase = (import.meta as any).env?.VITE_API_URL ?? "/api";
+const urlBase = import.meta.env.VITE_API_URL ?? "/api";
 
 export const clienteApi = axios.create({
   baseURL: urlBase,
@@ -38,11 +43,14 @@ async function renovarSesion(): Promise<string | null> {
   if (!refresh) return null;
   try {
     // axios "crudo" (sin interceptores) para no entrar en bucle
-    const { data } = await axios.post(`${urlBase}/auth/refresh`, { refreshToken: refresh });
+    const { data } = await axios.post<{ token: string; refreshToken?: string; rol?: string }>(
+      `${urlBase}/auth/refresh`,
+      { refreshToken: refresh },
+    );
     localStorage.setItem("sicofar_token", data.token);
     if (data.refreshToken) localStorage.setItem("sicofar_refresh", data.refreshToken);
     if (data.rol) localStorage.setItem("sicofar_rol", data.rol);
-    return data.token as string;
+    return data.token;
   } catch {
     return null;
   }
@@ -61,10 +69,13 @@ function limpiarSesionYSalir() {
 
 clienteApi.interceptors.response.use(
   (respuesta) => respuesta,
-  async (error) => {
-    const estado = error?.response?.status;
-    const config = error?.config ?? {};
-    const url: string = config.url ?? "";
+  async (error: unknown) => {
+    if (!axios.isAxiosError(error) || !error.config) {
+      return Promise.reject(error);
+    }
+    const estado = error.response?.status;
+    const config = error.config as ConfigConReintento;
+    const url = config.url ?? "";
 
     if (estado !== 401 || url.includes("/auth/")) {
       return Promise.reject(error);
@@ -78,7 +89,7 @@ clienteApi.interceptors.response.use(
       });
       const nuevoToken = await renovacionEnCurso;
       if (nuevoToken) {
-        config.headers = { ...config.headers, Authorization: `Bearer ${nuevoToken}` };
+        config.headers.Authorization = `Bearer ${nuevoToken}`;
         return clienteApi(config);
       }
     }
