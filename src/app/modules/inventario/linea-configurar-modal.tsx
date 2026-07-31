@@ -93,7 +93,12 @@ export function LineaConfigurarModal({
       alGuardar(resultado);
     } catch (error) {
       setErrorGeneral(interpretarErrorHttp(error, {
-        409: "Ese material ya está registrado en esta bodega.",
+        // 409 significa algo distinto según la operación: al crear, es un duplicado
+        // (LineaDuplicadaException); al editar topes, solo puede ser bloqueo optimista
+        // por edición concurrente (no hay chequeo de duplicado en el PUT).
+        409: esEdicion
+          ? "Otro usuario actualizó esta línea justo antes de tu envío. Cierra y vuelve a intentar."
+          : "Ese material ya está registrado en esta bodega.",
         400: "Revisa los datos.",
       }, "No se pudo guardar la configuración."));
     } finally {

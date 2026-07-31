@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/app/components/ui/dialog";
 import { registrarAjuste, type LineaInventario } from "@/app/modules/inventario/inventarioApi";
-import { interpretarErrorHttp } from "@/app/http/errores";
+import { interpretarErrorHttp, mensajeDelServidor } from "@/app/http/errores";
 import styles from "@/app/modules/materiales/material-formulario.module.css";
 
 export function AjusteModal({
@@ -54,7 +54,9 @@ export function AjusteModal({
       alGuardar(resultado);
     } catch (error) {
       setErrorGeneral(interpretarErrorHttp(error, {
-        400: "Revisa los datos.",
+        400: mensajeDelServidor(error) ?? "Revisa los datos.",
+        // Único origen posible del 409 aquí: bloqueo optimista (@Version) por edición concurrente.
+        409: "Otro usuario actualizó esta línea justo antes de tu envío. Cierra y vuelve a intentar con los datos actuales.",
       }, "No se pudo registrar el ajuste."));
     } finally {
       setEnviando(false);

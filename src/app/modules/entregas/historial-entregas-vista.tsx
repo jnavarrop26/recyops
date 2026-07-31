@@ -19,6 +19,7 @@ import {
 } from "@/app/modules/entregas/entregasApi";
 import { listarProveedores, type Proveedor } from "@/app/modules/proveedores/proveedoresApi";
 import { listarBodegas, type Bodega } from "@/app/modules/bodega/bodegasApi";
+import { obtenerTodo } from "@/app/http/paginacion";
 import styles from "@/app/modules/entregas/historial-entregas-vista.module.css";
 
 const TAMANO_PAGINA = 50;
@@ -104,11 +105,11 @@ export function HistorialEntregasVista() {
     (async () => {
       try {
         const [bs, ps] = await Promise.all([
-          listarBodegas({ size: 200 }),
-          listarProveedores({ size: 200 }),
+          obtenerTodo((page, size) => listarBodegas({ page, size })),
+          obtenerTodo((page, size) => listarProveedores({ page, size })),
         ]);
-        setBodegas(bs.content);
-        setProveedores(ps.content);
+        setBodegas(bs);
+        setProveedores(ps);
       } catch { /* sin filtros */ }
     })();
     cargar(0);

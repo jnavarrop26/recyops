@@ -1,4 +1,5 @@
 import { clienteApi } from "@/app/http/clienteApi";
+import { normalizarPagina, type Pagina } from "@/app/http/paginacion";
 
 // Un material dentro de un ingreso (detalle de bascula).
 export interface DetalleIngreso {
@@ -67,23 +68,26 @@ export interface Ingreso {
 export interface FiltrosHistorial {
   fechaDesde?: string; // formato YYYY-MM-DD
   fechaHasta?: string; // formato YYYY-MM-DD
+  page?: number;
+  size?: number;
 }
 
-// GET /api/ingresos?fechaDesde=YYYY-MM-DD&fechaHasta=YYYY-MM-DD
+export type PaginaIngresos = Pagina<Ingreso>;
+
+// GET /api/ingresos?fechaDesde=YYYY-MM-DD&fechaHasta=YYYY-MM-DD&page=&size=
 export async function obtenerHistorialIngresos(
   filtros: FiltrosHistorial = {},
-): Promise<Ingreso[]> {
-  const respuesta = await clienteApi.get("/ingresos", {
+): Promise<PaginaIngresos> {
+  const size = filtros.size ?? 50;
+  const { data } = await clienteApi.get("/ingresos", {
     params: {
       fechaDesde: filtros.fechaDesde || undefined,
       fechaHasta: filtros.fechaHasta || undefined,
+      page: filtros.page ?? 0,
+      size,
     },
   });
-  const datos = respuesta.data;
-  // Soporta tanto un arreglo directo como una respuesta paginada de Spring ({ content: [...] }).
-  if (Array.isArray(datos)) return datos;
-  if (datos && Array.isArray(datos.content)) return datos.content;
-  return [];
+  return normalizarPagina<Ingreso>(data, size);
 }
 
 // GET /api/ingresos/{id}

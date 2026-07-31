@@ -29,3 +29,26 @@ export function normalizarPagina<T>(data: unknown, size: number): Pagina<T> {
     size: pagina?.size ?? size,
   };
 }
+
+// Tope de tamaño de página que exige el backend (@Max(100) en los controladores paginados).
+const TAMANO_MAXIMO_PAGINA = 100;
+
+// Trae el contenido completo de un listado paginado, iterando página por página.
+// Útil para selects de filtro y exportes (reportes) que antes pedían un `size` único
+// muy grande (200-500) explotando que el backend no tenía tope: ahora rechaza con 400
+// cualquier `size` por encima de 100, así que "traer todo" exige paginar internamente.
+export async function obtenerTodo<T>(
+  pedirPagina: (page: number, size: number) => Promise<Pagina<T>>,
+  size = TAMANO_MAXIMO_PAGINA,
+): Promise<T[]> {
+  const todo: T[] = [];
+  let page = 0;
+  let totalPages = 1;
+  do {
+    const pagina = await pedirPagina(page, size);
+    todo.push(...pagina.content);
+    totalPages = pagina.totalPages;
+    page += 1;
+  } while (page < totalPages);
+  return todo;
+}

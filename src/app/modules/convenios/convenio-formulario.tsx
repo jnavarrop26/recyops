@@ -21,6 +21,7 @@ import {
 import { listarProveedores, type Proveedor } from "@/app/modules/proveedores/proveedoresApi";
 import { listarBodegas, type Bodega } from "@/app/modules/bodega/bodegasApi";
 import { interpretarErrorHttp } from "@/app/http/errores";
+import { obtenerTodo } from "@/app/http/paginacion";
 import styles from "@/app/modules/materiales/material-formulario.module.css";
 
 interface Errores {
@@ -67,8 +68,12 @@ export function ConvenioFormulario({
   const [enviando, setEnviando] = useState(false);
 
   useEffect(() => {
-    listarProveedores({ estado: "ACTIVO", size: 200 }).then((p) => setProveedores(p.content)).catch(() => {});
-    listarBodegas({ estado: "ACTIVA", size: 200 }).then((b) => setBodegas(b.content)).catch(() => {});
+    obtenerTodo((page, size) => listarProveedores({ estado: "ACTIVO", page, size }))
+      .then(setProveedores)
+      .catch(() => {});
+    obtenerTodo((page, size) => listarBodegas({ estado: "ACTIVA", page, size }))
+      .then(setBodegas)
+      .catch(() => {});
   }, []);
 
   function validar(): boolean {

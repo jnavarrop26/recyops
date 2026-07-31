@@ -13,6 +13,7 @@ import { ChipEstadoEntrega } from "@/app/modules/entregas/chip-estado-entrega";
 import { listarEntregas, ESTADOS_ENTREGA, type Entrega } from "@/app/modules/entregas/entregasApi";
 import { listarProveedores, type Proveedor } from "@/app/modules/proveedores/proveedoresApi";
 import { listarBodegas, type Bodega } from "@/app/modules/bodega/bodegasApi";
+import { obtenerTodo } from "@/app/http/paginacion";
 import styles from "@/app/modules/reportes/reportes-vista.module.css";
 
 // ── Tipos de reporte disponibles ────────────────────────────
@@ -97,20 +98,26 @@ function ReporteEntregas() {
   const [datos, setDatos] = useState<Entrega[]>([]);
   const [cargando, setCargando] = useState(false);
   const [generado, setGenerado] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
     setCargando(true);
+    setError(null);
     try {
-      const resp = await listarEntregas({
-        estado: fEstado === TODOS ? undefined : fEstado,
-        fechaDesde: desde || undefined,
-        fechaHasta: hasta || undefined,
-        size: 500,
-      });
-      setDatos(resp.content);
+      const todo = await obtenerTodo((page, size) =>
+        listarEntregas({
+          estado: fEstado === TODOS ? undefined : fEstado,
+          fechaDesde: desde || undefined,
+          fechaHasta: hasta || undefined,
+          page,
+          size,
+        }),
+      );
+      setDatos(todo);
       setGenerado(true);
     } catch {
       setDatos([]);
+      setError("No se pudo generar el reporte. Intenta de nuevo.");
     } finally {
       setCargando(false);
     }
@@ -152,6 +159,9 @@ function ReporteEntregas() {
             {cargando ? "Cargando..." : "Generar reporte"}
           </button>
         </div>
+        {error && (
+          <p role="alert" style={{ marginTop: 12, fontSize: 13, color: "#b42318" }}>{error}</p>
+        )}
       </div>
 
       {generado && (
@@ -234,15 +244,20 @@ function ReporteProveedores() {
   const [fEstado, setFEstado] = useState(TODOS);
   const [cargando, setCargando] = useState(false);
   const [generado, setGenerado] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
     setCargando(true);
+    setError(null);
     try {
-      const resp = await listarProveedores({ estado: fEstado === TODOS ? undefined : fEstado, size: 500 });
-      setDatos(resp.content);
+      const todo = await obtenerTodo((page, size) =>
+        listarProveedores({ estado: fEstado === TODOS ? undefined : fEstado, page, size }),
+      );
+      setDatos(todo);
       setGenerado(true);
     } catch {
       setDatos([]);
+      setError("No se pudo generar el reporte. Intenta de nuevo.");
     } finally {
       setCargando(false);
     }
@@ -273,6 +288,9 @@ function ReporteProveedores() {
             {cargando ? "Cargando..." : "Generar reporte"}
           </button>
         </div>
+        {error && (
+          <p role="alert" style={{ marginTop: 12, fontSize: 13, color: "#b42318" }}>{error}</p>
+        )}
       </div>
 
       {generado && (
@@ -347,15 +365,18 @@ function ReporteBodegas() {
   const [datos, setDatos] = useState<Bodega[]>([]);
   const [cargando, setCargando] = useState(false);
   const [generado, setGenerado] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
     setCargando(true);
+    setError(null);
     try {
-      const resp = await listarBodegas({ size: 200 });
-      setDatos(resp.content);
+      const todo = await obtenerTodo((page, size) => listarBodegas({ page, size }));
+      setDatos(todo);
       setGenerado(true);
     } catch {
       setDatos([]);
+      setError("No se pudo generar el reporte. Intenta de nuevo.");
     } finally {
       setCargando(false);
     }
@@ -376,6 +397,9 @@ function ReporteBodegas() {
             {cargando ? "Cargando..." : "Generar reporte"}
           </button>
         </div>
+        {error && (
+          <p role="alert" style={{ marginTop: 12, fontSize: 13, color: "#b42318" }}>{error}</p>
+        )}
       </div>
 
       {generado && (

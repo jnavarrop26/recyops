@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/app/components/ui/dialog";
 import { registrarMerma, type LineaInventario } from "@/app/modules/inventario/inventarioApi";
-import { interpretarErrorHttp } from "@/app/http/errores";
+import { interpretarErrorHttp, mensajeDelServidor } from "@/app/http/errores";
 import styles from "@/app/modules/materiales/material-formulario.module.css";
 
 export function MermaModal({
@@ -54,8 +54,11 @@ export function MermaModal({
       alGuardar(resultado);
     } catch (error) {
       setErrorGeneral(interpretarErrorHttp(error, {
-        409: "La merma supera el stock disponible.",
-        400: "Revisa los datos.",
+        // El backend valida "merma > stock actual" como regla de negocio (400), no como
+        // conflicto HTTP; mensajeDelServidor trae el detalle exacto ("La merma (X) supera...").
+        400: mensajeDelServidor(error) ?? "Revisa los datos.",
+        // Único origen posible del 409 aquí: bloqueo optimista (@Version) por edición concurrente.
+        409: "Otro usuario actualizó esta línea justo antes de tu envío. Cierra y vuelve a intentar con los datos actuales.",
       }, "No se pudo registrar la merma."));
     } finally {
       setEnviando(false);

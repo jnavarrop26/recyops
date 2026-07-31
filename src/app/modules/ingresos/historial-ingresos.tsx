@@ -42,38 +42,54 @@ const esDeHoy = (iso: string) => {
   );
 };
 
+const TAMANO_PAGINA = 50;
+
 export function HistorialIngresos() {
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
   const [ingresos, setIngresos] = useState<Ingreso[]>([]);
+  const [totalElementos, setTotalElementos] = useState(0);
+  const [totalPaginas, setTotalPaginas] = useState(0);
+  const [pagina, setPagina] = useState(0);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [actualizandoId, setActualizandoId] = useState<number | null>(null);
   const [errorCambio, setErrorCambio] = useState<string | null>(null);
 
-  const cargarIngresos = useCallback(async () => {
-    setCargando(true);
-    setError(null);
-    try {
-      const datos = await obtenerHistorialIngresos({ fechaDesde, fechaHasta });
-      setIngresos(Array.isArray(datos) ? datos : []);
-    } catch (e) {
-      setError("No se pudo cargar el historial de ingresos. Verifica la conexión con el servidor.");
-      setIngresos([]);
-    } finally {
-      setCargando(false);
-    }
-  }, [fechaDesde, fechaHasta]);
+  const cargarIngresos = useCallback(
+    async (paginaSolicitada: number) => {
+      setCargando(true);
+      setError(null);
+      try {
+        const datos = await obtenerHistorialIngresos({
+          fechaDesde,
+          fechaHasta,
+          page: paginaSolicitada,
+          size: TAMANO_PAGINA,
+        });
+        setIngresos(datos.content);
+        setTotalElementos(datos.totalElements);
+        setTotalPaginas(datos.totalPages);
+        setPagina(datos.number);
+      } catch (e) {
+        setError("No se pudo cargar el historial de ingresos. Verifica la conexión con el servidor.");
+        setIngresos([]);
+      } finally {
+        setCargando(false);
+      }
+    },
+    [fechaDesde, fechaHasta],
+  );
 
   // Carga inicial al montar la página.
   useEffect(() => {
-    cargarIngresos();
+    cargarIngresos(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const aplicarFiltros = (evento: React.FormEvent) => {
     evento.preventDefault();
-    cargarIngresos();
+    cargarIngresos(0);
   };
 
   const limpiarFiltros = () => {
@@ -132,9 +148,11 @@ export function HistorialIngresos() {
       "No se pudo actualizar la marca de paso. Intenta de nuevo.",
     );
 
-  // Separa lo registrado hoy del resto del historial
+  // Separa lo registrado hoy del resto del historial (solo aplica a la página 0)
   const ingresosHoy = ingresos.filter((ingreso) => esDeHoy(ingreso.fecha));
   const ingresosAnteriores = ingresos.filter((ingreso) => !esDeHoy(ingreso.fecha));
+  // En páginas siguientes no se separa: se muestra la página completa tal cual llega.
+  const ingresosVista = pagina === 0 ? ingresosAnteriores : ingresos;
 
   const propsTabla = {
     actualizandoId,
@@ -196,30 +214,64 @@ export function HistorialIngresos() {
               {errorCambio}
             </div>
           )}
+          {/* La separación hoy/histórico solo tiene sentido en la primera página:
+              en páginas siguientes ya no hay garantía de que "hoy" quede completo en esta página. */}
+          {pagina === 0 && (
+            <>
+              <h2 className={styles.seccionTitulo}>
+                Ingresos de hoy
+                <span className={styles.seccionConteo}>{ingresosHoy.length}</span>
+              </h2>
+              <div className={styles.tarjeta} style={{ marginBottom: 28 }}>
+                {ingresosHoy.length === 0 ? (
+                  <div className={styles.estado}>Hoy no se han registrado ingresos.</div>
+                ) : (
+                  <TablaIngresos ingresos={ingresosHoy} {...propsTabla} />
+                )}
+              </div>
+            </>
+          )}
+
           <h2 className={styles.seccionTitulo}>
-            Ingresos de hoy
-            <span className={styles.seccionConteo}>{ingresosHoy.length}</span>
+            {pagina === 0 ? "Historial general" : `Historial general · página ${pagina + 1}`}
+            <span className={styles.seccionConteo}>
+              {totalElementos} en total
+            </span>
           </h2>
-          <div className={styles.tarjeta} style={{ marginBottom: 28 }}>
-            {ingresosHoy.length === 0 ? (
-              <div className={styles.estado}>Hoy no se han registrado ingresos.</div>
+          <div className={styles.tarjeta}>
+            {ingresosVista.length === 0 ? (
+              <div className={styles.estado}>
+                {pagina === 0
+                  ? "No hay ingresos anteriores para el filtro seleccionado."
+                  : "No hay ingresos en esta página."}
+              </div>
             ) : (
-              <TablaIngresos ingresos={ingresosHoy} {...propsTabla} />
+              <TablaIngresos ingresos={ingresosVista} {...propsTabla} />
             )}
           </div>
 
-          <h2 className={styles.seccionTitulo}>
-            Historial general
-            <span className={styles.seccionConteo}>{ingresosAnteriores.length}</span>
-          </h2>
-          <div className={styles.tarjeta}>
-            {ingresosAnteriores.length === 0 ? (
-              <div className={styles.estado}>
-                No hay ingresos anteriores para el filtro seleccionado.
-              </div>
-            ) : (
-              <TablaIngresos ingresos={ingresosAnteriores} {...propsTabla} />
-            )}
+          <div className={styles.paginacion}>
+            <span>
+              {totalElementos} ingresos en total · Página {pagina + 1} de {Math.max(totalPaginas, 1)}
+            </span>
+            <div className={styles.controlesPagina}>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={pagina <= 0 || cargando}
+                onClick={() => cargarIngresos(pagina - 1)}
+              >
+                Anterior
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={pagina >= totalPaginas - 1 || cargando}
+                onClick={() => cargarIngresos(pagina + 1)}
+              >
+                Siguiente
+              </Button>
+            </div>
           </div>
         </>
       )}
