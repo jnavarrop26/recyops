@@ -1,4 +1,7 @@
 
+<p align="center">
+  <img src="logo-repo-recyopsapp.svg" alt="RecyOps" width="480" />
+</p>
 
 <!-- Núcleo -->
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
