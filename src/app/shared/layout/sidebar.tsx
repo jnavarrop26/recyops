@@ -96,11 +96,11 @@ const secciones: SeccionMenu[] = [
 ];
 
 function esAdmin(): boolean {
-  return (localStorage.getItem("sicofar_rol") || "").toUpperCase() === "ADMIN";
+  return (localStorage.getItem("recyops_rol") || "").toUpperCase() === "ADMIN";
 }
 
 function esSuperAdmin(): boolean {
-  return (localStorage.getItem("sicofar_rol") || "").toUpperCase() === "SUPERADMIN";
+  return (localStorage.getItem("recyops_rol") || "").toUpperCase() === "SUPERADMIN";
 }
 
 function obtenerIniciales(nombre: string): string {
@@ -183,8 +183,8 @@ export function Sidebar({ abierto = false, onNavegar }: SidebarProps) {
   const admin = esAdmin();
   const superAdmin = esSuperAdmin();
 
-  const nombre = localStorage.getItem("sicofar_nombre") ?? "Usuario";
-  const rol = (localStorage.getItem("sicofar_rol") ?? "OPERARIO").toUpperCase();
+  const nombre = localStorage.getItem("recyops_nombre") ?? "Usuario";
+  const rol = (localStorage.getItem("recyops_rol") ?? "OPERARIO").toUpperCase();
   const iniciales = obtenerIniciales(nombre) || "U";
 
   const visible = (o: { soloAdmin?: boolean; soloSuperAdmin?: boolean }) => {

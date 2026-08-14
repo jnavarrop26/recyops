@@ -37,7 +37,7 @@ function obtenerIniciales(nombre: string): string {
 }
 
 function esAdmin(): boolean {
-  return (localStorage.getItem("sicofar_rol") || "").toUpperCase() === "ADMIN";
+  return (localStorage.getItem("recyops_rol") || "").toUpperCase() === "ADMIN";
 }
 
 function SeccionCabecera({
@@ -288,9 +288,9 @@ export function ConfiguracionVista() {
   const navigate = useNavigate();
   const admin = esAdmin();
 
-  const nombre = localStorage.getItem("sicofar_nombre") ?? "Usuario";
-  const rol = (localStorage.getItem("sicofar_rol") ?? "OPERARIO").toUpperCase();
-  const username = localStorage.getItem("sicofar_username") ?? "—";
+  const nombre = localStorage.getItem("recyops_nombre") ?? "Usuario";
+  const rol = (localStorage.getItem("recyops_rol") ?? "OPERARIO").toUpperCase();
+  const username = localStorage.getItem("recyops_username") ?? "—";
   const iniciales = obtenerIniciales(nombre);
 
   function salir() {

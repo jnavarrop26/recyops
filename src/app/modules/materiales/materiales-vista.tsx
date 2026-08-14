@@ -34,7 +34,7 @@ const TODOS = "__todos__";
 
 // Solo el rol ADMIN puede crear/editar/activar-desactivar.
 function esAdmin(): boolean {
-  return (localStorage.getItem("sicofar_rol") || "").toUpperCase() === "ADMIN";
+  return (localStorage.getItem("recyops_rol") || "").toUpperCase() === "ADMIN";
 }
 
 const formatearPrecio = (valor: number) =>

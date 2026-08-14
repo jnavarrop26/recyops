@@ -21,7 +21,7 @@ import styles from "@/app/modules/inventario/inventario-vista.module.css";
 const TAMANO_PAGINA = 20;
 
 function esAdmin(): boolean {
-  return (localStorage.getItem("sicofar_rol") || "").toUpperCase() === "ADMIN";
+  return (localStorage.getItem("recyops_rol") || "").toUpperCase() === "ADMIN";
 }
 
 const formatearFecha = (iso: string) => {

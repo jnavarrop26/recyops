@@ -65,7 +65,7 @@ export function IngresoForm() {
       cedula: "",
       nombreCliente: "",
       bodegaDestino: "",
-      encargado: localStorage.getItem("sicofar_nombre") ?? "",
+      encargado: localStorage.getItem("recyops_nombre") ?? "",
       placa: "",
       materiales: [FILA_VACIA],
     },
