@@ -1,3 +1,5 @@
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
@@ -14,6 +16,11 @@ import { listarProveedores, type Proveedor } from "@/app/modules/proveedores/pro
 import { listarBodegas, type Bodega } from "@/app/modules/bodega/bodegasApi";
 import { listarMateriales, type Material } from "@/app/modules/materiales/materialesApi";
 import { interpretarErrorHttp } from "@/app/http/errores";
+import {
+  entregaSchema,
+  type EntregaFormInput,
+  type EntregaFormOutput,
+} from "@/app/modules/entregas/entregaSchema";
 import styles from "@/app/modules/materiales/material-formulario.module.css";
 
 export function EntregaFormulario({
@@ -23,18 +30,27 @@ export function EntregaFormulario({
   alGuardar: (resultado: Entrega) => void;
   alCerrar: () => void;
 }) {
-  const [proveedorId, setProveedorId] = useState("");
-  const [bodegaId, setBodegaId] = useState("");
-  const [tipoMaterialId, setTipoMaterialId] = useState("");
-  const [pesoKg, setPesoKg] = useState("");
-  const [personaEntrega, setPersonaEntrega] = useState("");
-  const [fechaRecepcion, setFechaRecepcion] = useState("");
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm<EntregaFormInput, unknown, EntregaFormOutput>({
+    resolver: zodResolver(entregaSchema),
+    defaultValues: {
+      proveedorId: "",
+      bodegaId: "",
+      tipoMaterialId: "",
+      pesoKg: "",
+      personaEntrega: "",
+      fechaRecepcion: "",
+    },
+  });
 
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [bodegas, setBodegas] = useState<Bodega[]>([]);
   const [materiales, setMateriales] = useState<Material[]>([]);
 
-  const [errores, setErrores] = useState<{ [k: string]: string }>({});
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
@@ -55,29 +71,16 @@ export function EntregaFormulario({
     })();
   }, []);
 
-  function validar(): boolean {
-    const e: { [k: string]: string } = {};
-    if (!proveedorId) e.proveedorId = "Selecciona un proveedor.";
-    if (!bodegaId) e.bodegaId = "Selecciona una bodega.";
-    if (!tipoMaterialId) e.tipoMaterialId = "Selecciona un material.";
-    const peso = parseFloat(pesoKg);
-    if (pesoKg === "" || Number.isNaN(peso) || peso <= 0) e.pesoKg = "El peso debe ser mayor que 0.";
-    setErrores(e);
-    return Object.keys(e).length === 0;
-  }
-
-  async function enviar(evento: React.FormEvent) {
-    evento.preventDefault();
+  async function onSubmit(valores: EntregaFormOutput) {
     setErrorGeneral(null);
-    if (!validar()) return;
 
     const cuerpo: CuerpoEntrega = {
-      proveedorId,
-      bodegaId,
-      tipoMaterialId,
-      pesoKg: parseFloat(pesoKg),
-      personaEntrega: personaEntrega.trim() || null,
-      fechaRecepcion: fechaRecepcion || null,
+      proveedorId: valores.proveedorId,
+      bodegaId: valores.bodegaId,
+      tipoMaterialId: valores.tipoMaterialId,
+      pesoKg: valores.pesoKg,
+      personaEntrega: valores.personaEntrega.trim() || null,
+      fechaRecepcion: valores.fechaRecepcion || null,
     };
 
     setEnviando(true);
@@ -94,58 +97,76 @@ export function EntregaFormulario({
   }
 
   return (
-    <form className={styles.formulario} onSubmit={enviar}>
+    <form className={styles.formulario} onSubmit={handleSubmit(onSubmit)}>
       {errorGeneral && <div className={styles.alertaError}>{errorGeneral}</div>}
 
       <div className={styles.campo}>
         <Label>Proveedor *</Label>
-        <Select value={proveedorId} onValueChange={setProveedorId}>
-          <SelectTrigger>
-            <SelectValue placeholder="Selecciona proveedor (solo activos)" />
-          </SelectTrigger>
-          <SelectContent>
-            {proveedores.map((p) => (
-              <SelectItem key={p.id} value={p.id}>
-                {p.nombre}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {errores.proveedorId && <span className={styles.errorCampo}>{errores.proveedorId}</span>}
+        <Controller
+          name="proveedorId"
+          control={control}
+          render={({ field }) => (
+            <Select value={field.value} onValueChange={field.onChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecciona proveedor (solo activos)" />
+              </SelectTrigger>
+              <SelectContent>
+                {proveedores.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        />
+        {errors.proveedorId && <span className={styles.errorCampo}>{errors.proveedorId.message}</span>}
       </div>
 
       <div className={styles.fila}>
         <div className={styles.campo}>
           <Label>Bodega *</Label>
-          <Select value={bodegaId} onValueChange={setBodegaId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecciona bodega" />
-            </SelectTrigger>
-            <SelectContent>
-              {bodegas.map((b) => (
-                <SelectItem key={b.id} value={b.id}>
-                  {b.nombre}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {errores.bodegaId && <span className={styles.errorCampo}>{errores.bodegaId}</span>}
+          <Controller
+            name="bodegaId"
+            control={control}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona bodega" />
+                </SelectTrigger>
+                <SelectContent>
+                  {bodegas.map((b) => (
+                    <SelectItem key={b.id} value={b.id}>
+                      {b.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+          {errors.bodegaId && <span className={styles.errorCampo}>{errors.bodegaId.message}</span>}
         </div>
         <div className={styles.campo}>
           <Label>Material *</Label>
-          <Select value={tipoMaterialId} onValueChange={setTipoMaterialId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecciona material" />
-            </SelectTrigger>
-            <SelectContent>
-              {materiales.map((m) => (
-                <SelectItem key={m.id} value={m.id}>
-                  {m.nombre}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {errores.tipoMaterialId && <span className={styles.errorCampo}>{errores.tipoMaterialId}</span>}
+          <Controller
+            name="tipoMaterialId"
+            control={control}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona material" />
+                </SelectTrigger>
+                <SelectContent>
+                  {materiales.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+          {errors.tipoMaterialId && <span className={styles.errorCampo}>{errors.tipoMaterialId.message}</span>}
         </div>
       </div>
 
@@ -157,19 +178,17 @@ export function EntregaFormulario({
             type="number"
             step="0.01"
             min="0"
-            value={pesoKg}
-            onChange={(e) => setPesoKg(e.target.value)}
+            {...register("pesoKg")}
             placeholder="1200.00"
           />
-          {errores.pesoKg && <span className={styles.errorCampo}>{errores.pesoKg}</span>}
+          {errors.pesoKg && <span className={styles.errorCampo}>{errors.pesoKg.message}</span>}
         </div>
         <div className={styles.campo}>
           <Label htmlFor="fechaRecepcion">Fecha de recepción</Label>
           <Input
             id="fechaRecepcion"
             type="datetime-local"
-            value={fechaRecepcion}
-            onChange={(e) => setFechaRecepcion(e.target.value)}
+            {...register("fechaRecepcion")}
           />
         </div>
       </div>
@@ -178,8 +197,7 @@ export function EntregaFormulario({
         <Label htmlFor="personaEntrega">Persona que entrega</Label>
         <Input
           id="personaEntrega"
-          value={personaEntrega}
-          onChange={(e) => setPersonaEntrega(e.target.value)}
+          {...register("personaEntrega")}
           placeholder="Carlos Ruiz"
         />
       </div>

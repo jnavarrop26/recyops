@@ -1,3 +1,5 @@
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
@@ -25,6 +27,11 @@ import {
 import { listarBodegas, type Bodega } from "@/app/modules/bodega/bodegasApi";
 import { listarMateriales, type Material } from "@/app/modules/materiales/materialesApi";
 import { interpretarErrorHttp } from "@/app/http/errores";
+import {
+  crearLineaConfigurarSchema,
+  type LineaConfigurarFormInput,
+  type LineaConfigurarFormOutput,
+} from "@/app/modules/inventario/lineaConfigurarSchema";
 import styles from "@/app/modules/materiales/material-formulario.module.css";
 
 export function LineaConfigurarModal({
@@ -40,14 +47,23 @@ export function LineaConfigurarModal({
 }) {
   const esEdicion = Boolean(linea);
 
-  const [bodegaId, setBodegaId] = useState(linea?.bodegaId ?? bodegaIdPorDefecto ?? "");
-  const [tipoMaterialId, setTipoMaterialId] = useState(linea?.tipoMaterialId ?? "");
-  const [stockMinimo, setStockMinimo] = useState(linea ? String(linea.stockMinimo) : "0");
-  const [stockMaximo, setStockMaximo] = useState(linea ? String(linea.stockMaximo) : "0");
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm<LineaConfigurarFormInput, unknown, LineaConfigurarFormOutput>({
+    resolver: zodResolver(crearLineaConfigurarSchema(esEdicion)),
+    defaultValues: {
+      bodegaId: linea?.bodegaId ?? bodegaIdPorDefecto ?? "",
+      tipoMaterialId: linea?.tipoMaterialId ?? "",
+      stockMinimo: linea ? String(linea.stockMinimo) : "0",
+      stockMaximo: linea ? String(linea.stockMaximo) : "0",
+    },
+  });
 
   const [bodegas, setBodegas] = useState<Bodega[]>([]);
   const [materiales, setMateriales] = useState<Material[]>([]);
-  const [errores, setErrores] = useState<{ [k: string]: string }>({});
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
@@ -67,29 +83,21 @@ export function LineaConfigurarModal({
     })();
   }, [esEdicion]);
 
-  function validar(): boolean {
-    const e: { [k: string]: string } = {};
-    if (!esEdicion && !bodegaId) e.bodegaId = "Selecciona una bodega.";
-    if (!esEdicion && !tipoMaterialId) e.tipoMaterialId = "Selecciona un material.";
-    const min = parseFloat(stockMinimo || "0");
-    const max = parseFloat(stockMaximo || "0");
-    if (min < 0) e.stockMinimo = "El stock mínimo debe ser ≥ 0.";
-    if (max < min) e.stockMaximo = "El stock máximo debe ser ≥ al mínimo.";
-    setErrores(e);
-    return Object.keys(e).length === 0;
-  }
-
-  async function enviar(evento: React.FormEvent) {
-    evento.preventDefault();
+  async function onSubmit(valores: LineaConfigurarFormOutput) {
     setErrorGeneral(null);
-    if (!validar()) return;
     setEnviando(true);
     try {
-      const min = parseFloat(stockMinimo || "0");
-      const max = parseFloat(stockMaximo || "0");
       const resultado = esEdicion
-        ? await actualizarTopes(linea!.id, { stockMinimo: min, stockMaximo: max })
-        : await crearLinea({ bodegaId, tipoMaterialId, stockMinimo: min, stockMaximo: max });
+        ? await actualizarTopes(linea!.id, {
+            stockMinimo: valores.stockMinimo,
+            stockMaximo: valores.stockMaximo,
+          })
+        : await crearLinea({
+            bodegaId: valores.bodegaId,
+            tipoMaterialId: valores.tipoMaterialId,
+            stockMinimo: valores.stockMinimo,
+            stockMaximo: valores.stockMaximo,
+          });
       alGuardar(resultado);
     } catch (error) {
       setErrorGeneral(interpretarErrorHttp(error, {
@@ -117,42 +125,54 @@ export function LineaConfigurarModal({
               : "El stock inicial es 0; solo se mueve por entregas, ajustes o mermas."}
           </DialogDescription>
         </DialogHeader>
-        <form className={styles.formulario} onSubmit={enviar}>
+        <form className={styles.formulario} onSubmit={handleSubmit(onSubmit)}>
           {errorGeneral && <div className={styles.alertaError}>{errorGeneral}</div>}
 
           {!esEdicion && (
             <>
               <div className={styles.campo}>
                 <Label>Bodega *</Label>
-                <Select value={bodegaId} onValueChange={setBodegaId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona bodega" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {bodegas.map((b) => (
-                      <SelectItem key={b.id} value={b.id}>
-                        {b.nombre}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errores.bodegaId && <span className={styles.errorCampo}>{errores.bodegaId}</span>}
+                <Controller
+                  name="bodegaId"
+                  control={control}
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona bodega" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {bodegas.map((b) => (
+                          <SelectItem key={b.id} value={b.id}>
+                            {b.nombre}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.bodegaId && <span className={styles.errorCampo}>{errors.bodegaId.message}</span>}
               </div>
               <div className={styles.campo}>
                 <Label>Material *</Label>
-                <Select value={tipoMaterialId} onValueChange={setTipoMaterialId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona material" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {materiales.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        {m.nombre}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errores.tipoMaterialId && <span className={styles.errorCampo}>{errores.tipoMaterialId}</span>}
+                <Controller
+                  name="tipoMaterialId"
+                  control={control}
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona material" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {materiales.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>
+                            {m.nombre}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.tipoMaterialId && <span className={styles.errorCampo}>{errors.tipoMaterialId.message}</span>}
               </div>
             </>
           )}
@@ -160,13 +180,13 @@ export function LineaConfigurarModal({
           <div className={styles.fila}>
             <div className={styles.campo}>
               <Label htmlFor="stockMinimo">Stock mínimo</Label>
-              <Input id="stockMinimo" type="number" step="0.01" min="0" value={stockMinimo} onChange={(e) => setStockMinimo(e.target.value)} />
-              {errores.stockMinimo && <span className={styles.errorCampo}>{errores.stockMinimo}</span>}
+              <Input id="stockMinimo" type="number" step="0.01" min="0" {...register("stockMinimo")} />
+              {errors.stockMinimo && <span className={styles.errorCampo}>{errors.stockMinimo.message}</span>}
             </div>
             <div className={styles.campo}>
               <Label htmlFor="stockMaximo">Stock máximo</Label>
-              <Input id="stockMaximo" type="number" step="0.01" min="0" value={stockMaximo} onChange={(e) => setStockMaximo(e.target.value)} />
-              {errores.stockMaximo && <span className={styles.errorCampo}>{errores.stockMaximo}</span>}
+              <Input id="stockMaximo" type="number" step="0.01" min="0" {...register("stockMaximo")} />
+              {errors.stockMaximo && <span className={styles.errorCampo}>{errors.stockMaximo.message}</span>}
             </div>
           </div>
 

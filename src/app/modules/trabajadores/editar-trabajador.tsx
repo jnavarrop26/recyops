@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Button } from "@/app/components/ui/button";
@@ -18,11 +20,11 @@ import {
   type Trabajador,
 } from "@/app/modules/trabajadores/trabajadoresApi";
 import { interpretarErrorHttp } from "@/app/http/errores";
+import {
+  editarTrabajadorSchema,
+  type EditarTrabajadorFormValues,
+} from "@/app/modules/trabajadores/trabajadorSchema";
 import styles from "@/app/modules/trabajadores/registrar-trabajador.module.css";
-
-interface Errores {
-  [campo: string]: string;
-}
 
 /** Edición de un trabajador. El email y el username son identidad y no se tocan. */
 export function EditarTrabajador({
@@ -34,14 +36,23 @@ export function EditarTrabajador({
   alGuardar: (actualizado: Trabajador) => void;
   alCerrar?: () => void;
 }) {
-  const [nombreCompleto, setNombreCompleto] = useState(trabajador.nombreCompleto);
-  const [telefono, setTelefono] = useState(trabajador.telefono ?? "");
-  const [bodegaId, setBodegaId] = useState(trabajador.bodegaId ?? "");
-  const [rolId, setRolId] = useState(trabajador.rolId);
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm<EditarTrabajadorFormValues>({
+    resolver: zodResolver(editarTrabajadorSchema),
+    defaultValues: {
+      nombreCompleto: trabajador.nombreCompleto,
+      telefono: trabajador.telefono ?? "",
+      bodegaId: trabajador.bodegaId ?? "",
+      rolId: trabajador.rolId,
+    },
+  });
 
   const [bodegas, setBodegas] = useState<Bodega[]>([]);
   const [roles, setRoles] = useState<Rol[]>([]);
-  const [errores, setErrores] = useState<Errores>({});
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
@@ -57,32 +68,15 @@ export function EditarTrabajador({
     })();
   }, []);
 
-  function validar(): boolean {
-    const nuevos: Errores = {};
-    if (nombreCompleto.trim().length < 3) {
-      nuevos.nombreCompleto = "El nombre completo debe tener al menos 3 caracteres.";
-    }
-    if (telefono && !/^\d+$/.test(telefono)) {
-      nuevos.telefono = "El teléfono solo puede contener números.";
-    }
-    if (!bodegaId) nuevos.bodegaId = "Selecciona una bodega.";
-    if (!rolId) nuevos.rolId = "Selecciona un rol.";
-    setErrores(nuevos);
-    return Object.keys(nuevos).length === 0;
-  }
-
-  async function manejarEnvio(evento: React.FormEvent) {
-    evento.preventDefault();
+  async function onSubmit(valores: EditarTrabajadorFormValues) {
     setErrorGeneral(null);
-    if (!validar()) return;
-
     setEnviando(true);
     try {
       const actualizado = await actualizarTrabajador(trabajador.id, {
-        nombreCompleto: nombreCompleto.trim(),
-        telefono: telefono.trim() || null,
-        bodegaId,
-        rolId,
+        nombreCompleto: valores.nombreCompleto.trim(),
+        telefono: valores.telefono.trim() || null,
+        bodegaId: valores.bodegaId,
+        rolId: valores.rolId,
       });
       alGuardar(actualizado);
     } catch (error) {
@@ -97,7 +91,7 @@ export function EditarTrabajador({
   }
 
   return (
-    <form className={styles.formulario} onSubmit={manejarEnvio}>
+    <form className={styles.formulario} onSubmit={handleSubmit(onSubmit)}>
       {errorGeneral && <div className={styles.alertaError}>{errorGeneral}</div>}
 
       <div className={styles.fila}>
@@ -115,10 +109,9 @@ export function EditarTrabajador({
         <Label htmlFor="editNombre">Nombre completo *</Label>
         <Input
           id="editNombre"
-          value={nombreCompleto}
-          onChange={(e) => setNombreCompleto(e.target.value)}
+          {...register("nombreCompleto")}
         />
-        {errores.nombreCompleto && <span className={styles.errorCampo}>{errores.nombreCompleto}</span>}
+        {errors.nombreCompleto && <span className={styles.errorCampo}>{errors.nombreCompleto.message}</span>}
       </div>
 
       <div className={styles.campo}>
@@ -126,44 +119,55 @@ export function EditarTrabajador({
         <Input
           id="editTelefono"
           inputMode="numeric"
-          value={telefono}
-          onChange={(e) => setTelefono(e.target.value)}
+          {...register("telefono")}
         />
-        {errores.telefono && <span className={styles.errorCampo}>{errores.telefono}</span>}
+        {errors.telefono && <span className={styles.errorCampo}>{errors.telefono.message}</span>}
       </div>
 
       <div className={styles.fila}>
         <div className={styles.campo}>
           <Label>Bodega *</Label>
-          <Select value={bodegaId} onValueChange={setBodegaId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecciona bodega" />
-            </SelectTrigger>
-            <SelectContent>
-              {bodegas.map((bodega) => (
-                <SelectItem key={bodega.id} value={bodega.id}>
-                  {bodega.nombre}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {errores.bodegaId && <span className={styles.errorCampo}>{errores.bodegaId}</span>}
+          <Controller
+            name="bodegaId"
+            control={control}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona bodega" />
+                </SelectTrigger>
+                <SelectContent>
+                  {bodegas.map((bodega) => (
+                    <SelectItem key={bodega.id} value={bodega.id}>
+                      {bodega.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+          {errors.bodegaId && <span className={styles.errorCampo}>{errors.bodegaId.message}</span>}
         </div>
         <div className={styles.campo}>
           <Label>Rol *</Label>
-          <Select value={rolId} onValueChange={setRolId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecciona rol" />
-            </SelectTrigger>
-            <SelectContent>
-              {roles.map((rol) => (
-                <SelectItem key={rol.id} value={rol.id}>
-                  {rol.nombre}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {errores.rolId && <span className={styles.errorCampo}>{errores.rolId}</span>}
+          <Controller
+            name="rolId"
+            control={control}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona rol" />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles.map((rol) => (
+                    <SelectItem key={rol.id} value={rol.id}>
+                      {rol.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+          {errors.rolId && <span className={styles.errorCampo}>{errors.rolId.message}</span>}
         </div>
       </div>
 

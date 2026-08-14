@@ -20,35 +20,28 @@ RecyOPS is a React 18 SPA (Vite + TypeScript) for managing a recycling operation
 src/app/
 ├── http/                   clienteApi.ts
 ├── modules/
-│   ├── auth/               login, restablecer, auth-layout + authApi
-│   ├── bodega/             vistas, detalle, formulario, ui + bodegasApi
-│   ├── configurta
-
-Build limpio. Cero errores de imports. La estructura quedó así:
-
-src/app/
-├── http/                   clienteApi.ts
-├── modules/
-│   ├── auth/   r, auth-layout +authApi
-│   ├── bodega/ formulario, ui +bodegasApi
-│   ├── configurta
-│   ├── convenios/          vista, formulario + conveniosApi
-│   ├── entregasformulario,historial, chip + entregasApi
+│   ├── auth/               login, restablecer, auth-layout + authApi, authSchema
+│   ├── bodega/             vistas, detalle, formulario, ui + bodegasApi, bodegaSchema
+│   ├── configuracion/      vista de configuración general
+│   ├── convenios/          vista, formulario + conveniosApi, convenioSchema
+│   ├── entregas/           vista, formulario, detalle, historial, chip de estado + entregasApi, entregaSchema
 │   ├── home/               home-view + dashboardApi
-│   ├── ingresosrecibo +ingresosApi
-│   ├── inventario/         vistas, detalle, modales, indicador + inventarioApi
+│   ├── ingresos/           vista, formulario, historial, chip de estado, recibo imprimible + ingresosApi, ingresoSchema
+│   ├── inventario/         vistas, detalle, modales (ajuste, merma, configurar línea), indicador de stock + inventarioApi, ajusteSchema, mermaSchema, lineaConfigurarSchema
 │   ├── logs/               vista + logsApi
-│   ├── material + materialesApi
-│   ├── proveedores/        vista, formulario + proveedoresApi
-│   ├── reportes
-│   ├── tareas/             vistas, detalle, formulario,
-mis-tareas + tar
-│   └── trabajadores/       vistas, registrar, editar + trabajadoresApi
+│   ├── materiales/         vista, formulario + materialesApi, materialSchema
+│   ├── platform/           vista de super admin de plataforma + plataformaApi, plataformaSchema
+│   ├── proveedores/        vista, formulario + proveedoresApi, proveedorSchema
+│   ├── reportes/           vista de reportes (PDF/Excel)
+│   ├── tareas/             vistas, detalle, formulario, mis-tareas + tareasApi, tareaSchema
+│   └── trabajadores/       vistas, registrar, editar + trabajadoresApi, trabajadorSchema
 ├── shared/
 │   ├── layout/             dashboard-layout, sidebar, topbar, ruta-admin
 │   └── components/         brand-logo, logo, icons, page, pages, estrellas
-└── components/ui/          (sin cambios — componentes atómicos)
+└── components/ui/          shadcn/ui — componentes atómicos, tratar como librería
 ```
+
+Cada módulo con formularios trae un `<modulo>Schema.ts` con validaciones Zod que replican las reglas del backend (`@NotBlank`, `@Size`, etc. de los DTOs Spring). Si el backend cambia una regla de validación, el schema correspondiente debe actualizarse manualmente.
 
 
 ### Entry point and routing

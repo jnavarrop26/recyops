@@ -1,3 +1,5 @@
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
@@ -9,11 +11,8 @@ import {
   type CuerpoProveedor,
 } from "@/app/modules/proveedores/proveedoresApi";
 import { estadoHttp, interpretarErrorHttp } from "@/app/http/errores";
+import { proveedorSchema, type ProveedorFormValues } from "@/app/modules/proveedores/proveedorSchema";
 import styles from "@/app/modules/materiales/material-formulario.module.css";
-
-interface Errores {
-  [campo: string]: string;
-}
 
 export function ProveedorFormulario({
   proveedor,
@@ -26,41 +25,36 @@ export function ProveedorFormulario({
 }) {
   const esEdicion = Boolean(proveedor);
 
-  const [nombre, setNombre] = useState(proveedor?.nombre ?? "");
-  const [nit, setNit] = useState(proveedor?.nit ?? "");
-  const [contacto, setContacto] = useState(proveedor?.contacto ?? "");
-  const [telefono, setTelefono] = useState(proveedor?.telefono ?? "");
-  const [email, setEmail] = useState(proveedor?.email ?? "");
-  const [direccion, setDireccion] = useState(proveedor?.direccion ?? "");
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors },
+  } = useForm<ProveedorFormValues>({
+    resolver: zodResolver(proveedorSchema),
+    defaultValues: {
+      nombre: proveedor?.nombre ?? "",
+      nit: proveedor?.nit ?? "",
+      contacto: proveedor?.contacto ?? "",
+      telefono: proveedor?.telefono ?? "",
+      email: proveedor?.email ?? "",
+      direccion: proveedor?.direccion ?? "",
+    },
+  });
 
-  const [errores, setErrores] = useState<Errores>({});
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
-  function validar(): boolean {
-    const nuevos: Errores = {};
-    if (nombre.trim().length < 3) nuevos.nombre = "El nombre debe tener al menos 3 caracteres.";
-    if (!nit.trim()) nuevos.nit = "El NIT es obligatorio.";
-    if (telefono && !/^\d+$/.test(telefono)) nuevos.telefono = "El teléfono solo puede contener números.";
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      nuevos.email = "Ingresa un correo con formato válido.";
-    }
-    setErrores(nuevos);
-    return Object.keys(nuevos).length === 0;
-  }
-
-  async function manejarEnvio(evento: React.FormEvent) {
-    evento.preventDefault();
+  async function onSubmit(valores: ProveedorFormValues) {
     setErrorGeneral(null);
-    if (!validar()) return;
 
     const cuerpo: CuerpoProveedor = {
-      nombre: nombre.trim(),
-      nit: nit.trim(),
-      contacto: contacto.trim() || null,
-      telefono: telefono.trim() || null,
-      email: email.trim() || null,
-      direccion: direccion.trim() || null,
+      nombre: valores.nombre.trim(),
+      nit: valores.nit.trim(),
+      contacto: valores.contacto.trim() || null,
+      telefono: valores.telefono.trim() || null,
+      email: valores.email.trim() || null,
+      direccion: valores.direccion.trim() || null,
     };
 
     setEnviando(true);
@@ -71,7 +65,7 @@ export function ProveedorFormulario({
       alGuardar(resultado);
     } catch (error) {
       if (estadoHttp(error) === 409) {
-        setErrores((prev) => ({ ...prev, nit: "Ya existe un proveedor con ese NIT." }));
+        setError("nit", { message: "Ya existe un proveedor con ese NIT." });
       }
       setErrorGeneral(interpretarErrorHttp(error, {
         409: "Ya existe un proveedor con ese NIT.",
@@ -83,43 +77,43 @@ export function ProveedorFormulario({
   }
 
   return (
-    <form className={styles.formulario} onSubmit={manejarEnvio}>
+    <form className={styles.formulario} onSubmit={handleSubmit(onSubmit)}>
       {errorGeneral && <div className={styles.alertaError}>{errorGeneral}</div>}
 
       <div className={styles.campo}>
         <Label htmlFor="nombre">Nombre *</Label>
-        <Input id="nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Reciclados del Norte S.A.S" />
-        {errores.nombre && <span className={styles.errorCampo}>{errores.nombre}</span>}
+        <Input id="nombre" {...register("nombre")} placeholder="Reciclados del Norte S.A.S" />
+        {errors.nombre && <span className={styles.errorCampo}>{errors.nombre.message}</span>}
       </div>
 
       <div className={styles.fila}>
         <div className={styles.campo}>
           <Label htmlFor="nit">NIT *</Label>
-          <Input id="nit" value={nit} onChange={(e) => setNit(e.target.value)} placeholder="901234567-8" />
-          {errores.nit && <span className={styles.errorCampo}>{errores.nit}</span>}
+          <Input id="nit" {...register("nit")} placeholder="901234567-8" />
+          {errors.nit && <span className={styles.errorCampo}>{errors.nit.message}</span>}
         </div>
         <div className={styles.campo}>
           <Label htmlFor="contacto">Contacto</Label>
-          <Input id="contacto" value={contacto} onChange={(e) => setContacto(e.target.value)} placeholder="María Gómez" />
+          <Input id="contacto" {...register("contacto")} placeholder="María Gómez" />
         </div>
       </div>
 
       <div className={styles.fila}>
         <div className={styles.campo}>
           <Label htmlFor="telefono">Teléfono</Label>
-          <Input id="telefono" inputMode="numeric" value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="3009876543" />
-          {errores.telefono && <span className={styles.errorCampo}>{errores.telefono}</span>}
+          <Input id="telefono" inputMode="numeric" {...register("telefono")} placeholder="3009876543" />
+          {errors.telefono && <span className={styles.errorCampo}>{errors.telefono.message}</span>}
         </div>
         <div className={styles.campo}>
           <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="contacto@recicladosnorte.com" />
-          {errores.email && <span className={styles.errorCampo}>{errores.email}</span>}
+          <Input id="email" type="email" {...register("email")} placeholder="contacto@recicladosnorte.com" />
+          {errors.email && <span className={styles.errorCampo}>{errors.email.message}</span>}
         </div>
       </div>
 
       <div className={styles.campo}>
         <Label htmlFor="direccion">Dirección</Label>
-        <Input id="direccion" value={direccion} onChange={(e) => setDireccion(e.target.value)} placeholder="Calle 80 # 15-40" />
+        <Input id="direccion" {...register("direccion")} placeholder="Calle 80 # 15-40" />
       </div>
 
       <div className={styles.acciones}>

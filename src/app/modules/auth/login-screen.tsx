@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router";
 import { Mail, Lock, Eye, EyeOff, LogIn, ArrowLeft } from "lucide-react";
 import Logo1Recyops from "@/app/shared/components/logo-recyops";
@@ -9,18 +11,29 @@ import { Label } from "@/app/components/ui/label";
 import { Checkbox } from "@/app/components/ui/checkbox";
 import { login, guardarSesion, solicitarRecuperacion } from "@/app/modules/auth/authApi";
 import { estadoHttp, mensajeDelServidor } from "@/app/http/errores";
+import { loginSchema, recuperarSchema, type LoginFormValues } from "@/app/modules/auth/authSchema";
 import styles from "@/app/modules/auth/login-screen.module.css";
 
 export function LoginScreen() {
   const navigate = useNavigate();
   const [fase, setFase] = useState<"splash" | "saliendo" | "formulario">("splash");
   const [showPwd, setShowPwd] = useState(false);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
   const [enviandoRecuperacion, setEnviandoRecuperacion] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    getValues,
+    setError: setFieldError,
+    formState: { errors },
+    reset,
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { username: "", password: "" },
+  });
 
   function abrirFormulario() {
     setFase("saliendo");
@@ -30,16 +43,14 @@ export function LoginScreen() {
   function volverAlSplash() {
     setFase("splash");
     setError(null);
-    setUsername("");
-    setPassword("");
+    reset({ username: "", password: "" });
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function onSubmit(valores: LoginFormValues) {
     setError(null);
     setCargando(true);
     try {
-      const resp = await login({ username: username.trim(), password });
+      const resp = await login({ username: valores.username.trim(), password: valores.password });
       guardarSesion(resp);
       navigate(resp.rol.toUpperCase() === "SUPERADMIN" ? "/plataforma" : "/inicio");
     } catch (err) {
@@ -59,15 +70,18 @@ export function LoginScreen() {
   async function recuperarPassword() {
     setError(null);
     setInfo(null);
-    const correo = username.trim();
-    if (!correo || !correo.includes("@")) {
-      setError("Escribe tu correo en el campo Usuario y vuelve a intentarlo.");
+    const correo = getValues("username").trim();
+    const validacion = recuperarSchema.safeParse({ email: correo });
+    if (!validacion.success) {
+      const mensaje = validacion.error.issues[0]?.message ?? "Escribe tu correo en el campo Usuario y vuelve a intentarlo.";
+      setFieldError("username", { message: mensaje });
+      setError(mensaje);
       return;
     }
     setEnviandoRecuperacion(true);
     try {
-      await solicitarRecuperacion(correo);
-      setInfo(`Si ${correo} está registrado, te llegará un enlace para restablecer la contraseña.`);
+      await solicitarRecuperacion(validacion.data.email);
+      setInfo(`Si ${validacion.data.email} está registrado, te llegará un enlace para restablecer la contraseña.`);
     } catch (err) {
       setError(mensajeDelServidor(err) ?? "No se pudo enviar el correo de recuperación. Intenta de nuevo.");
     } finally {
@@ -113,7 +127,7 @@ export function LoginScreen() {
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+            <form onSubmit={handleSubmit(onSubmit)} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
               {error && (
                 <div style={{
                   borderRadius: "8px",
@@ -145,13 +159,14 @@ export function LoginScreen() {
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                   <Input
                     id="username"
-                    required
                     placeholder="admin"
                     className="pl-9"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    {...register("username")}
                   />
                 </div>
+                {errors.username && (
+                  <span style={{ fontSize: "0.8rem", color: "#b91c1c" }}>{errors.username.message}</span>
+                )}
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
@@ -179,11 +194,9 @@ export function LoginScreen() {
                   <Input
                     id="password"
                     type={showPwd ? "text" : "password"}
-                    required
                     placeholder="••••••••"
                     className="pl-9 pr-9"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    {...register("password")}
                   />
                   <button
                     type="button"
@@ -193,6 +206,9 @@ export function LoginScreen() {
                     {showPwd ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                   </button>
                 </div>
+                {errors.password && (
+                  <span style={{ fontSize: "0.8rem", color: "#b91c1c" }}>{errors.password.message}</span>
+                )}
               </div>
 
               <div className="flex items-center gap-2">

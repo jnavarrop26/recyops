@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router";
 import { Lock, Eye, EyeOff, KeyRound } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
@@ -7,6 +9,7 @@ import { Label } from "@/app/components/ui/label";
 import { AuthLayout } from "@/app/modules/auth/auth-layout";
 import { restablecerPassword } from "@/app/modules/auth/authApi";
 import { estadoHttp, mensajeDelServidor } from "@/app/http/errores";
+import { restablecerSchema, type RestablecerFormValues } from "@/app/modules/auth/authSchema";
 
 /**
  * Pantalla a la que llega el enlace del correo de recuperación de Supabase:
@@ -22,27 +25,25 @@ export function RestablecerScreen() {
     return parametros.get("access_token") ?? "";
   }, []);
 
-  const [password, setPassword] = useState("");
-  const [confirmacion, setConfirmacion] = useState("");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RestablecerFormValues>({
+    resolver: zodResolver(restablecerSchema),
+    defaultValues: { password: "", confirmacion: "" },
+  });
+
   const [showPwd, setShowPwd] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [listo, setListo] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function onSubmit(valores: RestablecerFormValues) {
     setError(null);
-    if (password.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres.");
-      return;
-    }
-    if (password !== confirmacion) {
-      setError("Las contraseñas no coinciden.");
-      return;
-    }
     setEnviando(true);
     try {
-      await restablecerPassword(accessToken, password);
+      await restablecerPassword(accessToken, valores.password);
       setListo(true);
       setTimeout(() => navigate("/"), 2500);
     } catch (err) {
@@ -88,7 +89,7 @@ export function RestablecerScreen() {
             Contraseña actualizada. Te llevamos al login...
           </div>
         ) : (
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <form onSubmit={handleSubmit(onSubmit)} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             {error && (
               <div style={{
                 borderRadius: 8, border: "1px solid #fca5a5", background: "#fef2f2",
@@ -105,11 +106,9 @@ export function RestablecerScreen() {
                 <Input
                   id="password"
                   type={showPwd ? "text" : "password"}
-                  required
                   placeholder="Mínimo 6 caracteres"
                   className="pl-9 pr-9"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  {...register("password")}
                 />
                 <button
                   type="button"
@@ -119,6 +118,9 @@ export function RestablecerScreen() {
                   {showPwd ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>
               </div>
+              {errors.password && (
+                <span style={{ fontSize: "0.8rem", color: "#b91c1c" }}>{errors.password.message}</span>
+              )}
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -128,13 +130,14 @@ export function RestablecerScreen() {
                 <Input
                   id="confirmacion"
                   type={showPwd ? "text" : "password"}
-                  required
                   placeholder="Repite la contraseña"
                   className="pl-9"
-                  value={confirmacion}
-                  onChange={(e) => setConfirmacion(e.target.value)}
+                  {...register("confirmacion")}
                 />
               </div>
+              {errors.confirmacion && (
+                <span style={{ fontSize: "0.8rem", color: "#b91c1c" }}>{errors.confirmacion.message}</span>
+              )}
             </div>
 
             <Button type="submit" className="w-full" disabled={enviando}>
