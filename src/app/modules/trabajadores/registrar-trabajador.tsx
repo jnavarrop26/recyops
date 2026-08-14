@@ -145,7 +145,7 @@ export function RegistrarTrabajador({
           id="email"
           type="email"
           {...register("email")}
-          placeholder="ana@sicofar.com"
+          placeholder="ana@recyops.com"
         />
         {errors.email && <span className={styles.errorCampo}>{errors.email.message}</span>}
       </div>

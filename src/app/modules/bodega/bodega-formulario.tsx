@@ -115,7 +115,7 @@ export function BodegaFormulario({
 
       <div className={styles.campo}>
         <Label htmlFor="email">Email</Label>
-        <Input id="email" type="email" {...register("email")} placeholder="central@sicofark.com" />
+        <Input id="email" type="email" {...register("email")} placeholder="central@recyops.com" />
         {errors.email && <span className={styles.errorCampo}>{errors.email.message}</span>}
       </div>
 

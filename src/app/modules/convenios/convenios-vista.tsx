@@ -45,7 +45,7 @@ const ETIQUETAS_ESTADO: Record<string, string> = {
 };
 
 function esAdmin(): boolean {
-  return (localStorage.getItem("sicofar_rol") || "").toUpperCase() === "ADMIN";
+  return (localStorage.getItem("recyops_rol") || "").toUpperCase() === "ADMIN";
 }
 
 function chipEstado(estado: EstadoConvenio) {

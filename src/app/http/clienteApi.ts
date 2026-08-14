@@ -23,7 +23,7 @@ export const clienteApi = axios.create({
 // las credenciales escritas sean correctas.
 clienteApi.interceptors.request.use((config) => {
   const esLogin = (config.url ?? "").includes("/auth/login");
-  const token = localStorage.getItem("sicofar_token");
+  const token = localStorage.getItem("recyops_token");
   if (token && !esLogin) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -39,7 +39,7 @@ clienteApi.interceptors.request.use((config) => {
 let renovacionEnCurso: Promise<string | null> | null = null;
 
 async function renovarSesion(): Promise<string | null> {
-  const refresh = localStorage.getItem("sicofar_refresh");
+  const refresh = localStorage.getItem("recyops_refresh");
   if (!refresh) return null;
   try {
     // axios "crudo" (sin interceptores) para no entrar en bucle
@@ -47,9 +47,9 @@ async function renovarSesion(): Promise<string | null> {
       `${urlBase}/auth/refresh`,
       { refreshToken: refresh },
     );
-    localStorage.setItem("sicofar_token", data.token);
-    if (data.refreshToken) localStorage.setItem("sicofar_refresh", data.refreshToken);
-    if (data.rol) localStorage.setItem("sicofar_rol", data.rol);
+    localStorage.setItem("recyops_token", data.token);
+    if (data.refreshToken) localStorage.setItem("recyops_refresh", data.refreshToken);
+    if (data.rol) localStorage.setItem("recyops_rol", data.rol);
     return data.token;
   } catch {
     return null;
@@ -57,11 +57,11 @@ async function renovarSesion(): Promise<string | null> {
 }
 
 function limpiarSesionYSalir() {
-  localStorage.removeItem("sicofar_token");
-  localStorage.removeItem("sicofar_rol");
-  localStorage.removeItem("sicofar_nombre");
-  localStorage.removeItem("sicofar_username");
-  localStorage.removeItem("sicofar_refresh");
+  localStorage.removeItem("recyops_token");
+  localStorage.removeItem("recyops_rol");
+  localStorage.removeItem("recyops_nombre");
+  localStorage.removeItem("recyops_username");
+  localStorage.removeItem("recyops_refresh");
   if (window.location.pathname !== "/") {
     window.location.href = "/";
   }

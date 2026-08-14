@@ -20,23 +20,23 @@ export async function login(cuerpo: CuerpoLogin): Promise<RespuestaLogin> {
 }
 
 export function guardarSesion(resp: RespuestaLogin) {
-  localStorage.setItem("sicofar_token", resp.token);
-  localStorage.setItem("sicofar_rol", resp.rol);
-  localStorage.setItem("sicofar_nombre", resp.nombreCompleto);
-  localStorage.setItem("sicofar_username", resp.username);
+  localStorage.setItem("recyops_token", resp.token);
+  localStorage.setItem("recyops_rol", resp.rol);
+  localStorage.setItem("recyops_nombre", resp.nombreCompleto);
+  localStorage.setItem("recyops_username", resp.username);
   if (resp.refreshToken) {
-    localStorage.setItem("sicofar_refresh", resp.refreshToken);
+    localStorage.setItem("recyops_refresh", resp.refreshToken);
   } else {
-    localStorage.removeItem("sicofar_refresh");
+    localStorage.removeItem("recyops_refresh");
   }
 }
 
 export function cerrarSesion() {
-  localStorage.removeItem("sicofar_token");
-  localStorage.removeItem("sicofar_rol");
-  localStorage.removeItem("sicofar_nombre");
-  localStorage.removeItem("sicofar_username");
-  localStorage.removeItem("sicofar_refresh");
+  localStorage.removeItem("recyops_token");
+  localStorage.removeItem("recyops_rol");
+  localStorage.removeItem("recyops_nombre");
+  localStorage.removeItem("recyops_username");
+  localStorage.removeItem("recyops_refresh");
 }
 
 // POST /api/auth/recuperar — envía el correo con el enlace de recuperación.

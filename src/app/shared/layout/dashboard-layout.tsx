@@ -25,7 +25,7 @@ export function DashboardLayout() {
   }, [menuAbierto]);
 
   // Sin sesión activa no hay dashboard: de vuelta al login.
-  if (!localStorage.getItem("sicofar_token")) {
+  if (!localStorage.getItem("recyops_token")) {
     return <Navigate to="/" replace />;
   }
 
