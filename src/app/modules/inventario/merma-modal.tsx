@@ -1,3 +1,5 @@
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
@@ -13,6 +15,11 @@ import {
 } from "@/app/components/ui/dialog";
 import { registrarMerma, type LineaInventario } from "@/app/modules/inventario/inventarioApi";
 import { interpretarErrorHttp, mensajeDelServidor } from "@/app/http/errores";
+import {
+  mermaSchema,
+  type MermaFormInput,
+  type MermaFormOutput,
+} from "@/app/modules/inventario/mermaSchema";
 import styles from "@/app/modules/materiales/material-formulario.module.css";
 
 export function MermaModal({
@@ -24,32 +31,28 @@ export function MermaModal({
   alCerrar: () => void;
   alGuardar: (resultado: LineaInventario) => void;
 }) {
-  const [cantidad, setCantidad] = useState("");
-  const [motivo, setMotivo] = useState("");
-  const [errores, setErrores] = useState<{ [k: string]: string }>({});
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<MermaFormInput, unknown, MermaFormOutput>({
+    resolver: zodResolver(mermaSchema),
+    defaultValues: {
+      cantidad: "",
+      motivo: "",
+    },
+  });
+
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
-  function validar(): boolean {
-    const e: { [k: string]: string } = {};
-    const valor = parseFloat(cantidad);
-    if (cantidad === "" || Number.isNaN(valor) || valor <= 0) {
-      e.cantidad = "La cantidad debe ser mayor que 0.";
-    }
-    if (motivo.trim().length < 5) e.motivo = "El motivo debe tener al menos 5 caracteres.";
-    setErrores(e);
-    return Object.keys(e).length === 0;
-  }
-
-  async function enviar(evento: React.FormEvent) {
-    evento.preventDefault();
+  async function onSubmit(valores: MermaFormOutput) {
     setErrorGeneral(null);
-    if (!validar()) return;
     setEnviando(true);
     try {
       const resultado = await registrarMerma(linea.id, {
-        cantidad: parseFloat(cantidad),
-        motivo: motivo.trim(),
+        cantidad: valores.cantidad,
+        motivo: valores.motivo.trim(),
       });
       alGuardar(resultado);
     } catch (error) {
@@ -74,7 +77,7 @@ export function MermaModal({
             {linea.tipoMaterialNombre} · {linea.bodegaNombre}
           </DialogDescription>
         </DialogHeader>
-        <form className={styles.formulario} onSubmit={enviar}>
+        <form className={styles.formulario} onSubmit={handleSubmit(onSubmit)}>
           {errorGeneral && <div className={styles.alertaError}>{errorGeneral}</div>}
           <div className={styles.campo}>
             <Label>Stock actual</Label>
@@ -87,22 +90,20 @@ export function MermaModal({
               type="number"
               step="0.01"
               min="0"
-              value={cantidad}
-              onChange={(e) => setCantidad(e.target.value)}
+              {...register("cantidad")}
               placeholder="50.00"
             />
-            {errores.cantidad && <span className={styles.errorCampo}>{errores.cantidad}</span>}
+            {errors.cantidad && <span className={styles.errorCampo}>{errors.cantidad.message}</span>}
           </div>
           <div className={styles.campo}>
             <Label htmlFor="motivo">Motivo *</Label>
             <Textarea
               id="motivo"
               rows={3}
-              value={motivo}
-              onChange={(e) => setMotivo(e.target.value)}
+              {...register("motivo")}
               placeholder="Material contaminado descartado"
             />
-            {errores.motivo && <span className={styles.errorCampo}>{errores.motivo}</span>}
+            {errors.motivo && <span className={styles.errorCampo}>{errors.motivo.message}</span>}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={alCerrar}>

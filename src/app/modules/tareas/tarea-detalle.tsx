@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Clock } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
@@ -11,6 +13,7 @@ import {
   type Tarea,
 } from "@/app/modules/tareas/tareasApi";
 import { mensajeDelServidor } from "@/app/http/errores";
+import { avanceSchema, type AvanceFormValues } from "@/app/modules/tareas/tareaSchema";
 import styles from "@/app/modules/tareas/tareas-vista.module.css";
 
 const fmtCantidad = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 });
@@ -42,10 +45,18 @@ export function TareaDetalle({
 }) {
   const [avances, setAvances] = useState<Avance[]>([]);
   const [cargando, setCargando] = useState(true);
-  const [cantidad, setCantidad] = useState("");
-  const [descripcion, setDescripcion] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<AvanceFormValues>({
+    resolver: zodResolver(avanceSchema),
+    defaultValues: { cantidad: "", descripcion: "" },
+  });
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -62,24 +73,14 @@ export function TareaDetalle({
     cargar();
   }, [cargar]);
 
-  async function manejarEnvio(evento: React.FormEvent) {
-    evento.preventDefault();
+  async function onSubmit(valores: AvanceFormValues) {
     setError(null);
-    if (descripcion.trim().length < 3) {
-      setError("Describe qué hiciste (mínimo 3 caracteres).");
-      return;
-    }
-    const numero = cantidad.trim() === "" ? null : Number(cantidad);
-    if (numero !== null && (Number.isNaN(numero) || numero <= 0)) {
-      setError("La cantidad debe ser un número mayor que 0, o déjala vacía.");
-      return;
-    }
+    const numero = valores.cantidad.trim() === "" ? null : Number(valores.cantidad);
     setEnviando(true);
     try {
-      const nuevo = await agregarAvance(tarea.id, numero, descripcion.trim());
+      const nuevo = await agregarAvance(tarea.id, numero, valores.descripcion.trim());
       setAvances((lista) => [...lista, nuevo]);
-      setCantidad("");
-      setDescripcion("");
+      reset({ cantidad: "", descripcion: "" });
     } catch (err) {
       setError(mensajeDelServidor(err) ?? "No se pudo registrar el avance.");
     } finally {
@@ -131,7 +132,7 @@ export function TareaDetalle({
       )}
 
       {puedeAgregar && (
-        <form onSubmit={manejarEnvio} className={styles.avanceForm}>
+        <form onSubmit={handleSubmit(onSubmit)} className={styles.avanceForm}>
           {error && <div className={styles.avanceError}>{error}</div>}
           <div className={styles.avanceCampos}>
             <div>
@@ -142,9 +143,9 @@ export function TareaDetalle({
                 step="0.01"
                 min="0"
                 placeholder="15"
-                value={cantidad}
-                onChange={(e) => setCantidad(e.target.value)}
+                {...register("cantidad")}
               />
+              {errors.cantidad && <span className={styles.avanceError}>{errors.cantidad.message}</span>}
             </div>
             <div style={{ flex: 1 }}>
               <Label htmlFor="avanceDesc">¿Qué hiciste?</Label>
@@ -152,9 +153,11 @@ export function TareaDetalle({
                 id="avanceDesc"
                 placeholder="globos de HDPE azul"
                 maxLength={300}
-                value={descripcion}
-                onChange={(e) => setDescripcion(e.target.value)}
+                {...register("descripcion")}
               />
+              {errors.descripcion && (
+                <span className={styles.avanceError}>{errors.descripcion.message}</span>
+              )}
             </div>
             <Button type="submit" disabled={enviando} style={{ alignSelf: "flex-end" }}>
               {enviando ? "..." : "+ Agregar"}

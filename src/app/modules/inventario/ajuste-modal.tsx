@@ -1,3 +1,5 @@
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
@@ -13,6 +15,11 @@ import {
 } from "@/app/components/ui/dialog";
 import { registrarAjuste, type LineaInventario } from "@/app/modules/inventario/inventarioApi";
 import { interpretarErrorHttp, mensajeDelServidor } from "@/app/http/errores";
+import {
+  ajusteSchema,
+  type AjusteFormInput,
+  type AjusteFormOutput,
+} from "@/app/modules/inventario/ajusteSchema";
 import styles from "@/app/modules/materiales/material-formulario.module.css";
 
 export function AjusteModal({
@@ -24,32 +31,28 @@ export function AjusteModal({
   alCerrar: () => void;
   alGuardar: (resultado: LineaInventario) => void;
 }) {
-  const [cantidadNueva, setCantidadNueva] = useState(String(linea.stockActual));
-  const [motivo, setMotivo] = useState("");
-  const [errores, setErrores] = useState<{ [k: string]: string }>({});
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<AjusteFormInput, unknown, AjusteFormOutput>({
+    resolver: zodResolver(ajusteSchema),
+    defaultValues: {
+      cantidadNueva: linea.stockActual,
+      motivo: "",
+    },
+  });
+
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
-  function validar(): boolean {
-    const e: { [k: string]: string } = {};
-    const valor = parseFloat(cantidadNueva);
-    if (cantidadNueva === "" || Number.isNaN(valor) || valor < 0) {
-      e.cantidadNueva = "La cantidad nueva debe ser mayor o igual a 0.";
-    }
-    if (motivo.trim().length < 5) e.motivo = "El motivo debe tener al menos 5 caracteres.";
-    setErrores(e);
-    return Object.keys(e).length === 0;
-  }
-
-  async function enviar(evento: React.FormEvent) {
-    evento.preventDefault();
+  async function onSubmit(valores: AjusteFormOutput) {
     setErrorGeneral(null);
-    if (!validar()) return;
     setEnviando(true);
     try {
       const resultado = await registrarAjuste(linea.id, {
-        cantidadNueva: parseFloat(cantidadNueva),
-        motivo: motivo.trim(),
+        cantidadNueva: valores.cantidadNueva,
+        motivo: valores.motivo.trim(),
       });
       alGuardar(resultado);
     } catch (error) {
@@ -72,7 +75,7 @@ export function AjusteModal({
             {linea.tipoMaterialNombre} · {linea.bodegaNombre}
           </DialogDescription>
         </DialogHeader>
-        <form className={styles.formulario} onSubmit={enviar}>
+        <form className={styles.formulario} onSubmit={handleSubmit(onSubmit)}>
           {errorGeneral && <div className={styles.alertaError}>{errorGeneral}</div>}
           <div className={styles.campo}>
             <Label>Stock actual</Label>
@@ -85,21 +88,19 @@ export function AjusteModal({
               type="number"
               step="0.01"
               min="0"
-              value={cantidadNueva}
-              onChange={(e) => setCantidadNueva(e.target.value)}
+              {...register("cantidadNueva")}
             />
-            {errores.cantidadNueva && <span className={styles.errorCampo}>{errores.cantidadNueva}</span>}
+            {errors.cantidadNueva && <span className={styles.errorCampo}>{errors.cantidadNueva.message}</span>}
           </div>
           <div className={styles.campo}>
             <Label htmlFor="motivo">Motivo *</Label>
             <Textarea
               id="motivo"
               rows={3}
-              value={motivo}
-              onChange={(e) => setMotivo(e.target.value)}
+              {...register("motivo")}
               placeholder="Conteo físico - corrección de inventario"
             />
-            {errores.motivo && <span className={styles.errorCampo}>{errores.motivo}</span>}
+            {errors.motivo && <span className={styles.errorCampo}>{errors.motivo.message}</span>}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={alCerrar}>

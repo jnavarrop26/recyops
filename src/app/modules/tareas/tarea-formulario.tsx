@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Button } from "@/app/components/ui/button";
@@ -18,6 +20,7 @@ import {
   type PrioridadTarea,
   type Tarea,
 } from "@/app/modules/tareas/tareasApi";
+import { tareaSchema, type TareaFormValues } from "@/app/modules/tareas/tareaSchema";
 import styles from "@/app/modules/trabajadores/registrar-trabajador.module.css";
 
 const SIN_BODEGA = "__ninguna__";
@@ -33,12 +36,23 @@ export function TareaFormulario({
   alCerrar?: () => void;
 }) {
   const esEdicion = Boolean(tarea);
-  const [titulo, setTitulo] = useState(tarea?.titulo ?? "");
-  const [descripcion, setDescripcion] = useState(tarea?.descripcion ?? "");
-  const [asignadoId, setAsignadoId] = useState(tarea?.asignadoId ?? "");
-  const [bodegaId, setBodegaId] = useState(tarea?.bodegaId ?? SIN_BODEGA);
-  const [prioridad, setPrioridad] = useState<PrioridadTarea>(tarea?.prioridad ?? "MEDIA");
-  const [fechaLimite, setFechaLimite] = useState(tarea?.fechaLimite ?? "");
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm<TareaFormValues>({
+    resolver: zodResolver(tareaSchema),
+    defaultValues: {
+      titulo: tarea?.titulo ?? "",
+      descripcion: tarea?.descripcion ?? "",
+      asignadoId: tarea?.asignadoId ?? "",
+      bodegaId: tarea?.bodegaId ?? SIN_BODEGA,
+      prioridad: tarea?.prioridad ?? "MEDIA",
+      fechaLimite: tarea?.fechaLimite ?? "",
+    },
+  });
 
   const [trabajadores, setTrabajadores] = useState<Trabajador[]>([]);
   const [bodegas, setBodegas] = useState<Bodega[]>([]);
@@ -60,27 +74,17 @@ export function TareaFormulario({
     })();
   }, []);
 
-  async function manejarEnvio(evento: React.FormEvent) {
-    evento.preventDefault();
+  async function onSubmit(valores: TareaFormValues) {
     setError(null);
-    if (titulo.trim().length < 3) {
-      setError("El título debe tener al menos 3 caracteres.");
-      return;
-    }
-    if (!asignadoId) {
-      setError("Selecciona el trabajador asignado.");
-      return;
-    }
-
     setEnviando(true);
     try {
       const cuerpo = {
-        titulo: titulo.trim(),
-        descripcion: descripcion.trim() || null,
-        asignadoId,
-        bodegaId: bodegaId === SIN_BODEGA ? null : bodegaId,
-        prioridad,
-        fechaLimite: fechaLimite || null,
+        titulo: valores.titulo.trim(),
+        descripcion: valores.descripcion.trim() || null,
+        asignadoId: valores.asignadoId,
+        bodegaId: valores.bodegaId === SIN_BODEGA ? null : valores.bodegaId,
+        prioridad: valores.prioridad as PrioridadTarea,
+        fechaLimite: valores.fechaLimite || null,
       };
       const guardada = esEdicion
         ? await actualizarTarea(tarea!.id, cuerpo)
@@ -94,17 +98,17 @@ export function TareaFormulario({
   }
 
   return (
-    <form className={styles.formulario} onSubmit={manejarEnvio}>
+    <form className={styles.formulario} onSubmit={handleSubmit(onSubmit)}>
       {error && <div className={styles.alertaError}>{error}</div>}
 
       <div className={styles.campo}>
         <Label htmlFor="tareaTitulo">Título *</Label>
         <Input
           id="tareaTitulo"
-          value={titulo}
-          onChange={(e) => setTitulo(e.target.value)}
+          {...register("titulo")}
           placeholder="Clasificar lote de PET recibido"
         />
+        {errors.titulo && <span className={styles.errorCampo}>{errors.titulo.message}</span>}
       </div>
 
       <div className={styles.campo}>
@@ -112,8 +116,7 @@ export function TareaFormulario({
         <Textarea
           id="tareaDesc"
           rows={3}
-          value={descripcion}
-          onChange={(e) => setDescripcion(e.target.value)}
+          {...register("descripcion")}
           placeholder="Detalles, ubicación, instrucciones..."
         />
       </div>
@@ -121,60 +124,78 @@ export function TareaFormulario({
       <div className={styles.fila}>
         <div className={styles.campo}>
           <Label>Asignar a *</Label>
-          <Select value={asignadoId} onValueChange={setAsignadoId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecciona trabajador" />
-            </SelectTrigger>
-            <SelectContent>
-              {trabajadores.map((t) => (
-                <SelectItem key={t.id} value={t.id}>
-                  {t.nombreCompleto}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Controller
+            name="asignadoId"
+            control={control}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona trabajador" />
+                </SelectTrigger>
+                <SelectContent>
+                  {trabajadores.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.nombreCompleto}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+          {errors.asignadoId && <span className={styles.errorCampo}>{errors.asignadoId.message}</span>}
         </div>
         <div className={styles.campo}>
           <Label>Bodega</Label>
-          <Select value={bodegaId} onValueChange={setBodegaId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Sin bodega" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={SIN_BODEGA}>Sin bodega</SelectItem>
-              {bodegas.map((b) => (
-                <SelectItem key={b.id} value={b.id}>
-                  {b.nombre}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Controller
+            name="bodegaId"
+            control={control}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sin bodega" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={SIN_BODEGA}>Sin bodega</SelectItem>
+                  {bodegas.map((b) => (
+                    <SelectItem key={b.id} value={b.id}>
+                      {b.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
         </div>
       </div>
 
       <div className={styles.fila}>
         <div className={styles.campo}>
           <Label>Prioridad *</Label>
-          <Select value={prioridad} onValueChange={(v) => setPrioridad(v as PrioridadTarea)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PRIORIDADES.map((p) => (
-                <SelectItem key={p} value={p}>
-                  {p}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Controller
+            name="prioridad"
+            control={control}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRIORIDADES.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {p}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
         </div>
         <div className={styles.campo}>
           <Label htmlFor="tareaFecha">Fecha límite</Label>
           <Input
             id="tareaFecha"
             type="date"
-            value={fechaLimite}
-            onChange={(e) => setFechaLimite(e.target.value)}
+            {...register("fechaLimite")}
           />
         </div>
       </div>

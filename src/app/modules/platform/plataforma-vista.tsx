@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Button } from "@/app/components/ui/button";
@@ -8,66 +10,62 @@ import {
   type RespuestaEmpresaCreada,
 } from "@/app/modules/platform/plataformaApi";
 import { estadoHttp, mensajeDelServidor } from "@/app/http/errores";
+import { plataformaSchema, type PlataformaFormValues } from "@/app/modules/platform/plataformaSchema";
 import styles from "@/app/modules/platform/plataforma-vista.module.css";
 
-interface Errores {
-  [campo: string]: string;
-}
-
-const SCHEMA_RE = /^[a-z][a-z0-9_]{1,62}$/;
-
 export function PlataformaVista() {
-  const [nombre, setNombre] = useState("");
-  const [nit, setNit] = useState("");
-  const [schemaNombre, setSchemaNombre] = useState("");
-  const [adminEmail, setAdminEmail] = useState("");
-  const [adminNombreCompleto, setAdminNombreCompleto] = useState("");
-  const [adminUsername, setAdminUsername] = useState("");
-  const [adminPassword, setAdminPassword] = useState("");
-  const [generarPassword, setGenerarPassword] = useState(true);
+  const {
+    register,
+    handleSubmit,
+    control,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<PlataformaFormValues>({
+    resolver: zodResolver(plataformaSchema),
+    defaultValues: {
+      nombre: "",
+      nit: "",
+      schemaNombre: "",
+      adminEmail: "",
+      adminNombreCompleto: "",
+      adminUsername: "",
+      adminPassword: "",
+      generarPassword: true,
+    },
+  });
 
-  const [errores, setErrores] = useState<Errores>({});
+  const generarPassword = watch("generarPassword");
+
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [resultado, setResultado] = useState<RespuestaEmpresaCreada | null>(null);
 
-  function validar(): boolean {
-    const e: Errores = {};
-    if (nombre.trim().length < 3) e.nombre = "El nombre debe tener al menos 3 caracteres.";
-    if (!nit.trim()) e.nit = "El NIT es obligatorio.";
-    if (!SCHEMA_RE.test(schemaNombre))
-      e.schemaNombre =
-        "Solo minúsculas, números y guion bajo. Debe iniciar con letra (ej: empresa_ecoverde).";
-    if (!adminEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adminEmail))
-      e.adminEmail = "Correo del admin no válido.";
-    if (adminNombreCompleto.trim().length < 3)
-      e.adminNombreCompleto = "El nombre completo debe tener al menos 3 caracteres.";
-    if (!adminUsername.trim() || /\s/.test(adminUsername))
-      e.adminUsername = "El username es obligatorio y sin espacios.";
-    if (!generarPassword && adminPassword.length > 0 && adminPassword.length < 8)
-      e.adminPassword = "La contraseña debe tener al menos 8 caracteres.";
-    setErrores(e);
-    return Object.keys(e).length === 0;
-  }
-
-  async function manejarEnvio(evento: React.FormEvent) {
-    evento.preventDefault();
+  async function onSubmit(valores: PlataformaFormValues) {
     setErrorGeneral(null);
-    if (!validar()) return;
 
     setEnviando(true);
     try {
       const resp = await provisionarEmpresa({
-        nombre: nombre.trim(),
-        nit: nit.trim(),
-        schemaNombre: schemaNombre.trim(),
-        adminEmail: adminEmail.trim(),
-        adminNombreCompleto: adminNombreCompleto.trim(),
-        adminUsername: adminUsername.trim(),
-        adminPassword: generarPassword || !adminPassword ? undefined : adminPassword,
+        nombre: valores.nombre.trim(),
+        nit: valores.nit.trim(),
+        schemaNombre: valores.schemaNombre.trim(),
+        adminEmail: valores.adminEmail.trim(),
+        adminNombreCompleto: valores.adminNombreCompleto.trim(),
+        adminUsername: valores.adminUsername.trim(),
+        adminPassword: valores.generarPassword || !valores.adminPassword ? undefined : valores.adminPassword,
       });
       setResultado(resp);
-      resetFormulario();
+      reset({
+        nombre: "",
+        nit: "",
+        schemaNombre: "",
+        adminEmail: "",
+        adminNombreCompleto: "",
+        adminUsername: "",
+        adminPassword: "",
+        generarPassword: true,
+      });
     } catch (error) {
       const estado = estadoHttp(error);
       if (estado === 409) {
@@ -80,17 +78,6 @@ export function PlataformaVista() {
     } finally {
       setEnviando(false);
     }
-  }
-
-  function resetFormulario() {
-    setNombre("");
-    setNit("");
-    setSchemaNombre("");
-    setAdminEmail("");
-    setAdminNombreCompleto("");
-    setAdminUsername("");
-    setAdminPassword("");
-    setGenerarPassword(true);
   }
 
   return (
@@ -138,7 +125,7 @@ export function PlataformaVista() {
 
       <div className={styles.tarjeta}>
         <h2>Nueva Empresa</h2>
-        <form className={styles.formulario} onSubmit={manejarEnvio}>
+        <form className={styles.formulario} onSubmit={handleSubmit(onSubmit)}>
           {errorGeneral && <div className={styles.alertaError}>{errorGeneral}</div>}
 
           <p className={styles.seccion}>Datos de la empresa</p>
@@ -147,11 +134,10 @@ export function PlataformaVista() {
             <Label htmlFor="nombre">Nombre *</Label>
             <Input
               id="nombre"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
+              {...register("nombre")}
               placeholder="EcoVerde S.A.S"
             />
-            {errores.nombre && <span className={styles.errorCampo}>{errores.nombre}</span>}
+            {errors.nombre && <span className={styles.errorCampo}>{errors.nombre.message}</span>}
           </div>
 
           <div className={styles.fila}>
@@ -159,22 +145,27 @@ export function PlataformaVista() {
               <Label htmlFor="nit">NIT *</Label>
               <Input
                 id="nit"
-                value={nit}
-                onChange={(e) => setNit(e.target.value)}
+                {...register("nit")}
                 placeholder="900123456-1"
               />
-              {errores.nit && <span className={styles.errorCampo}>{errores.nit}</span>}
+              {errors.nit && <span className={styles.errorCampo}>{errors.nit.message}</span>}
             </div>
             <div className={styles.campo}>
               <Label htmlFor="schemaNombre">Schema de BD *</Label>
-              <Input
-                id="schemaNombre"
-                value={schemaNombre}
-                onChange={(e) => setSchemaNombre(e.target.value.toLowerCase().replace(/\s/g, "_"))}
-                placeholder="empresa_ecoverde"
+              <Controller
+                name="schemaNombre"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    id="schemaNombre"
+                    value={field.value}
+                    onChange={(e) => field.onChange(e.target.value.toLowerCase().replace(/\s/g, "_"))}
+                    placeholder="empresa_ecoverde"
+                  />
+                )}
               />
-              {errores.schemaNombre && (
-                <span className={styles.errorCampo}>{errores.schemaNombre}</span>
+              {errors.schemaNombre && (
+                <span className={styles.errorCampo}>{errors.schemaNombre.message}</span>
               )}
             </div>
           </div>
@@ -185,12 +176,11 @@ export function PlataformaVista() {
             <Label htmlFor="adminNombreCompleto">Nombre completo *</Label>
             <Input
               id="adminNombreCompleto"
-              value={adminNombreCompleto}
-              onChange={(e) => setAdminNombreCompleto(e.target.value)}
+              {...register("adminNombreCompleto")}
               placeholder="Carlos Ruiz"
             />
-            {errores.adminNombreCompleto && (
-              <span className={styles.errorCampo}>{errores.adminNombreCompleto}</span>
+            {errors.adminNombreCompleto && (
+              <span className={styles.errorCampo}>{errors.adminNombreCompleto.message}</span>
             )}
           </div>
 
@@ -200,33 +190,37 @@ export function PlataformaVista() {
               <Input
                 id="adminEmail"
                 type="email"
-                value={adminEmail}
-                onChange={(e) => setAdminEmail(e.target.value)}
+                {...register("adminEmail")}
                 placeholder="admin@ecoverde.com"
               />
-              {errores.adminEmail && (
-                <span className={styles.errorCampo}>{errores.adminEmail}</span>
+              {errors.adminEmail && (
+                <span className={styles.errorCampo}>{errors.adminEmail.message}</span>
               )}
             </div>
             <div className={styles.campo}>
               <Label htmlFor="adminUsername">Username *</Label>
               <Input
                 id="adminUsername"
-                value={adminUsername}
-                onChange={(e) => setAdminUsername(e.target.value)}
+                {...register("adminUsername")}
                 placeholder="cruiz"
               />
-              {errores.adminUsername && (
-                <span className={styles.errorCampo}>{errores.adminUsername}</span>
+              {errors.adminUsername && (
+                <span className={styles.errorCampo}>{errors.adminUsername.message}</span>
               )}
             </div>
           </div>
 
           <div className={styles.checkbox}>
-            <Checkbox
-              id="generarPassword"
-              checked={generarPassword}
-              onCheckedChange={(v) => setGenerarPassword(Boolean(v))}
+            <Controller
+              name="generarPassword"
+              control={control}
+              render={({ field }) => (
+                <Checkbox
+                  id="generarPassword"
+                  checked={field.value}
+                  onCheckedChange={(v) => field.onChange(Boolean(v))}
+                />
+              )}
             />
             <Label htmlFor="generarPassword">Generar contraseña automáticamente</Label>
           </div>
@@ -237,12 +231,11 @@ export function PlataformaVista() {
               <Input
                 id="adminPassword"
                 type="password"
-                value={adminPassword}
-                onChange={(e) => setAdminPassword(e.target.value)}
+                {...register("adminPassword")}
                 placeholder="Mínimo 8 caracteres"
               />
-              {errores.adminPassword && (
-                <span className={styles.errorCampo}>{errores.adminPassword}</span>
+              {errors.adminPassword && (
+                <span className={styles.errorCampo}>{errors.adminPassword.message}</span>
               )}
             </div>
           )}

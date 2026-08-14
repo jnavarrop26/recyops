@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useForm, useFieldArray, useWatch, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
@@ -18,18 +20,8 @@ import {
   obtenerCategorias,
   type Material as MaterialCatalogo,
 } from "@/app/modules/materiales/materialesApi";
+import { ingresoSchema, type IngresoFormValues } from "@/app/modules/ingresos/ingresoSchema";
 import styles from "@/app/modules/ingresos/ingreso-form.module.css";
-
-type Material = {
-  id: number;
-  // id del material del catálogo; "" cuando se usa el respaldo de categorías
-  materialId: string;
-  categoria: string;
-  pesoBruto: string;
-  tara: string;
-  precioKilo: string;
-  observaciones: string;
-};
 
 // Respaldo si el catálogo del backend aún no responde.
 const CATEGORIAS_RESPALDO = [
@@ -43,37 +35,47 @@ const CATEGORIAS_RESPALDO = [
   "Cobre",
 ];
 
-function nuevoMaterial(id: number): Material {
-  return {
-    id,
-    materialId: "",
-    categoria: "",
-    pesoBruto: "",
-    tara: "",
-    precioKilo: "",
-    observaciones: "",
-  };
-}
+const FILA_VACIA = {
+  materialId: "",
+  categoria: "",
+  pesoBruto: "",
+  tara: "",
+  precioKilo: "",
+  observaciones: "",
+};
 
 const num = (v: string) => parseFloat(v) || 0;
-const neto = (m: Material) => Math.max(num(m.pesoBruto) - num(m.tara), 0);
-const total = (m: Material) => neto(m) * num(m.precioKilo);
+const neto = (m: { pesoBruto: string; tara: string }) => Math.max(num(m.pesoBruto) - num(m.tara), 0);
+const total = (m: { pesoBruto: string; tara: string; precioKilo: string }) => neto(m) * num(m.precioKilo);
 const fmt = (n: number) =>
   n.toLocaleString("es-CO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export function IngresoForm() {
   const navigate = useNavigate();
-  const [materiales, setMateriales] = useState<Material[]>([nuevoMaterial(1)]);
-  const [nextId, setNextId] = useState(2);
 
-  // Datos del cliente / recepción que viajan al backend
-  const [cedula, setCedula] = useState("");
-  const [nombreCliente, setNombreCliente] = useState("");
-  const [bodegaDestino, setBodegaDestino] = useState("");
-  const [encargado, setEncargado] = useState(
-    () => localStorage.getItem("sicofar_nombre") ?? "",
-  );
-  const [placa, setPlaca] = useState("");
+  const {
+    register,
+    handleSubmit,
+    control,
+    setValue,
+    formState: { errors },
+  } = useForm<IngresoFormValues>({
+    resolver: zodResolver(ingresoSchema),
+    defaultValues: {
+      cedula: "",
+      nombreCliente: "",
+      bodegaDestino: "",
+      encargado: localStorage.getItem("sicofar_nombre") ?? "",
+      placa: "",
+      materiales: [FILA_VACIA],
+    },
+  });
+
+  const { fields, append, remove } = useFieldArray({ control, name: "materiales" });
+  // useWatch para recalcular neto/total/gran total en cada tecleo (los inputs de
+  // la fila son no-controlados vía register(), fields[] de useFieldArray no
+  // refleja esos cambios en vivo).
+  const materialesWatch = useWatch({ control, name: "materiales" }) ?? [];
 
   // Catálogos que vienen del backend
   const [bodegas, setBodegas] = useState<string[]>([]);
@@ -83,7 +85,7 @@ export function IngresoForm() {
   const [categorias, setCategorias] = useState<string[]>(CATEGORIAS_RESPALDO);
 
   const [enviando, setEnviando] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [exito, setExito] = useState(false);
 
   useEffect(() => {
@@ -100,67 +102,35 @@ export function IngresoForm() {
       .catch(() => {});
   }, []);
 
-  function update(id: number, patch: Partial<Material>) {
-    setMateriales((ms) => ms.map((m) => (m.id === id ? { ...m, ...patch } : m)));
-  }
-  function addMaterial() {
-    setMateriales((ms) => [...ms, nuevoMaterial(nextId)]);
-    setNextId((n) => n + 1);
-  }
-  function removeMaterial(id: number) {
-    setMateriales((ms) => (ms.length > 1 ? ms.filter((m) => m.id !== id) : ms));
-  }
   // Elegir un material del catálogo precarga su precio base (editable).
-  function seleccionarMaterial(fila: number, materialId: string) {
+  function seleccionarMaterial(index: number, materialId: string) {
     const mat = catalogo.find((c) => c.id === materialId);
-    update(fila, {
-      materialId,
-      categoria: mat?.nombre ?? "",
-      precioKilo: mat ? String(mat.precioBase) : "",
-    });
+    setValue(`materiales.${index}.materialId`, materialId);
+    setValue(`materiales.${index}.categoria`, mat?.nombre ?? "");
+    setValue(`materiales.${index}.precioKilo`, mat ? String(mat.precioBase) : "");
   }
 
-  const granTotal = materiales.reduce((acc, m) => acc + total(m), 0);
-  const pesoNetoTotal = materiales.reduce((acc, m) => acc + neto(m), 0);
+  const granTotal = materialesWatch.reduce((acc, m) => acc + total(m), 0);
+  const pesoNetoTotal = materialesWatch.reduce((acc, m) => acc + neto(m), 0);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
+  const errorMateriales = errors.materiales?.root?.message ?? errors.materiales?.message;
+
+  async function onSubmit(valores: IngresoFormValues) {
+    setErrorGeneral(null);
     setExito(false);
 
-    if (!cedula.trim() || !nombreCliente.trim()) {
-      setError("Ingresa la cédula y el nombre del cliente.");
-      return;
-    }
-    if (!bodegaDestino) {
-      setError("Selecciona la bodega destino.");
-      return;
-    }
-    if (!encargado.trim()) {
-      setError("Indica el encargado de recepción.");
-      return;
-    }
-    if (pesoNetoTotal <= 0) {
-      setError("Registra al menos un material con peso neto mayor a cero.");
-      return;
-    }
-
-    const materialesValidos = materiales.filter(
+    const materialesValidos = valores.materiales.filter(
       (m) => (m.materialId || m.categoria) && neto(m) > 0,
     );
-    if (materialesValidos.length === 0) {
-      setError("Cada material necesita un material del catálogo y un peso neto mayor a cero.");
-      return;
-    }
 
     setEnviando(true);
     try {
       await registrarIngreso({
-        cliente: nombreCliente.trim(),
-        cedula: cedula.trim(),
-        bodegaDestino,
-        encargado: encargado.trim(),
-        placaVehiculo: placa.trim() || null,
+        cliente: valores.nombreCliente.trim(),
+        cedula: valores.cedula.trim(),
+        bodegaDestino: valores.bodegaDestino,
+        encargado: valores.encargado.trim(),
+        placaVehiculo: valores.placa.trim() || null,
         pesoNetoTotal: Number(pesoNetoTotal.toFixed(2)),
         total: Number(granTotal.toFixed(2)),
         materiales: materialesValidos.map((m) => ({
@@ -176,14 +146,14 @@ export function IngresoForm() {
       // Al historial, donde el ingreso recién creado aparece de primero.
       setTimeout(() => navigate("/ingreso/historial"), 900);
     } catch {
-      setError("No se pudo registrar el ingreso. Revisa la conexión con el servidor.");
+      setErrorGeneral("No se pudo registrar el ingreso. Revisa la conexión con el servidor.");
     } finally {
       setEnviando(false);
     }
   }
 
   return (
-    <form className={styles.form} onSubmit={handleSubmit}>
+    <form className={styles.form} onSubmit={handleSubmit(onSubmit)}>
       {/* Cliente */}
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Cliente</h2>
@@ -195,18 +165,18 @@ export function IngresoForm() {
               id="cedula"
               className={styles.mono}
               placeholder="1.020.345.678"
-              value={cedula}
-              onChange={(e) => setCedula(e.target.value)}
+              {...register("cedula")}
             />
+            {errors.cedula && <span className={styles.errorCampo}>{errors.cedula.message}</span>}
           </div>
           <div className={styles.field}>
             <Label htmlFor="nombre">Nombre completo</Label>
             <Input
               id="nombre"
               placeholder="Ana Torres"
-              value={nombreCliente}
-              onChange={(e) => setNombreCliente(e.target.value)}
+              {...register("nombreCliente")}
             />
+            {errors.nombreCliente && <span className={styles.errorCampo}>{errors.nombreCliente.message}</span>}
           </div>
           <div className={styles.field}>
             <Label htmlFor="telefono">Teléfono</Label>
@@ -252,29 +222,36 @@ export function IngresoForm() {
           </div>
           <div className={styles.field}>
             <Label>Bodega destino</Label>
-            <Select value={bodegaDestino} onValueChange={setBodegaDestino}>
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={bodegas.length ? "Selecciona bodega" : "Sin bodegas disponibles"}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {bodegas.map((nombre) => (
-                  <SelectItem key={nombre} value={nombre}>
-                    {nombre}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Controller
+              name="bodegaDestino"
+              control={control}
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={bodegas.length ? "Selecciona bodega" : "Sin bodegas disponibles"}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {bodegas.map((nombre) => (
+                      <SelectItem key={nombre} value={nombre}>
+                        {nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.bodegaDestino && <span className={styles.errorCampo}>{errors.bodegaDestino.message}</span>}
           </div>
           <div className={styles.field}>
             <Label htmlFor="encargado">Encargado de recepción</Label>
             <Input
               id="encargado"
               placeholder="Carlos Méndez"
-              value={encargado}
-              onChange={(e) => setEncargado(e.target.value)}
+              {...register("encargado")}
             />
+            {errors.encargado && <span className={styles.errorCampo}>{errors.encargado.message}</span>}
           </div>
           <div className={styles.field}>
             <Label htmlFor="fecha">Fecha y hora</Label>
@@ -286,8 +263,7 @@ export function IngresoForm() {
               id="placa"
               className={styles.mono}
               placeholder="ABC-123"
-              value={placa}
-              onChange={(e) => setPlaca(e.target.value)}
+              {...register("placa")}
             />
           </div>
         </div>
@@ -300,113 +276,127 @@ export function IngresoForm() {
           El peso neto y el total se calculan automáticamente por material.
         </p>
 
-        {materiales.map((m, i) => (
-          <div key={m.id} className={styles.material}>
-            <div className={styles.materialHead}>
-              <span className={styles.materialLabel}>Material #{i + 1}</span>
-              {materiales.length > 1 && (
-                <Button type="button" variant="ghost" size="sm" onClick={() => removeMaterial(m.id)}>
-                  Eliminar
-                </Button>
-              )}
-            </div>
-            <div className={styles.grid}>
-              <div className={styles.field}>
-                {catalogo.length > 0 ? (
-                  <>
-                    <Label>Material</Label>
-                    <Select
-                      value={m.materialId}
-                      onValueChange={(v) => seleccionarMaterial(m.id, v)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecciona material" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {catalogo.map((mat) => (
-                          <SelectItem key={mat.id} value={mat.id}>
-                            {mat.nombre}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </>
-                ) : (
-                  <>
-                    <Label>Categoría</Label>
-                    <Select
-                      value={m.categoria}
-                      onValueChange={(v) => update(m.id, { categoria: v })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecciona categoría" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categorias.map((c) => (
-                          <SelectItem key={c} value={c}>
-                            {c}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </>
+        {errorMateriales && <div className={styles.errorCampo}>{errorMateriales}</div>}
+
+        {fields.map((field, index) => {
+          const filaActual = materialesWatch[index] ?? FILA_VACIA;
+          const erroresFila = errors.materiales?.[index];
+          return (
+            <div key={field.id} className={styles.material}>
+              <div className={styles.materialHead}>
+                <span className={styles.materialLabel}>Material #{index + 1}</span>
+                {fields.length > 1 && (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => remove(index)}>
+                    Eliminar
+                  </Button>
                 )}
               </div>
-              <div className={styles.field}>
-                <Label>Peso bruto (kg)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  className={styles.mono}
-                  value={m.pesoBruto}
-                  onChange={(e) => update(m.id, { pesoBruto: e.target.value })}
-                  placeholder="0.00"
-                />
-              </div>
-              <div className={styles.field}>
-                <Label>Tara (kg)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  className={styles.mono}
-                  value={m.tara}
-                  onChange={(e) => update(m.id, { tara: e.target.value })}
-                  placeholder="0.00"
-                />
-              </div>
-              <div className={styles.field}>
-                <Label>Peso neto (kg)</Label>
-                <div className={styles.computed}>{fmt(neto(m))}</div>
-              </div>
-              <div className={styles.field}>
-                <Label>Precio por kilo</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  className={styles.mono}
-                  value={m.precioKilo}
-                  onChange={(e) => update(m.id, { precioKilo: e.target.value })}
-                  placeholder="0.00"
-                />
-              </div>
-              <div className={styles.field}>
-                <Label>Total</Label>
-                <div className={styles.computed}>$ {fmt(total(m))}</div>
-              </div>
-              <div className={`${styles.field} ${styles.full}`}>
-                <Label>Observaciones del material</Label>
-                <Textarea
-                  rows={2}
-                  value={m.observaciones}
-                  onChange={(e) => update(m.id, { observaciones: e.target.value })}
-                  placeholder="Estado, humedad, contaminación, etc."
-                />
+              <div className={styles.grid}>
+                <div className={styles.field}>
+                  {catalogo.length > 0 ? (
+                    <>
+                      <Label>Material</Label>
+                      <Controller
+                        name={`materiales.${index}.materialId`}
+                        control={control}
+                        render={({ field: selectField }) => (
+                          <Select
+                            value={selectField.value}
+                            onValueChange={(v) => seleccionarMaterial(index, v)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecciona material" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {catalogo.map((mat) => (
+                                <SelectItem key={mat.id} value={mat.id}>
+                                  {mat.nombre}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <Label>Categoría</Label>
+                      <Controller
+                        name={`materiales.${index}.categoria`}
+                        control={control}
+                        render={({ field: selectField }) => (
+                          <Select value={selectField.value} onValueChange={selectField.onChange}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecciona categoría" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {categorias.map((c) => (
+                                <SelectItem key={c} value={c}>
+                                  {c}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </>
+                  )}
+                </div>
+                <div className={styles.field}>
+                  <Label>Peso bruto (kg)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    className={styles.mono}
+                    {...register(`materiales.${index}.pesoBruto`)}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className={styles.field}>
+                  <Label>Tara (kg)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    className={styles.mono}
+                    {...register(`materiales.${index}.tara`)}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className={styles.field}>
+                  <Label>Peso neto (kg)</Label>
+                  <div className={styles.computed}>{fmt(neto(filaActual))}</div>
+                </div>
+                <div className={styles.field}>
+                  <Label>Precio por kilo</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    className={styles.mono}
+                    {...register(`materiales.${index}.precioKilo`)}
+                    placeholder="0.00"
+                  />
+                  {erroresFila?.precioKilo && (
+                    <span className={styles.errorCampo}>{erroresFila.precioKilo.message}</span>
+                  )}
+                </div>
+                <div className={styles.field}>
+                  <Label>Total</Label>
+                  <div className={styles.computed}>$ {fmt(total(filaActual))}</div>
+                </div>
+                <div className={`${styles.field} ${styles.full}`}>
+                  <Label>Observaciones del material</Label>
+                  <Textarea
+                    rows={2}
+                    {...register(`materiales.${index}.observaciones`)}
+                    placeholder="Estado, humedad, contaminación, etc."
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
-        <Button type="button" variant="outline" onClick={addMaterial}>
+        <Button type="button" variant="outline" onClick={() => append(FILA_VACIA)}>
           + Agregar material
         </Button>
       </section>
@@ -424,9 +414,9 @@ export function IngresoForm() {
           {" · "}
           Total ingreso: <strong>$ {fmt(granTotal)}</strong>
         </div>
-        {error && (
+        {errorGeneral && (
           <span role="alert" style={{ color: "#c0392b", fontSize: 13 }}>
-            {error}
+            {errorGeneral}
           </span>
         )}
         {exito && (

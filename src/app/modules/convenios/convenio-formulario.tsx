@@ -1,4 +1,7 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Button } from "@/app/components/ui/button";
@@ -22,11 +25,8 @@ import { listarProveedores, type Proveedor } from "@/app/modules/proveedores/pro
 import { listarBodegas, type Bodega } from "@/app/modules/bodega/bodegasApi";
 import { interpretarErrorHttp } from "@/app/http/errores";
 import { obtenerTodo } from "@/app/http/paginacion";
+import { convenioSchema, type ConvenioFormValues } from "@/app/modules/convenios/convenioSchema";
 import styles from "@/app/modules/materiales/material-formulario.module.css";
-
-interface Errores {
-  [campo: string]: string;
-}
 
 const SIN_SELECCION = "__ninguno__";
 
@@ -48,22 +48,29 @@ export function ConvenioFormulario({
 }) {
   const esEdicion = Boolean(convenio);
 
-  const [nombre, setNombre] = useState(convenio?.nombre ?? "");
-  const [tipo, setTipo] = useState<TipoConvenio | "">(convenio?.tipo ?? "");
-  const [proveedorId, setProveedorId] = useState(convenio?.proveedorId ?? SIN_SELECCION);
-  const [bodegaId, setBodegaId] = useState(convenio?.bodegaId ?? SIN_SELECCION);
-  const [fechaInicio, setFechaInicio] = useState(convenio?.fechaInicio?.slice(0, 10) ?? "");
-  const [fechaFin, setFechaFin] = useState(convenio?.fechaFin?.slice(0, 10) ?? "");
-  const [valorTotal, setValorTotal] = useState(
-    convenio?.valorTotal != null ? String(convenio.valorTotal) : "",
-  );
-  const [responsable, setResponsable] = useState(convenio?.responsable ?? "");
-  const [descripcion, setDescripcion] = useState(convenio?.descripcion ?? "");
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm<ConvenioFormValues>({
+    resolver: zodResolver(convenioSchema),
+    defaultValues: {
+      nombre: convenio?.nombre ?? "",
+      tipo: convenio?.tipo ?? "",
+      proveedorId: convenio?.proveedorId ?? SIN_SELECCION,
+      bodegaId: convenio?.bodegaId ?? SIN_SELECCION,
+      fechaInicio: convenio?.fechaInicio?.slice(0, 10) ?? "",
+      fechaFin: convenio?.fechaFin?.slice(0, 10) ?? "",
+      valorTotal: convenio?.valorTotal != null ? String(convenio.valorTotal) : "",
+      responsable: convenio?.responsable ?? "",
+      descripcion: convenio?.descripcion ?? "",
+    },
+  });
 
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [bodegas, setBodegas] = useState<Bodega[]>([]);
 
-  const [errores, setErrores] = useState<Errores>({});
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
@@ -76,36 +83,19 @@ export function ConvenioFormulario({
       .catch(() => {});
   }, []);
 
-  function validar(): boolean {
-    const nuevos: Errores = {};
-    if (nombre.trim().length < 3) nuevos.nombre = "El nombre debe tener al menos 3 caracteres.";
-    if (!tipo) nuevos.tipo = "Selecciona el tipo de convenio.";
-    if (!fechaInicio) nuevos.fechaInicio = "La fecha de inicio es obligatoria.";
-    if (fechaFin && fechaInicio && fechaFin < fechaInicio) {
-      nuevos.fechaFin = "La fecha de fin no puede ser anterior a la de inicio.";
-    }
-    if (valorTotal !== "" && (Number.isNaN(parseFloat(valorTotal)) || parseFloat(valorTotal) < 0)) {
-      nuevos.valorTotal = "El valor debe ser un número positivo.";
-    }
-    setErrores(nuevos);
-    return Object.keys(nuevos).length === 0;
-  }
-
-  async function manejarEnvio(evento: React.FormEvent) {
-    evento.preventDefault();
+  async function onSubmit(valores: ConvenioFormValues) {
     setErrorGeneral(null);
-    if (!validar()) return;
 
     const cuerpo: CuerpoConvenio = {
-      nombre: nombre.trim(),
-      tipo: tipo as TipoConvenio,
-      proveedorId: proveedorId === SIN_SELECCION ? null : proveedorId,
-      bodegaId: bodegaId === SIN_SELECCION ? null : bodegaId,
-      fechaInicio,
-      fechaFin: fechaFin || null,
-      valorTotal: valorTotal === "" ? null : parseFloat(valorTotal),
-      responsable: responsable.trim() || null,
-      descripcion: descripcion.trim() || null,
+      nombre: valores.nombre.trim(),
+      tipo: valores.tipo as TipoConvenio,
+      proveedorId: valores.proveedorId === SIN_SELECCION ? null : valores.proveedorId,
+      bodegaId: valores.bodegaId === SIN_SELECCION ? null : valores.bodegaId,
+      fechaInicio: valores.fechaInicio,
+      fechaFin: valores.fechaFin || null,
+      valorTotal: valores.valorTotal === "" ? null : parseFloat(valores.valorTotal),
+      responsable: valores.responsable.trim() || null,
+      descripcion: valores.descripcion.trim() || null,
     };
 
     setEnviando(true);
@@ -125,7 +115,7 @@ export function ConvenioFormulario({
   }
 
   return (
-    <form className={styles.formulario} onSubmit={manejarEnvio}>
+    <form className={styles.formulario} onSubmit={handleSubmit(onSubmit)}>
       {errorGeneral && <div className={styles.alertaError}>{errorGeneral}</div>}
 
       <div className={styles.fila}>
@@ -133,85 +123,92 @@ export function ConvenioFormulario({
           <Label htmlFor="nombre">Nombre *</Label>
           <Input
             id="nombre"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
+            {...register("nombre")}
             placeholder="Convenio de compra de PET 2025"
           />
-          {errores.nombre && <span className={styles.errorCampo}>{errores.nombre}</span>}
+          {errors.nombre && <span className={styles.errorCampo}>{errors.nombre.message}</span>}
         </div>
         <div className={styles.campo}>
           <Label>Tipo *</Label>
-          <Select value={tipo} onValueChange={(v) => setTipo(v as TipoConvenio)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecciona tipo" />
-            </SelectTrigger>
-            <SelectContent>
-              {TIPOS_CONVENIO.map((t) => (
-                <SelectItem key={t} value={t}>
-                  {ETIQUETAS_TIPO[t]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {errores.tipo && <span className={styles.errorCampo}>{errores.tipo}</span>}
+          <Controller
+            name="tipo"
+            control={control}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIPOS_CONVENIO.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {ETIQUETAS_TIPO[t]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+          {errors.tipo && <span className={styles.errorCampo}>{errors.tipo.message}</span>}
         </div>
       </div>
 
       <div className={styles.fila}>
         <div className={styles.campo}>
           <Label>Proveedor</Label>
-          <Select value={proveedorId} onValueChange={setProveedorId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Sin proveedor" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={SIN_SELECCION}>Sin proveedor</SelectItem>
-              {proveedores.map((p) => (
-                <SelectItem key={p.id} value={p.id}>
-                  {p.nombre}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Controller
+            name="proveedorId"
+            control={control}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sin proveedor" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={SIN_SELECCION}>Sin proveedor</SelectItem>
+                  {proveedores.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
         </div>
         <div className={styles.campo}>
           <Label>Bodega</Label>
-          <Select value={bodegaId} onValueChange={setBodegaId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Sin bodega" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={SIN_SELECCION}>Sin bodega</SelectItem>
-              {bodegas.map((b) => (
-                <SelectItem key={b.id} value={b.id}>
-                  {b.nombre}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Controller
+            name="bodegaId"
+            control={control}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sin bodega" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={SIN_SELECCION}>Sin bodega</SelectItem>
+                  {bodegas.map((b) => (
+                    <SelectItem key={b.id} value={b.id}>
+                      {b.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
         </div>
       </div>
 
       <div className={styles.fila}>
         <div className={styles.campo}>
           <Label htmlFor="fechaInicio">Fecha de inicio *</Label>
-          <Input
-            id="fechaInicio"
-            type="date"
-            value={fechaInicio}
-            onChange={(e) => setFechaInicio(e.target.value)}
-          />
-          {errores.fechaInicio && <span className={styles.errorCampo}>{errores.fechaInicio}</span>}
+          <Input id="fechaInicio" type="date" {...register("fechaInicio")} />
+          {errors.fechaInicio && <span className={styles.errorCampo}>{errors.fechaInicio.message}</span>}
         </div>
         <div className={styles.campo}>
           <Label htmlFor="fechaFin">Fecha de fin</Label>
-          <Input
-            id="fechaFin"
-            type="date"
-            value={fechaFin}
-            onChange={(e) => setFechaFin(e.target.value)}
-          />
-          {errores.fechaFin && <span className={styles.errorCampo}>{errores.fechaFin}</span>}
+          <Input id="fechaFin" type="date" {...register("fechaFin")} />
+          {errors.fechaFin && <span className={styles.errorCampo}>{errors.fechaFin.message}</span>}
         </div>
       </div>
 
@@ -223,18 +220,16 @@ export function ConvenioFormulario({
             type="number"
             step="0.01"
             min="0"
-            value={valorTotal}
-            onChange={(e) => setValorTotal(e.target.value)}
+            {...register("valorTotal")}
             placeholder="5000000.00"
           />
-          {errores.valorTotal && <span className={styles.errorCampo}>{errores.valorTotal}</span>}
+          {errors.valorTotal && <span className={styles.errorCampo}>{errors.valorTotal.message}</span>}
         </div>
         <div className={styles.campo}>
           <Label htmlFor="responsable">Responsable</Label>
           <Input
             id="responsable"
-            value={responsable}
-            onChange={(e) => setResponsable(e.target.value)}
+            {...register("responsable")}
             placeholder="Juan Pérez"
           />
         </div>
@@ -244,8 +239,7 @@ export function ConvenioFormulario({
         <Label htmlFor="descripcion">Descripción / Condiciones</Label>
         <Textarea
           id="descripcion"
-          value={descripcion}
-          onChange={(e) => setDescripcion(e.target.value)}
+          {...register("descripcion")}
           placeholder="Describe las condiciones, términos y alcance del convenio..."
           rows={3}
         />
