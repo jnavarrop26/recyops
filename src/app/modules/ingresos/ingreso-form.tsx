@@ -14,30 +14,13 @@ import {
   SelectValue,
 } from "@/app/components/ui/select";
 import { registrarIngreso } from "@/app/modules/ingresos/ingresosApi";
-import { listarBodegas } from "@/app/modules/bodega/bodegasApi";
-import {
-  listarMateriales,
-  obtenerCategorias,
-  type Material as MaterialCatalogo,
-} from "@/app/modules/materiales/materialesApi";
+import { listarBodegas, type Bodega } from "@/app/modules/bodega/bodegasApi";
+import { listarMateriales, type Material as MaterialCatalogo } from "@/app/modules/materiales/materialesApi";
 import { ingresoSchema, type IngresoFormValues } from "@/app/modules/ingresos/ingresoSchema";
 import styles from "@/app/modules/ingresos/ingreso-form.module.css";
 
-// Respaldo si el catálogo del backend aún no responde.
-const CATEGORIAS_RESPALDO = [
-  "Cartón",
-  "Papel",
-  "PET",
-  "HDPE",
-  "Vidrio",
-  "Chatarra ferrosa",
-  "Aluminio",
-  "Cobre",
-];
-
 const FILA_VACIA = {
   materialId: "",
-  categoria: "",
   pesoBruto: "",
   tara: "",
   precioKilo: "",
@@ -64,7 +47,7 @@ export function IngresoForm() {
     defaultValues: {
       cedula: "",
       nombreCliente: "",
-      bodegaDestino: "",
+      bodegaDestinoId: "",
       encargado: localStorage.getItem("recyops_nombre") ?? "",
       placa: "",
       materiales: [FILA_VACIA],
@@ -78,11 +61,8 @@ export function IngresoForm() {
   const materialesWatch = useWatch({ control, name: "materiales" }) ?? [];
 
   // Catálogos que vienen del backend
-  const [bodegas, setBodegas] = useState<string[]>([]);
-  // Materiales reales de la empresa (módulo Materiales); si está vacío se
-  // cae al respaldo de categorías genéricas.
+  const [bodegas, setBodegas] = useState<Bodega[]>([]);
   const [catalogo, setCatalogo] = useState<MaterialCatalogo[]>([]);
-  const [categorias, setCategorias] = useState<string[]>(CATEGORIAS_RESPALDO);
 
   const [enviando, setEnviando] = useState(false);
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
@@ -90,23 +70,17 @@ export function IngresoForm() {
 
   useEffect(() => {
     listarBodegas({ estado: "ACTIVA", size: 100 })
-      .then((pagina) => setBodegas(pagina.content.map((b) => b.nombre)))
+      .then((pagina) => setBodegas(pagina.content))
       .catch(() => setBodegas([]));
     listarMateriales({ activo: "true", size: 100 })
       .then((pagina) => setCatalogo(pagina.content))
       .catch(() => setCatalogo([]));
-    obtenerCategorias()
-      .then((opciones) => {
-        if (opciones.length > 0) setCategorias(opciones.map((o) => o.nombre));
-      })
-      .catch(() => {});
   }, []);
 
   // Elegir un material del catálogo precarga su precio base (editable).
   function seleccionarMaterial(index: number, materialId: string) {
     const mat = catalogo.find((c) => c.id === materialId);
     setValue(`materiales.${index}.materialId`, materialId);
-    setValue(`materiales.${index}.categoria`, mat?.nombre ?? "");
     setValue(`materiales.${index}.precioKilo`, mat ? String(mat.precioBase) : "");
   }
 
@@ -119,23 +93,20 @@ export function IngresoForm() {
     setErrorGeneral(null);
     setExito(false);
 
-    const materialesValidos = valores.materiales.filter(
-      (m) => (m.materialId || m.categoria) && neto(m) > 0,
-    );
+    const materialesValidos = valores.materiales.filter((m) => m.materialId && neto(m) > 0);
 
     setEnviando(true);
     try {
       await registrarIngreso({
         cliente: valores.nombreCliente.trim(),
         cedula: valores.cedula.trim(),
-        bodegaDestino: valores.bodegaDestino,
+        bodegaDestinoId: valores.bodegaDestinoId,
         encargado: valores.encargado.trim(),
         placaVehiculo: valores.placa.trim() || null,
         pesoNetoTotal: Number(pesoNetoTotal.toFixed(2)),
         total: Number(granTotal.toFixed(2)),
         materiales: materialesValidos.map((m) => ({
-          materialId: m.materialId || null,
-          categoria: m.categoria,
+          materialId: m.materialId,
           pesoBruto: num(m.pesoBruto),
           tara: num(m.tara),
           precioKilo: num(m.precioKilo),
@@ -223,7 +194,7 @@ export function IngresoForm() {
           <div className={styles.field}>
             <Label>Bodega destino</Label>
             <Controller
-              name="bodegaDestino"
+              name="bodegaDestinoId"
               control={control}
               render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange}>
@@ -233,16 +204,18 @@ export function IngresoForm() {
                     />
                   </SelectTrigger>
                   <SelectContent>
-                    {bodegas.map((nombre) => (
-                      <SelectItem key={nombre} value={nombre}>
-                        {nombre}
+                    {bodegas.map((b) => (
+                      <SelectItem key={b.id} value={b.id}>
+                        {b.nombre}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               )}
             />
-            {errors.bodegaDestino && <span className={styles.errorCampo}>{errors.bodegaDestino.message}</span>}
+            {errors.bodegaDestinoId && (
+              <span className={styles.errorCampo}>{errors.bodegaDestinoId.message}</span>
+            )}
           </div>
           <div className={styles.field}>
             <Label htmlFor="encargado">Encargado de recepción</Label>
@@ -293,53 +266,31 @@ export function IngresoForm() {
               </div>
               <div className={styles.grid}>
                 <div className={styles.field}>
+                  <Label>Material</Label>
                   {catalogo.length > 0 ? (
-                    <>
-                      <Label>Material</Label>
-                      <Controller
-                        name={`materiales.${index}.materialId`}
-                        control={control}
-                        render={({ field: selectField }) => (
-                          <Select
-                            value={selectField.value}
-                            onValueChange={(v) => seleccionarMaterial(index, v)}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecciona material" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {catalogo.map((mat) => (
-                                <SelectItem key={mat.id} value={mat.id}>
-                                  {mat.nombre}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
-                    </>
+                    <Controller
+                      name={`materiales.${index}.materialId`}
+                      control={control}
+                      render={({ field: selectField }) => (
+                        <Select
+                          value={selectField.value}
+                          onValueChange={(v) => seleccionarMaterial(index, v)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona material" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {catalogo.map((mat) => (
+                              <SelectItem key={mat.id} value={mat.id}>
+                                {mat.nombre}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
                   ) : (
-                    <>
-                      <Label>Categoría</Label>
-                      <Controller
-                        name={`materiales.${index}.categoria`}
-                        control={control}
-                        render={({ field: selectField }) => (
-                          <Select value={selectField.value} onValueChange={selectField.onChange}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecciona categoría" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {categorias.map((c) => (
-                                <SelectItem key={c} value={c}>
-                                  {c}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
-                    </>
+                    <div className={styles.computed}>No hay materiales configurados en el catálogo</div>
                   )}
                 </div>
                 <div className={styles.field}>
