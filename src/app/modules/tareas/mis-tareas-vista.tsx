@@ -86,7 +86,7 @@ export function MisTareasVista() {
       ) : error && tareas.length === 0 ? (
         <div className={`${styles.estado} ${styles.error}`}>{error}</div>
       ) : tareas.length === 0 ? (
-        <div className={styles.estado}>No tienes tareas asignadas. 🎉</div>
+        <div className={styles.estado}>No tienes tareas asignadas.</div>
       ) : (
         <div className={styles.lista}>
           {activas.map((tarea) => (

@@ -21,16 +21,14 @@ type TipoReporte = "entregas" | "proveedores" | "bodegas";
 
 interface ConfigReporte {
   id: TipoReporte;
-  emoji: string;
-  color: string;
   nombre: string;
   desc: string;
 }
 
 const TIPOS: ConfigReporte[] = [
-  { id: "entregas", emoji: "📦", color: "#e8f0fe", nombre: "Entregas", desc: "Historial de recepciones" },
-  { id: "proveedores", emoji: "🏭", color: "#dcf2e3", nombre: "Proveedores", desc: "Directorio de proveedores" },
-  { id: "bodegas", emoji: "🏗️", color: "#fdf0d5", nombre: "Bodegas", desc: "Capacidad y estado" },
+  { id: "entregas", nombre: "Entregas", desc: "Historial de recepciones" },
+  { id: "proveedores", nombre: "Proveedores", desc: "Directorio de proveedores" },
+  { id: "bodegas", nombre: "Bodegas", desc: "Capacidad y estado" },
 ];
 
 const TODOS = "__todos__";
@@ -123,14 +121,14 @@ function ReporteEntregas() {
     }
   }, [desde, hasta, fEstado]);
 
-  const cabeceras = ["Código", "Proveedor", "Material", "Peso (kg)", "Bodega", "Estado", "Fecha recepción", "Registrado por"];
+  const cabeceras = ["Código", "Convenio", "Persona que entrega", "Total (kg)", "Bodega", "Estado", "Fecha recepción", "Registrado por"];
   const filas = datos.map((e) => [
-    e.codigo, e.proveedorNombre, e.tipoMaterialNombre,
-    fmtPeso.format(e.pesoKg), e.bodegaNombre, e.estado,
+    e.codigo, e.convenioNombre ?? "—", e.personaEntregaNombre ?? "—",
+    fmtPeso.format(e.totalKg), e.bodegaNombre, e.estado,
     fmtFecha(e.fechaRecepcion), e.usuarioRegistroNombre,
   ]);
 
-  const totalKg = datos.reduce((s, e) => s + e.pesoKg, 0);
+  const totalKg = datos.reduce((s, e) => s + e.totalKg, 0);
 
   return (
     <>
@@ -204,9 +202,9 @@ function ReporteEntregas() {
               <thead>
                 <tr>
                   <th>Código</th>
-                  <th>Proveedor</th>
-                  <th>Material</th>
-                  <th className={styles.derecha}>Peso (kg)</th>
+                  <th>Convenio</th>
+                  <th>Persona que entrega</th>
+                  <th className={styles.derecha}>Total (kg)</th>
                   <th>Bodega</th>
                   <th>Estado</th>
                   <th>Fecha</th>
@@ -216,9 +214,9 @@ function ReporteEntregas() {
                 {datos.slice(0, 50).map((e) => (
                   <tr key={e.id}>
                     <td className={styles.mono}>{e.codigo}</td>
-                    <td>{e.proveedorNombre}</td>
-                    <td>{e.tipoMaterialNombre}</td>
-                    <td className={`${styles.mono} ${styles.derecha}`}>{fmtPeso.format(e.pesoKg)}</td>
+                    <td>{e.convenioNombre ?? "—"}</td>
+                    <td>{e.personaEntregaNombre ?? "—"}</td>
+                    <td className={`${styles.mono} ${styles.derecha}`}>{fmtPeso.format(e.totalKg)}</td>
                     <td>{e.bodegaNombre}</td>
                     <td><ChipEstadoEntrega estado={e.estado} /></td>
                     <td className={styles.mono}>{fmtFecha(e.fechaRecepcion)}</td>
@@ -263,10 +261,10 @@ function ReporteProveedores() {
     }
   }, [fEstado]);
 
-  const cabeceras = ["Nombre", "NIT", "Contacto", "Teléfono", "Email", "Calificación", "Estado", "Fecha registro"];
+  const cabeceras = ["Nombre", "NIT", "Contacto", "Teléfono", "Email", "Estado", "Fecha registro"];
   const filas = datos.map((p) => [
     p.nombre, p.nit, p.contacto ?? "—", p.telefono ?? "—",
-    p.email ?? "—", p.calificacion, p.estado, fmtFecha(p.fechaCreacion),
+    p.email ?? "—", p.estado, fmtFecha(p.fechaCreacion),
   ]);
 
   return (
@@ -329,7 +327,6 @@ function ReporteProveedores() {
                   <th>Contacto</th>
                   <th>Teléfono</th>
                   <th>Email</th>
-                  <th className={styles.derecha}>Calificación</th>
                   <th>Estado</th>
                 </tr>
               </thead>
@@ -341,7 +338,6 @@ function ReporteProveedores() {
                     <td>{p.contacto ?? "—"}</td>
                     <td className={styles.mono}>{p.telefono ?? "—"}</td>
                     <td>{p.email ?? "—"}</td>
-                    <td className={`${styles.mono} ${styles.derecha}`}>{"★".repeat(Math.round(p.calificacion))}</td>
                     <td>
                       <span style={{
                         padding: "2px 8px", borderRadius: 999, fontSize: 11, fontWeight: 600,

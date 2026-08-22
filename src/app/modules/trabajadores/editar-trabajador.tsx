@@ -45,6 +45,7 @@ export function EditarTrabajador({
     resolver: zodResolver(editarTrabajadorSchema),
     defaultValues: {
       nombreCompleto: trabajador.nombreCompleto,
+      cedula: trabajador.cedula ?? "",
       telefono: trabajador.telefono ?? "",
       bodegaId: trabajador.bodegaId ?? "",
       rolId: trabajador.rolId,
@@ -74,6 +75,7 @@ export function EditarTrabajador({
     try {
       const actualizado = await actualizarTrabajador(trabajador.id, {
         nombreCompleto: valores.nombreCompleto.trim(),
+        cedula: valores.cedula.trim(),
         telefono: valores.telefono.trim() || null,
         bodegaId: valores.bodegaId,
         rolId: valores.rolId,
@@ -112,6 +114,16 @@ export function EditarTrabajador({
           {...register("nombreCompleto")}
         />
         {errors.nombreCompleto && <span className={styles.errorCampo}>{errors.nombreCompleto.message}</span>}
+      </div>
+
+      <div className={styles.campo}>
+        <Label htmlFor="editCedula">Cédula *</Label>
+        <Input
+          id="editCedula"
+          inputMode="numeric"
+          {...register("cedula")}
+        />
+        {errors.cedula && <span className={styles.errorCampo}>{errors.cedula.message}</span>}
       </div>
 
       <div className={styles.campo}>

@@ -65,13 +65,6 @@ const secciones: SeccionMenu[] = [
         etiquetaPrincipal: "Registrar ingreso",
         subopciones: [{ ruta: "/ingreso/historial", etiqueta: "Historial de ingresos" }],
       },
-      {
-        ruta: "/entregas",
-        etiqueta: "Entregas",
-        etiquetaPrincipal: "Registrar entrega",
-        soloAdmin: true,
-        subopciones: [{ ruta: "/entregas/historial", etiqueta: "Historial de entregas" }],
-      },
       { ruta: "/inventario", etiqueta: "Inventario", soloAdmin: true },
       { ruta: "/bodegas", etiqueta: "Bodegas", soloAdmin: true },
     ],
@@ -88,9 +81,22 @@ const secciones: SeccionMenu[] = [
     etiqueta: "Sistema",
     opciones: [
       { ruta: "/reportes", etiqueta: "Reportes", soloAdmin: true },
-      { ruta: "/logs", etiqueta: "Logs", soloAdmin: true },
-      { ruta: "/configuracion", etiqueta: "Configuración" },
-      { ruta: "/servicios-externos", etiqueta: "Servicios externos", soloAdmin: true },
+      {
+        ruta: "/configuracion",
+        etiqueta: "Configuración",
+        subopciones: [{ ruta: "/logs", etiqueta: "Logs", soloAdmin: true }],
+      },
+      {
+        // Entregas es una integración con el proveedor/servicio externo que
+        // recoge el material, así que vive dentro de Servicios externos.
+        ruta: "/servicios-externos",
+        etiqueta: "Servicios externos",
+        soloAdmin: true,
+        subopciones: [
+          { ruta: "/entregas", etiqueta: "Entregas" },
+          { ruta: "/entregas/historial", etiqueta: "Historial de entregas" },
+        ],
+      },
     ],
   },
 ];

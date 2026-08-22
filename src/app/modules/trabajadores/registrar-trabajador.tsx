@@ -46,6 +46,7 @@ export function RegistrarTrabajador({
       nombreCompleto: "",
       username: "",
       email: "",
+      cedula: "",
       telefono: "",
       bodegaId: "",
       rolId: "",
@@ -86,6 +87,7 @@ export function RegistrarTrabajador({
         nombreCompleto: valores.nombreCompleto.trim(),
         username: valores.username.trim(),
         email: valores.email.trim(),
+        cedula: valores.cedula.trim(),
         telefono: valores.telefono.trim() || undefined,
         bodegaId: valores.bodegaId,
         rolId: valores.rolId,
@@ -139,15 +141,27 @@ export function RegistrarTrabajador({
         </div>
       </div>
 
-      <div className={styles.campo}>
-        <Label htmlFor="email">Email *</Label>
-        <Input
-          id="email"
-          type="email"
-          {...register("email")}
-          placeholder="ana@recyops.com"
-        />
-        {errors.email && <span className={styles.errorCampo}>{errors.email.message}</span>}
+      <div className={styles.fila}>
+        <div className={styles.campo}>
+          <Label htmlFor="email">Email *</Label>
+          <Input
+            id="email"
+            type="email"
+            {...register("email")}
+            placeholder="ana@recyops.com"
+          />
+          {errors.email && <span className={styles.errorCampo}>{errors.email.message}</span>}
+        </div>
+        <div className={styles.campo}>
+          <Label htmlFor="cedula">Cédula *</Label>
+          <Input
+            id="cedula"
+            inputMode="numeric"
+            {...register("cedula")}
+            placeholder="1023456789"
+          />
+          {errors.cedula && <span className={styles.errorCampo}>{errors.cedula.message}</span>}
+        </div>
       </div>
 
       <div className={styles.fila}>

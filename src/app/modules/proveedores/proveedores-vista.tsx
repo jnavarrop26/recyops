@@ -13,16 +13,13 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/app/components/ui/dialog";
 import { ProveedorFormulario } from "@/app/modules/proveedores/proveedor-formulario";
-import { EstrellasCalificacion } from "@/app/shared/components/estrellas-calificacion";
 import {
   listarProveedores,
   cambiarEstadoProveedor,
-  calificarProveedor,
   obtenerEntregasProveedor,
   ESTADOS_PROVEEDOR,
   type Proveedor,
@@ -66,14 +63,10 @@ export function ProveedoresVista() {
 
   const [fEstado, setFEstado] = useState(TODOS);
   const [fNombre, setFNombre] = useState("");
-  const [fCalificacionMin, setFCalificacionMin] = useState(TODOS);
 
   // Modales
   const [modalForm, setModalForm] = useState(false);
   const [proveedorEditando, setProveedorEditando] = useState<Proveedor | null>(null);
-
-  const [modalCalificar, setModalCalificar] = useState<Proveedor | null>(null);
-  const [calificacionTemporal, setCalificacionTemporal] = useState(0);
 
   const [modalEntregas, setModalEntregas] = useState<Proveedor | null>(null);
   const [entregas, setEntregas] = useState<EntregaProveedor[]>([]);
@@ -89,7 +82,6 @@ export function ProveedoresVista() {
         const datos = await listarProveedores({
           estado: valor(fEstado),
           nombre: fNombre.trim() || undefined,
-          calificacionMin: valor(fCalificacionMin),
           page: paginaSolicitada,
           size: TAMANO_PAGINA,
         });
@@ -104,7 +96,7 @@ export function ProveedoresVista() {
         setCargando(false);
       }
     },
-    [fEstado, fNombre, fCalificacionMin],
+    [fEstado, fNombre],
   );
 
   useEffect(() => {
@@ -120,7 +112,6 @@ export function ProveedoresVista() {
   function limpiarFiltros() {
     setFEstado(TODOS);
     setFNombre("");
-    setFCalificacionMin(TODOS);
   }
 
   function abrirCrear() {
@@ -148,27 +139,6 @@ export function ProveedoresVista() {
       setError(interpretarErrorHttp(e, {
         404: "El proveedor no existe o fue eliminado.",
       }, "No se pudo cambiar el estado del proveedor."));
-    }
-  }
-
-  function abrirCalificar(p: Proveedor) {
-    setCalificacionTemporal(p.calificacion);
-    setModalCalificar(p);
-  }
-
-  async function guardarCalificacion() {
-    if (!modalCalificar) return;
-    try {
-      const actualizado = await calificarProveedor(modalCalificar.id, calificacionTemporal);
-      setProveedores((prev) =>
-        prev.map((x) => (x.id === modalCalificar.id ? { ...x, calificacion: actualizado.calificacion } : x)),
-      );
-      setModalCalificar(null);
-    } catch (e) {
-      setError(interpretarErrorHttp(e, {
-        404: "El proveedor no existe o fue eliminado.",
-      }, "No se pudo guardar la calificación."));
-      setModalCalificar(null);
     }
   }
 
@@ -217,22 +187,6 @@ export function ProveedoresVista() {
             </SelectContent>
           </Select>
         </div>
-        <div className={styles.campoFiltro}>
-          <Label>Calificación mínima</Label>
-          <Select value={fCalificacionMin} onValueChange={setFCalificacionMin}>
-            <SelectTrigger>
-              <SelectValue placeholder="Todas" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={TODOS}>Todas</SelectItem>
-              {[1, 2, 3, 4, 5].map((n) => (
-                <SelectItem key={n} value={String(n)}>
-                  {n}+ estrellas
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
         <div className={styles.accionesFiltro}>
           <Button type="button" variant="outline" onClick={limpiarFiltros}>
             Limpiar
@@ -259,7 +213,6 @@ export function ProveedoresVista() {
                   <th>NIT</th>
                   <th>Contacto</th>
                   <th>Teléfono</th>
-                  <th>Calificación</th>
                   <th>Estado</th>
                   <th>Acciones</th>
                 </tr>
@@ -271,7 +224,6 @@ export function ProveedoresVista() {
                     <td className={styles.mono}>{p.nit}</td>
                     <td>{p.contacto ?? "—"}</td>
                     <td className={styles.mono}>{p.telefono ?? "—"}</td>
-                    <td><EstrellasCalificacion valor={p.calificacion} /></td>
                     <td><ChipEstadoProveedor estado={p.estado} /></td>
                     <td>
                       <div className={styles.acciones}>
@@ -282,9 +234,6 @@ export function ProveedoresVista() {
                           <>
                             <Button variant="outline" size="sm" onClick={() => abrirEditar(p)}>
                               Editar
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={() => abrirCalificar(p)}>
-                              Calificar
                             </Button>
                             <div className={styles.selectEstado}>
                               <Select value={p.estado} onValueChange={(v) => cambiarEstado(p, v as EstadoProveedor)}>
@@ -332,7 +281,7 @@ export function ProveedoresVista() {
           <DialogHeader>
             <DialogTitle>{proveedorEditando ? "Editar proveedor" : "Nuevo proveedor"}</DialogTitle>
             <DialogDescription>
-              Los campos con * son obligatorios. El estado y la calificación se gestionan desde la tabla.
+              Los campos con * son obligatorios. El estado se gestiona desde la tabla.
             </DialogDescription>
           </DialogHeader>
           <ProveedorFormulario
@@ -340,30 +289,6 @@ export function ProveedoresVista() {
             alGuardar={alGuardar}
             alCerrar={() => setModalForm(false)}
           />
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal calificar */}
-      <Dialog open={modalCalificar !== null} onOpenChange={(abierto) => !abierto && setModalCalificar(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Calificar proveedor</DialogTitle>
-            <DialogDescription>{modalCalificar?.nombre}</DialogDescription>
-          </DialogHeader>
-          <div className={styles.calificarCaja}>
-            <EstrellasCalificacion
-              valor={calificacionTemporal}
-              interactivo
-              grande
-              alCambiar={setCalificacionTemporal}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setModalCalificar(null)}>
-              Cancelar
-            </Button>
-            <Button onClick={guardarCalificacion}>Guardar calificación</Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -385,11 +310,11 @@ export function ProveedoresVista() {
                   <div className={styles.entregaInfo}>
                     <span className={styles.entregaCodigo}>{entrega.codigo}</span>
                     <span className={styles.entregaMeta}>
-                      {entrega.tipoMaterialNombre} · {entrega.estado} · {formatearFecha(entrega.fechaRecepcion)}
+                      {entrega.estado} · {formatearFecha(entrega.fechaRecepcion)}
                     </span>
                   </div>
                   <span className={styles.entregaPeso}>
-                    {entrega.pesoKg.toLocaleString("es-CO")} kg
+                    {entrega.totalKg.toLocaleString("es-CO")} kg
                   </span>
                 </div>
               ))}

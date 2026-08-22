@@ -1,6 +1,7 @@
 .pagina {
   font-family: var(--font-sans);
   max-width: 780px;
+  margin: 0 auto;
 }
 
 /* ── Cabecera ─────────────────────────────────── */

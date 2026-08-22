@@ -1,47 +1,41 @@
 import logoMarcaAgua from "@/app/public/icons/logo-1-recyops.svg?raw";
 import faviconRecyops from "@/app/public/icons/favicon-recyops.svg?raw";
-import { obtenerIngresoPorUuid, type Ingreso } from "@/app/modules/ingresos/ingresosApi";
+import { obtenerEntrega, type Entrega, type EstadoEntrega } from "@/app/modules/entregas/entregasApi";
 
 /**
- * Plantilla HTML imprimible del recibo de ingreso de material.
+ * Plantilla HTML imprimible del recibo de entrega de material a bodega.
  * Se abre en una ventana nueva lista para imprimir o guardar como PDF.
- * Usa el logo 1 de RecyOps como marca de agua y el isotipo en la cabecera.
+ * Comparte el sistema visual del recibo de ingreso (mismo ticket, misma
+ * marca de agua y paleta) para que ambos documentos se vean como parte
+ * de la misma familia, con dos firmas en blanco al final.
  */
 
-const ETIQUETAS_ESTADO: Record<string, string> = {
-  POR_CLASIFICAR: "Por clasificar",
-  EN_BODEGA: "En bodega",
-  DESPACHADO: "Despachado",
-  RECHAZADO: "Rechazado",
+const ETIQUETAS_ESTADO: Record<EstadoEntrega, string> = {
+  RECIBIDA: "Recibida",
+  EN_PROCESO: "En proceso",
+  PROCESADA: "Procesada",
+  DESPACHADA: "Despachada",
 };
 
-const TINTAS_ESTADO: Record<string, string> = {
-  POR_CLASIFICAR: "#B97A12",
-  EN_BODEGA: "#178E3B",
-  DESPACHADO: "#178E3B",
-  RECHAZADO: "#C0392B",
-};
-
-const ETIQUETAS_PAGO: Record<string, string> = {
-  POR_PAGAR: "Por pagar",
-  PAGADO: "Pagado",
-};
-
-const ETIQUETAS_METODO: Record<string, string> = {
-  EFECTIVO: "Efectivo",
-  TRANSFERENCIA: "Transferencia",
+const TINTAS_ESTADO: Record<EstadoEntrega, string> = {
+  RECIBIDA: "#B97A12",
+  EN_PROCESO: "#1D6FB8",
+  PROCESADA: "#178E3B",
+  DESPACHADA: "#178E3B",
 };
 
 const escapar = (valor: string | null | undefined) =>
   (valor ?? "—").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-const moneda = (v: number) =>
-  "$ " + v.toLocaleString("es-CO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
 const kilos = (v: number) =>
   v.toLocaleString("es-CO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-const folio = (id: number) => "REC-" + String(id).padStart(6, "0");
+function nombrePersonaConCedula(entrega: Entrega): string | null {
+  if (!entrega.personaEntregaNombre) return null;
+  return entrega.personaEntregaCedula
+    ? `${entrega.personaEntregaNombre} (CC ${entrega.personaEntregaCedula})`
+    : entrega.personaEntregaNombre;
+}
 
 function fechaLarga(iso: string) {
   const f = new Date(iso);
@@ -55,45 +49,15 @@ function fechaLarga(iso: string) {
   });
 }
 
-function tablaMateriales(ingreso: Ingreso): string {
-  if (!ingreso.detalles || ingreso.detalles.length === 0) return "";
-  const filas = ingreso.detalles
-    .map(
-      (d) => `<tr>
-        <td>${escapar(d.categoria)}${d.observaciones ? `<div class="obs">${escapar(d.observaciones)}</div>` : ""}</td>
-        <td class="num mono">${kilos(d.pesoBruto)}</td>
-        <td class="num mono">${kilos(d.tara)}</td>
-        <td class="num mono">${kilos(d.pesoNeto)}</td>
-        <td class="num mono">${moneda(d.precioKilo)}</td>
-        <td class="num mono">${moneda(d.subtotal)}</td>
-      </tr>`,
-    )
-    .join("");
-  return `
-      <table class="materiales">
-        <thead>
-          <tr>
-            <th>Material</th>
-            <th class="num">Bruto (kg)</th>
-            <th class="num">Tara (kg)</th>
-            <th class="num">Neto (kg)</th>
-            <th class="num">Precio / kg</th>
-            <th class="num">Subtotal</th>
-          </tr>
-        </thead>
-        <tbody>${filas}</tbody>
-      </table>`;
-}
-
-export function plantillaReciboIngreso(ingreso: Ingreso): string {
-  const estado = ETIQUETAS_ESTADO[ingreso.estado] ?? ingreso.estado;
-  const tintaEstado = TINTAS_ESTADO[ingreso.estado] ?? "#203529";
+export function plantillaReciboEntrega(entrega: Entrega): string {
+  const estado = ETIQUETAS_ESTADO[entrega.estado] ?? entrega.estado;
+  const tintaEstado = TINTAS_ESTADO[entrega.estado] ?? "#203529";
 
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
-<title>${folio(ingreso.id)} · Recibo de ingreso · RecyOPS</title>
+<title>${escapar(entrega.codigo)} · Recibo de entrega · RecyOPS</title>
 <style>
   :root {
     --tinta: #203529;
@@ -123,7 +87,6 @@ export function plantillaReciboIngreso(ingreso: Ingreso): string {
     border-right: 1px solid var(--linea);
     overflow: hidden;
   }
-  /* Perforado de tiquete arriba y abajo */
   .perforado {
     height: 12px;
     background:
@@ -165,21 +128,6 @@ export function plantillaReciboIngreso(ingreso: Ingreso): string {
   .folio-numero { font-size: 19px; font-weight: 700; }
   .folio-fecha { font-size: 11px; color: var(--tenue); margin-top: 3px; }
   .folio-uuid { font-size: 9px; color: var(--tenue); margin-top: 4px; letter-spacing: 0.02em; }
-
-  .materiales { width: 100%; border-collapse: collapse; margin-top: 4px; font-size: 12.5px; }
-  .materiales th {
-    font-size: 9.5px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: var(--tenue);
-    text-align: left;
-    padding: 7px 8px;
-    border-bottom: 1.5px solid var(--tinta);
-  }
-  .materiales td { padding: 7px 8px; border-bottom: 1px dashed var(--linea); vertical-align: top; }
-  .materiales .num { text-align: right; white-space: nowrap; }
-  .materiales .obs { font-size: 10px; color: var(--tenue); margin-top: 2px; }
 
   .titulo-doc {
     margin: 18px 0 14px;
@@ -227,26 +175,51 @@ export function plantillaReciboIngreso(ingreso: Ingreso): string {
   }
   .valor { font-size: 14px; }
 
-  .cifras {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+  .tabla-lineas { margin-top: 18px; }
+  .tabla-lineas table { width: 100%; border-collapse: collapse; }
+  .tabla-lineas th {
+    text-align: left;
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--tenue);
+    padding: 6px 0;
+    border-bottom: 1px solid var(--linea);
+  }
+  .tabla-lineas td {
+    font-size: 13px;
+    padding: 7px 0;
+    border-bottom: 1px dashed var(--linea);
+  }
+  .col-derecha { text-align: right; }
+
+  .cifra-envoltorio {
     border: 1.5px solid var(--tinta);
     margin-top: 16px;
+    padding: 14px 18px 16px;
+    text-align: center;
   }
-  .cifra { padding: 14px 18px 16px; }
-  .cifra + .cifra { border-left: 1.5px solid var(--tinta); }
-  .cifra-valor { font-size: 25px; font-weight: 700; line-height: 1.1; white-space: nowrap; }
+  .cifra-valor { font-size: 25px; font-weight: 700; line-height: 1.1; }
   .cifra-unidad { font-size: 13px; font-weight: 400; color: var(--tenue); }
 
   .firmas {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 48px;
-    margin-top: 44px;
+    margin-top: 76px;
   }
-  .firma { border-top: 1px solid var(--tinta); padding-top: 6px; }
-  .firma .etiqueta { margin-bottom: 2px; }
-  .firma .valor { font-size: 12px; color: var(--tenue); }
+  .firma-linea { border-top: 1px solid var(--tinta); padding-top: 6px; }
+  .firma-nombre { font-size: 13px; font-weight: 600; }
+  .firma-rol {
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--tenue);
+    margin-top: 2px;
+  }
+  .firma-detalle { font-size: 11px; color: var(--tenue); margin-top: 1px; }
 
   footer {
     margin-top: 22px;
@@ -299,76 +272,73 @@ export function plantillaReciboIngreso(ingreso: Ingreso): string {
         </div>
         <div class="folio">
           <div class="folio-etiqueta">Recibo N.º</div>
-          <div class="folio-numero mono">${folio(ingreso.id)}</div>
-          <div class="folio-fecha">${escapar(fechaLarga(ingreso.fecha))}</div>
-          <div class="folio-uuid mono">Verificación: ${escapar(ingreso.uuid)}</div>
+          <div class="folio-numero mono">${escapar(entrega.codigo)}</div>
+          <div class="folio-fecha">${escapar(fechaLarga(entrega.fechaRecepcion))}</div>
+          <div class="folio-uuid mono">Verificación: ${escapar(entrega.id)}</div>
         </div>
       </header>
 
-      <div class="titulo-doc">Recibo de ingreso de material</div>
+      <div class="titulo-doc">Recibo de entrega de material</div>
 
       <div class="datos">
         <div class="grupo">
-          <div class="etiqueta">Cliente</div>
-          <div class="valor">${escapar(ingreso.cliente)}</div>
+          <div class="etiqueta">Convenio</div>
+          <div class="valor">${escapar(entrega.convenioNombre)}</div>
         </div>
         <div class="grupo">
-          <div class="etiqueta">Cédula / NIT</div>
-          <div class="valor mono">${escapar(ingreso.cedula)}</div>
+          <div class="etiqueta">Persona que entrega</div>
+          <div class="valor">${escapar(nombrePersonaConCedula(entrega))}</div>
         </div>
         <div class="grupo">
           <div class="etiqueta">Bodega destino</div>
-          <div class="valor">${escapar(ingreso.bodegaDestino)}</div>
+          <div class="valor">${escapar(entrega.bodegaNombre)}</div>
         </div>
         <div class="grupo">
-          <div class="etiqueta">Encargado de recepción</div>
-          <div class="valor">${escapar(ingreso.encargado)}</div>
+          <div class="etiqueta">Recibido por</div>
+          <div class="valor">${escapar(entrega.usuarioRegistroNombre)}</div>
         </div>
         <div class="grupo">
-          <div class="etiqueta">Placa del vehículo</div>
-          <div class="valor mono">${escapar(ingreso.placaVehiculo)}</div>
-        </div>
-        <div class="grupo">
-          <div class="etiqueta">Fecha y hora de ingreso</div>
-          <div class="valor">${escapar(fechaLarga(ingreso.fecha))}</div>
-        </div>
-        <div class="grupo">
-          <div class="etiqueta">Estado de pago</div>
-          <div class="valor">${escapar(ETIQUETAS_PAGO[ingreso.estadoPago] ?? ingreso.estadoPago)}</div>
-        </div>
-        <div class="grupo">
-          <div class="etiqueta">Método de pago</div>
-          <div class="valor">${escapar(ingreso.metodoPago ? (ETIQUETAS_METODO[ingreso.metodoPago] ?? ingreso.metodoPago) : null)}</div>
+          <div class="etiqueta">Fecha de recepción</div>
+          <div class="valor">${escapar(fechaLarga(entrega.fechaRecepcion))}</div>
         </div>
       </div>
 
-      ${tablaMateriales(ingreso)}
+      <div class="tabla-lineas">
+        <table>
+          <thead>
+            <tr><th>Material</th><th class="col-derecha">Peso (kg)</th></tr>
+          </thead>
+          <tbody>
+            ${entrega.lineas.map((linea) => `
+            <tr>
+              <td>${escapar(linea.tipoMaterialNombre)}</td>
+              <td class="mono col-derecha">${kilos(linea.pesoKg)}</td>
+            </tr>`).join("")}
+          </tbody>
+        </table>
+      </div>
 
-      <div class="cifras">
-        <div class="cifra">
-          <div class="etiqueta">Peso neto total</div>
-          <div class="cifra-valor mono">${kilos(ingreso.pesoNetoTotal)} <span class="cifra-unidad">kg</span></div>
-        </div>
-        <div class="cifra">
-          <div class="etiqueta">Total a pagar</div>
-          <div class="cifra-valor mono">${moneda(ingreso.total)}</div>
-        </div>
+      <div class="cifra-envoltorio">
+        <div class="etiqueta">Total recibido</div>
+        <div class="cifra-valor mono">${kilos(entrega.totalKg)} <span class="cifra-unidad">kg</span></div>
       </div>
 
       <div class="firmas">
-        <div class="firma">
-          <div class="etiqueta">Entrega</div>
-          <div class="valor">${escapar(ingreso.cliente)} · CC ${escapar(ingreso.cedula)}</div>
+        <div class="firma-linea">
+          <div class="firma-nombre">${escapar(nombrePersonaConCedula(entrega))}</div>
+          <div class="firma-rol">Quien entrega</div>
+          <div class="firma-detalle">${escapar(entrega.convenioNombre)}</div>
         </div>
-        <div class="firma">
-          <div class="etiqueta">Recibe</div>
-          <div class="valor">${escapar(ingreso.encargado)} · ${escapar(ingreso.bodegaDestino)}</div>
+        <div class="firma-linea">
+          <div class="firma-nombre">${escapar(entrega.usuarioRegistroNombre)}</div>
+          <div class="firma-rol">Quien recibe</div>
+          <div class="firma-detalle">${escapar(entrega.bodegaNombre)}</div>
         </div>
       </div>
 
       <footer>
         <span>RecyOPS · Trazabilidad de material reciclable</span>
-        <span class="mono">${folio(ingreso.id)} · ${escapar(ingreso.uuid)}</span>
+        <span class="mono">${escapar(entrega.codigo)} · ${escapar(entrega.id)}</span>
       </footer>
     </div>
     <div class="perforado abajo"></div>
@@ -381,31 +351,21 @@ export function plantillaReciboIngreso(ingreso: Ingreso): string {
 </html>`;
 }
 
-/** Abre el recibo en una pestaña nueva listo para imprimir o guardar en PDF. */
-export function abrirReciboIngreso(ingreso: Ingreso) {
-  const ventana = window.open("", "_blank");
-  if (!ventana) return;
-  ventana.document.write(plantillaReciboIngreso(ingreso));
-  ventana.document.close();
-}
-
 /**
- * Trae el ingreso completo (con su detalle de materiales) y abre el recibo.
- * Se consulta por UUID (identificador público no enumerable, como Supabase).
- * La ventana se abre primero (sincrónicamente, en el gesto del clic) para no
- * chocar con el bloqueador de emergentes; el contenido se navega después vía
- * un Blob URL en lugar de document.write, que algunos navegadores bloquean o
- * ignoran cuando se invoca de forma asíncrona sobre un documento ya cargado
- * (la ventana queda entonces colgada en el mensaje de "Generando recibo…").
+ * Trae la entrega completa y abre el recibo. La ventana se abre primero
+ * (sincrónicamente, en el gesto del clic) para no chocar con el bloqueador
+ * de emergentes; el contenido se navega después vía un Blob URL en lugar de
+ * document.write, que algunos navegadores bloquean o ignoran cuando se
+ * invoca de forma asíncrona sobre un documento ya cargado.
  */
-export async function abrirReciboIngresoPorUuid(uuid: string) {
+export async function abrirReciboEntrega(id: string): Promise<void> {
   const ventana = window.open("", "_blank");
   if (!ventana) return;
   ventana.document.title = "Generando recibo…";
   try {
-    const ingreso = await obtenerIngresoPorUuid(uuid);
+    const entrega = await obtenerEntrega(id);
     const url = URL.createObjectURL(
-      new Blob([plantillaReciboIngreso(ingreso)], { type: "text/html" }),
+      new Blob([plantillaReciboEntrega(entrega)], { type: "text/html" }),
     );
     ventana.location.href = url;
     setTimeout(() => URL.revokeObjectURL(url), 60000);

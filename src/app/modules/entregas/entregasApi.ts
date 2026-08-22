@@ -3,27 +3,35 @@ import { normalizarPagina, type Pagina } from "@/app/http/paginacion";
 
 export type EstadoEntrega = "RECIBIDA" | "EN_PROCESO" | "PROCESADA" | "DESPACHADA";
 
-export interface Entrega {
-  id: string;
-  codigo: string;
-  proveedorId: string;
-  proveedorNombre: string;
-  bodegaId: string;
-  bodegaNombre: string;
+export interface LineaEntrega {
   tipoMaterialId: string;
   tipoMaterialNombre: string;
   pesoKg: number;
-  personaEntrega: string | null;
+}
+
+/** Encabezado de entrega — forma liviana que devuelve el listado (sin líneas). */
+export interface Entrega {
+  id: string;
+  codigo: string;
+  convenioId: string | null;
+  convenioNombre: string | null;
+  bodegaId: string;
+  bodegaNombre: string;
+  personaEntregaId: string | null;
+  personaEntregaNombre: string | null;
+  personaEntregaCedula: string | null;
+  totalKg: number;
   estado: EstadoEntrega;
   fechaRecepcion: string;
   usuarioRegistroNombre: string;
+  lineas: LineaEntrega[];
 }
 
 export type PaginaEntregas = Pagina<Entrega>;
 
 export interface FiltrosEntregas {
   bodegaId?: string;
-  proveedorId?: string;
+  convenioId?: string;
   estado?: string;
   fechaDesde?: string;
   fechaHasta?: string;
@@ -31,13 +39,17 @@ export interface FiltrosEntregas {
   size?: number;
 }
 
-export interface CuerpoEntrega {
-  proveedorId: string;
-  bodegaId: string;
+export interface CuerpoLineaEntrega {
   tipoMaterialId: string;
   pesoKg: number;
-  personaEntrega: string | null;
+}
+
+export interface CuerpoEntrega {
+  convenioId: string;
+  bodegaId: string;
+  personaEntregaId: string;
   fechaRecepcion: string | null;
+  lineas: CuerpoLineaEntrega[];
 }
 
 export const ESTADOS_ENTREGA: EstadoEntrega[] = [
@@ -59,7 +71,7 @@ export async function listarEntregas(filtros: FiltrosEntregas = {}): Promise<Pag
   const { data } = await clienteApi.get("/entregas", {
     params: {
       bodegaId: filtros.bodegaId || undefined,
-      proveedorId: filtros.proveedorId || undefined,
+      convenioId: filtros.convenioId || undefined,
       estado: filtros.estado || undefined,
       fechaDesde: filtros.fechaDesde || undefined,
       fechaHasta: filtros.fechaHasta || undefined,
@@ -70,7 +82,7 @@ export async function listarEntregas(filtros: FiltrosEntregas = {}): Promise<Pag
   return normalizarPagina<Entrega>(data, size);
 }
 
-// GET /api/entregas/{id}
+// GET /api/entregas/{id} — trae las líneas de material.
 export async function obtenerEntrega(id: string): Promise<Entrega> {
   const { data } = await clienteApi.get<Entrega>(`/entregas/${id}`);
   return data;
@@ -93,13 +105,4 @@ export async function cambiarEstadoEntrega(id: string, valor: EstadoEntrega): Pr
 // DELETE /api/entregas/{id}
 export async function eliminarEntrega(id: string): Promise<void> {
   await clienteApi.delete(`/entregas/${id}`);
-}
-
-// GET /api/entregas/{id}/recibo -> PDF
-export async function abrirReciboEntrega(id: string): Promise<void> {
-  const respuesta = await clienteApi.get(`/entregas/${id}/recibo`, { responseType: "blob" });
-  const url = URL.createObjectURL(respuesta.data);
-  window.open(url, "_blank");
-  // Libera la URL después de un momento para no acumular memoria.
-  setTimeout(() => URL.revokeObjectURL(url), 60000);
 }

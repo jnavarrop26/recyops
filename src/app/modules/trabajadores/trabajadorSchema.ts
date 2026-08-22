@@ -24,6 +24,7 @@ export const trabajadorSchema = z
       .trim()
       .min(1, "El correo es obligatorio.")
       .refine((v) => z.string().email().safeParse(v).success, "Ingresa un correo con formato válido."),
+    cedula: z.string().trim().min(1, "La cédula es obligatoria."),
     telefono: z
       .string()
       .trim()
@@ -52,6 +53,7 @@ export type TrabajadorFormValues = z.infer<typeof trabajadorSchema>;
  */
 export const editarTrabajadorSchema = z.object({
   nombreCompleto: z.string().trim().min(3, "El nombre completo debe tener al menos 3 caracteres."),
+  cedula: z.string().trim().min(1, "La cédula es obligatoria."),
   telefono: z
     .string()
     .trim()

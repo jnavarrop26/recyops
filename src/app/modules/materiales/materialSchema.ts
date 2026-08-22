@@ -5,9 +5,9 @@ export const UNIDADES_EMPAQUE = ["GRANEL", "PACA"] as const;
 
 /**
  * Replica CuerpoMaterial (backend):
- *   nombre @NotBlank, categoriaCodigo @NotBlank, subcategoriaCodigo/codigoResinaCodigo/
- *   colorCodigo (libres), unidadMedida @NotNull, unidadEmpaque @NotNull,
- *   precioBase @NotNull @Positive, factorCalidad @NotNull @Positive, umbralMerma (libre).
+ *   nombre @NotBlank, categoriaCodigo @NotBlank, resinaCodigo/colorCodigo (libres),
+ *   unidadMedida @NotNull, unidadEmpaque @NotNull, precioBase @NotNull @Positive,
+ *   factorCalidad @NotNull @Positive, umbralMerma (libre).
  *
  * "nombre" min 3 caracteres y "umbralMerma entre 0 y 100" son reglas solo-frontend,
  * se conservan.
@@ -18,7 +18,6 @@ export const UNIDADES_EMPAQUE = ["GRANEL", "PACA"] as const;
 export const materialSchema = z.object({
   nombre: z.string().trim().min(3, "El nombre debe tener al menos 3 caracteres."),
   categoriaCodigo: z.string().min(1, "Selecciona una categoría."),
-  subcategoriaCodigo: z.string(),
   resinaCodigo: z.string(),
   colorCodigo: z.string(),
   unidadMedida: z

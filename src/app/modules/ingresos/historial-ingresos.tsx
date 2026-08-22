@@ -6,15 +6,9 @@ import { Button } from "@/app/components/ui/button";
 import {
   obtenerHistorialIngresos,
   registrarPagoIngreso,
-  cambiarEstadoIngreso,
-  cambiarPasoIngreso,
-  esEstadoIngreso,
   esMetodoPago,
-  ESTADOS_INGRESO,
-  ETIQUETA_ESTADO_INGRESO,
   METODOS_PAGO,
   type Ingreso,
-  type EstadoIngreso,
   type MetodoPago,
 } from "@/app/modules/ingresos/ingresosApi";
 import { ChipEstadoPago, ETIQUETA_METODO } from "@/app/modules/ingresos/chip-estado-pago";
@@ -112,10 +106,8 @@ export function HistorialIngresos() {
           ingreso.id === actualizado.id
             ? {
                 ...ingreso,
-                estado: actualizado.estado,
                 estadoPago: actualizado.estadoPago,
                 metodoPago: actualizado.metodoPago,
-                paso: actualizado.paso,
               }
             : ingreso,
         ),
@@ -134,20 +126,6 @@ export function HistorialIngresos() {
       "No se pudo registrar el pago. Intenta de nuevo.",
     );
 
-  const cambiarEstado = (id: number, estado: EstadoIngreso) =>
-    ejecutarCambio(
-      id,
-      () => cambiarEstadoIngreso(id, estado),
-      "No se pudo cambiar el estado. Intenta de nuevo.",
-    );
-
-  const cambiarPaso = (id: number, valor: boolean) =>
-    ejecutarCambio(
-      id,
-      () => cambiarPasoIngreso(id, valor),
-      "No se pudo actualizar la marca de paso. Intenta de nuevo.",
-    );
-
   // Separa lo registrado hoy del resto del historial (solo aplica a la página 0)
   const ingresosHoy = ingresos.filter((ingreso) => esDeHoy(ingreso.fecha));
   const ingresosAnteriores = ingresos.filter((ingreso) => !esDeHoy(ingreso.fecha));
@@ -157,8 +135,6 @@ export function HistorialIngresos() {
   const propsTabla = {
     actualizandoId,
     onPagar: pagarIngreso,
-    onCambiarEstado: cambiarEstado,
-    onCambiarPaso: cambiarPaso,
   };
 
   return (
@@ -283,8 +259,6 @@ interface PropsTablaIngresos {
   ingresos: Ingreso[];
   actualizandoId: number | null;
   onPagar: (id: number, metodo: MetodoPago) => void;
-  onCambiarEstado: (id: number, estado: EstadoIngreso) => void;
-  onCambiarPaso: (id: number, valor: boolean) => void;
 }
 
 /** Tabla compartida por las dos secciones (hoy / historial general). */
@@ -292,8 +266,6 @@ function TablaIngresos({
   ingresos,
   actualizandoId,
   onPagar,
-  onCambiarEstado,
-  onCambiarPaso,
 }: PropsTablaIngresos) {
   return (
     <div className={styles.tablaScroll}>
@@ -308,9 +280,7 @@ function TablaIngresos({
             <th>Placa</th>
             <th className={styles.derecha}>Peso neto</th>
             <th className={styles.derecha}>Total</th>
-            <th>Estado</th>
             <th>Pago</th>
-            <th>Paso</th>
             <th>Recibo</th>
           </tr>
         </thead>
@@ -332,74 +302,28 @@ function TablaIngresos({
                   {formatearMoneda(ingreso.total)}
                 </td>
                 <td>
-                  <select
-                    className={styles.selectFila}
-                    aria-label="Cambiar estado del ingreso"
-                    value={esEstadoIngreso(ingreso.estado) ? ingreso.estado : ""}
-                    disabled={ocupada}
-                    onChange={(e) => {
-                      const valor = e.target.value;
-                      if (esEstadoIngreso(valor)) onCambiarEstado(ingreso.id, valor);
-                    }}
-                  >
-                    {ESTADOS_INGRESO.map((estado) => (
-                      <option key={estado} value={estado}>
-                        {ETIQUETA_ESTADO_INGRESO[estado]}
+                  <span className={styles.accionesPago}>
+                    <ChipEstadoPago estadoPago={ingreso.estadoPago} metodoPago={ingreso.metodoPago} />
+                    <select
+                      className={styles.selectFila}
+                      aria-label="Registrar método de pago"
+                      value={ingreso.metodoPago ?? ""}
+                      disabled={ocupada || ingreso.metodoPago !== null}
+                      onChange={(e) => {
+                        const metodo = e.target.value;
+                        if (esMetodoPago(metodo)) onPagar(ingreso.id, metodo);
+                      }}
+                    >
+                      <option value="" disabled>
+                        Seleccionar
                       </option>
-                    ))}
-                  </select>
-                </td>
-                <td>
-                  {ingreso.estadoPago === "PAGADO" ? (
-                    <span className={styles.accionesPago}>
-                      <ChipEstadoPago estadoPago={ingreso.estadoPago} metodoPago={null} />
-                      <select
-                        className={styles.selectFila}
-                        aria-label="Cambiar método de pago"
-                        value={ingreso.metodoPago ?? ""}
-                        disabled={ocupada}
-                        onChange={(e) => {
-                          const metodo = e.target.value;
-                          if (esMetodoPago(metodo)) onPagar(ingreso.id, metodo);
-                        }}
-                      >
-                        {METODOS_PAGO.map((metodo) => (
-                          <option key={metodo} value={metodo}>
-                            {ETIQUETA_METODO[metodo]}
-                          </option>
-                        ))}
-                      </select>
-                    </span>
-                  ) : (
-                    <span className={styles.accionesPago}>
-                      <ChipEstadoPago estadoPago={ingreso.estadoPago} metodoPago={null} />
                       {METODOS_PAGO.map((metodo) => (
-                        <Button
-                          key={metodo}
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          disabled={ocupada}
-                          title={`Marcar pagado con ${ETIQUETA_METODO[metodo].toLowerCase()}`}
-                          onClick={() => onPagar(ingreso.id, metodo)}
-                        >
+                        <option key={metodo} value={metodo}>
                           {ETIQUETA_METODO[metodo]}
-                        </Button>
+                        </option>
                       ))}
-                    </span>
-                  )}
-                </td>
-                <td>
-                  <button
-                    type="button"
-                    className={`${styles.chipPaso} ${ingreso.paso ? styles.chipPasoSi : ""}`}
-                    aria-pressed={ingreso.paso}
-                    disabled={ocupada}
-                    title={ingreso.paso ? "Marcar como no pasó" : "Marcar como pasó"}
-                    onClick={() => onCambiarPaso(ingreso.id, !ingreso.paso)}
-                  >
-                    {ingreso.paso ? "Sí" : "No"}
-                  </button>
+                    </select>
+                  </span>
                 </td>
                 <td>
                   <Button

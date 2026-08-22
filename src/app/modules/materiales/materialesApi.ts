@@ -6,8 +6,6 @@ export interface Material {
   nombre: string;
   categoriaCodigo: string;
   categoriaNombre: string;
-  subcategoriaCodigo: string | null;
-  subcategoriaNombre: string | null;
   resinaCodigo: string | null;
   resinaNombre: string | null;
   colorCodigo: string | null;
@@ -42,8 +40,7 @@ export interface OpcionCatalogo {
 export interface CuerpoMaterial {
   nombre: string;
   categoriaCodigo: string;
-  subcategoriaCodigo: string | null;
-  codigoResinaCodigo: string | null;
+  resinaCodigo: string | null;
   colorCodigo: string | null;
   unidadMedida: string;
   unidadEmpaque: string;
@@ -76,14 +73,6 @@ export async function listarMateriales(
 // GET /api/materiales/categorias
 export async function obtenerCategorias(): Promise<OpcionCatalogo[]> {
   const { data } = await clienteApi.get("/materiales/categorias");
-  return Array.isArray(data) ? data : [];
-}
-
-// GET /api/materiales/subcategorias?categoria=
-export async function obtenerSubcategorias(categoria: string): Promise<OpcionCatalogo[]> {
-  const { data } = await clienteApi.get("/materiales/subcategorias", {
-    params: { categoria },
-  });
   return Array.isArray(data) ? data : [];
 }
 

@@ -13,7 +13,6 @@ import {
 } from "@/app/components/ui/select";
 import {
   obtenerCategorias,
-  obtenerSubcategorias,
   obtenerResinas,
   obtenerColores,
   crearMaterial,
@@ -56,7 +55,6 @@ export function MaterialFormulario({
     defaultValues: {
       nombre: material?.nombre ?? "",
       categoriaCodigo: material?.categoriaCodigo ?? "",
-      subcategoriaCodigo: material?.subcategoriaCodigo ?? "",
       resinaCodigo: material?.resinaCodigo ?? "",
       colorCodigo: material?.colorCodigo ?? "",
       unidadMedida: material?.unidadMedida ?? "",
@@ -70,7 +68,6 @@ export function MaterialFormulario({
   const categoriaCodigo = watch("categoriaCodigo");
 
   const [categorias, setCategorias] = useState<OpcionCatalogo[]>([]);
-  const [subcategorias, setSubcategorias] = useState<OpcionCatalogo[]>([]);
   const [resinas, setResinas] = useState<OpcionCatalogo[]>([]);
   const [colores, setColores] = useState<OpcionCatalogo[]>([]);
 
@@ -97,22 +94,6 @@ export function MaterialFormulario({
     })();
   }, []);
 
-  // Recarga subcategorías cada vez que cambia la categoría.
-  useEffect(() => {
-    if (!categoriaCodigo) {
-      setSubcategorias([]);
-      return;
-    }
-    (async () => {
-      try {
-        const subs = await obtenerSubcategorias(categoriaCodigo);
-        setSubcategorias(subs);
-      } catch {
-        setSubcategorias([]);
-      }
-    })();
-  }, [categoriaCodigo]);
-
   // Si la categoría deja de ser PLASTICO, se limpian resina y color.
   useEffect(() => {
     if (!esPlastico) {
@@ -121,11 +102,6 @@ export function MaterialFormulario({
     }
   }, [esPlastico, setValue]);
 
-  function manejarCambioCategoria(valor: string, onChange: (v: string) => void) {
-    onChange(valor);
-    setValue("subcategoriaCodigo", ""); // se reinicia al cambiar categoría
-  }
-
   async function onSubmit(valores: MaterialFormOutput) {
     setErrorGeneral(null);
 
@@ -133,8 +109,7 @@ export function MaterialFormulario({
     const cuerpo: CuerpoMaterial = {
       nombre: valores.nombre.trim(),
       categoriaCodigo: valores.categoriaCodigo,
-      subcategoriaCodigo: valores.subcategoriaCodigo || null,
-      codigoResinaCodigo: esPlastico ? valores.resinaCodigo || null : null,
+      resinaCodigo: esPlastico ? valores.resinaCodigo || null : null,
       colorCodigo: esPlastico ? valores.colorCodigo || null : null,
       unidadMedida: valores.unidadMedida,
       unidadEmpaque: valores.unidadEmpaque,
@@ -168,56 +143,29 @@ export function MaterialFormulario({
         {errors.nombre && <span className={styles.errorCampo}>{errors.nombre.message}</span>}
       </div>
 
-      <div className={styles.fila}>
-        <div className={styles.campo}>
-          <Label>Categoría *</Label>
-          <Controller
-            name="categoriaCodigo"
-            control={control}
-            render={({ field }) => (
-              <Select value={field.value} onValueChange={(v) => manejarCambioCategoria(v, field.onChange)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona categoría" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categorias.map((c) => (
-                    <SelectItem key={c.codigo} value={c.codigo}>
-                      {c.nombre}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-          {errors.categoriaCodigo && (
-            <span className={styles.errorCampo}>{errors.categoriaCodigo.message}</span>
+      <div className={styles.campo}>
+        <Label>Categoría *</Label>
+        <Controller
+          name="categoriaCodigo"
+          control={control}
+          render={({ field }) => (
+            <Select value={field.value} onValueChange={field.onChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecciona categoría" />
+              </SelectTrigger>
+              <SelectContent>
+                {categorias.map((c) => (
+                  <SelectItem key={c.codigo} value={c.codigo}>
+                    {c.nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
-        </div>
-        <div className={styles.campo}>
-          <Label>Subcategoría</Label>
-          <Controller
-            name="subcategoriaCodigo"
-            control={control}
-            render={({ field }) => (
-              <Select
-                value={field.value}
-                onValueChange={field.onChange}
-                disabled={!categoriaCodigo || subcategorias.length === 0}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona subcategoría" />
-                </SelectTrigger>
-                <SelectContent>
-                  {subcategorias.map((s) => (
-                    <SelectItem key={s.codigo} value={s.codigo}>
-                      {s.nombre}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </div>
+        />
+        {errors.categoriaCodigo && (
+          <span className={styles.errorCampo}>{errors.categoriaCodigo.message}</span>
+        )}
       </div>
 
       <div className={styles.fila}>
@@ -234,7 +182,7 @@ export function MaterialFormulario({
                 <SelectContent>
                   {resinas.map((r) => (
                     <SelectItem key={r.codigo} value={r.codigo}>
-                      {r.codigo} · {r.nombre}
+                      {r.nombre}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -77,6 +77,32 @@
   font-family: var(--font-mono);
 }
 
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.tabla th {
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tabla td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.derecha {
+  text-align: right;
+}
+
 .mapa {
   margin-top: 18px;
   border: 1px solid var(--line);

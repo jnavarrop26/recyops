@@ -145,14 +145,6 @@
   gap: 12px;
 }
 
-.calificarCaja {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 0;
-}
-
 .entregas {
   display: flex;
   flex-direction: column;

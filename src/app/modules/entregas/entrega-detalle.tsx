@@ -5,10 +5,10 @@ import { ChipEstadoEntrega } from "@/app/modules/entregas/chip-estado-entrega";
 import {
   obtenerEntrega,
   cambiarEstadoEntrega,
-  abrirReciboEntrega,
   siguienteEstado,
   type Entrega,
 } from "@/app/modules/entregas/entregasApi";
+import { abrirReciboEntrega } from "@/app/modules/entregas/recibo-entrega";
 import { interpretarErrorHttp } from "@/app/http/errores";
 import styles from "@/app/modules/bodega/bodega-detalle.module.css";
 
@@ -94,26 +94,25 @@ export function EntregaDetalle() {
         <h2 className={styles.tarjetaTitulo}>Información de la entrega</h2>
         <div className={styles.datos}>
           <div className={styles.dato}>
-            <span className={styles.datoEtiqueta}>Proveedor</span>
-            <span className={styles.datoValor}>{entrega.proveedorNombre}</span>
+            <span className={styles.datoEtiqueta}>Convenio</span>
+            <span className={styles.datoValor}>{entrega.convenioNombre ?? "—"}</span>
           </div>
           <div className={styles.dato}>
             <span className={styles.datoEtiqueta}>Bodega</span>
             <span className={styles.datoValor}>{entrega.bodegaNombre}</span>
           </div>
           <div className={styles.dato}>
-            <span className={styles.datoEtiqueta}>Material</span>
-            <span className={styles.datoValor}>{entrega.tipoMaterialNombre}</span>
-          </div>
-          <div className={styles.dato}>
-            <span className={styles.datoEtiqueta}>Peso</span>
-            <span className={`${styles.datoValor} ${styles.mono}`}>
-              {entrega.pesoKg.toLocaleString("es-CO")} kg
+            <span className={styles.datoEtiqueta}>Persona que entrega</span>
+            <span className={styles.datoValor}>
+              {entrega.personaEntregaNombre ?? "—"}
+              {entrega.personaEntregaCedula && ` (CC ${entrega.personaEntregaCedula})`}
             </span>
           </div>
           <div className={styles.dato}>
-            <span className={styles.datoEtiqueta}>Persona que entrega</span>
-            <span className={styles.datoValor}>{entrega.personaEntrega ?? "—"}</span>
+            <span className={styles.datoEtiqueta}>Total</span>
+            <span className={`${styles.datoValor} ${styles.mono}`}>
+              {entrega.totalKg.toLocaleString("es-CO")} kg
+            </span>
           </div>
           <div className={styles.dato}>
             <span className={styles.datoEtiqueta}>Registrado por</span>
@@ -126,6 +125,28 @@ export function EntregaDetalle() {
             </span>
           </div>
         </div>
+      </div>
+
+      <div className={styles.tarjeta}>
+        <h2 className={styles.tarjetaTitulo}>Líneas de material</h2>
+        <table className={styles.tabla}>
+          <thead>
+            <tr>
+              <th>Material</th>
+              <th className={styles.derecha}>Peso (kg)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {entrega.lineas.map((linea) => (
+              <tr key={linea.tipoMaterialId}>
+                <td>{linea.tipoMaterialNombre}</td>
+                <td className={`${styles.mono} ${styles.derecha}`}>
+                  {linea.pesoKg.toLocaleString("es-CO")}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

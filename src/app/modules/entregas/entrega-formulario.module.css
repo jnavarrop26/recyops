@@ -1,0 +1,47 @@
+.seccionLineas {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tituloSeccion {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--brand);
+  margin: 8px 0 0;
+}
+
+.linea {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  background-color: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lineaHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.lineaLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.avisoLinea {
+  font-size: 12px;
+  color: var(--destructive);
+}
+
+.total {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--brand-dark);
+  text-align: right;
+}

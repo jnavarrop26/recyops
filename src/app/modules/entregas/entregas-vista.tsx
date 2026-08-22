@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router";
+import { Printer } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Label } from "@/app/components/ui/label";
 import { Input } from "@/app/components/ui/input";
@@ -14,32 +14,18 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/app/components/ui/dialog";
 import { EntregaFormulario } from "@/app/modules/entregas/entrega-formulario";
-import { ChipEstadoEntrega } from "@/app/modules/entregas/chip-estado-entrega";
-import {
-  listarEntregas,
-  cambiarEstadoEntrega,
-  eliminarEntrega,
-  abrirReciboEntrega,
-  siguienteEstado,
-  ESTADOS_ENTREGA,
-  type Entrega,
-} from "@/app/modules/entregas/entregasApi";
-import { listarProveedores, type Proveedor } from "@/app/modules/proveedores/proveedoresApi";
+import { listarEntregas, ESTADOS_ENTREGA, type Entrega } from "@/app/modules/entregas/entregasApi";
+import { abrirReciboEntrega } from "@/app/modules/entregas/recibo-entrega";
+import { listarConvenios, type Convenio } from "@/app/modules/convenios/conveniosApi";
 import { listarBodegas, type Bodega } from "@/app/modules/bodega/bodegasApi";
-import { interpretarErrorHttp } from "@/app/http/errores";
 import styles from "@/app/modules/entregas/entregas-vista.module.css";
 
 const TAMANO_PAGINA = 20;
 const TODOS = "__todos__";
-
-function esAdmin(): boolean {
-  return (localStorage.getItem("recyops_rol") || "").toUpperCase() === "ADMIN";
-}
 
 const formatearFecha = (iso: string) => {
   const f = new Date(iso);
@@ -47,9 +33,6 @@ const formatearFecha = (iso: string) => {
 };
 
 export function EntregasVista() {
-  const admin = esAdmin();
-  const navegar = useNavigate();
-
   const [entregas, setEntregas] = useState<Entrega[]>([]);
   const [totalElementos, setTotalElementos] = useState(0);
   const [totalPaginas, setTotalPaginas] = useState(0);
@@ -58,16 +41,15 @@ export function EntregasVista() {
   const [error, setError] = useState<string | null>(null);
 
   const [fBodega, setFBodega] = useState(TODOS);
-  const [fProveedor, setFProveedor] = useState(TODOS);
+  const [fConvenio, setFConvenio] = useState(TODOS);
   const [fEstado, setFEstado] = useState(TODOS);
   const [fDesde, setFDesde] = useState("");
   const [fHasta, setFHasta] = useState("");
 
   const [bodegas, setBodegas] = useState<Bodega[]>([]);
-  const [proveedores, setProveedores] = useState<Proveedor[]>([]);
+  const [convenios, setConvenios] = useState<Convenio[]>([]);
 
   const [modalForm, setModalForm] = useState(false);
-  const [entregaEliminar, setEntregaEliminar] = useState<Entrega | null>(null);
 
   const valor = (v: string) => (v === TODOS ? undefined : v);
 
@@ -78,7 +60,7 @@ export function EntregasVista() {
       try {
         const datos = await listarEntregas({
           bodegaId: valor(fBodega),
-          proveedorId: valor(fProveedor),
+          convenioId: valor(fConvenio),
           estado: valor(fEstado),
           fechaDesde: fDesde || undefined,
           fechaHasta: fHasta || undefined,
@@ -96,18 +78,18 @@ export function EntregasVista() {
         setCargando(false);
       }
     },
-    [fBodega, fProveedor, fEstado, fDesde, fHasta],
+    [fBodega, fConvenio, fEstado, fDesde, fHasta],
   );
 
   useEffect(() => {
     (async () => {
       try {
-        const [bs, ps] = await Promise.all([
+        const [bs, cs] = await Promise.all([
           listarBodegas({ size: 100 }),
-          listarProveedores({ size: 100 }),
+          listarConvenios({ size: 100 }),
         ]);
         setBodegas(bs.content);
-        setProveedores(ps.content);
+        setConvenios(cs.content);
       } catch {
         /* filtros quedarán vacíos */
       }
@@ -123,7 +105,7 @@ export function EntregasVista() {
 
   function limpiarFiltros() {
     setFBodega(TODOS);
-    setFProveedor(TODOS);
+    setFConvenio(TODOS);
     setFEstado(TODOS);
     setFDesde("");
     setFHasta("");
@@ -134,20 +116,6 @@ export function EntregasVista() {
     cargar(0);
   }
 
-  async function avanzarEstado(entrega: Entrega) {
-    const siguiente = siguienteEstado(entrega.estado);
-    if (!siguiente) return;
-    try {
-      const actualizada = await cambiarEstadoEntrega(entrega.id, siguiente);
-      setEntregas((prev) => prev.map((e) => (e.id === entrega.id ? { ...e, estado: actualizada.estado } : e)));
-    } catch (e) {
-      setError(interpretarErrorHttp(e, {
-        409: "Transición de estado no permitida.",
-        400: "Transición de estado no permitida.",
-      }, "No se pudo cambiar el estado de la entrega."));
-    }
-  }
-
   async function descargarRecibo(entrega: Entrega) {
     try {
       await abrirReciboEntrega(entrega.id);
@@ -156,26 +124,12 @@ export function EntregasVista() {
     }
   }
 
-  async function confirmarEliminar() {
-    if (!entregaEliminar) return;
-    try {
-      await eliminarEntrega(entregaEliminar.id);
-      setEntregaEliminar(null);
-      cargar(pagina);
-    } catch (e) {
-      setError(interpretarErrorHttp(e, {
-        409: "No se puede eliminar una entrega ya procesada.",
-      }, "No se pudo eliminar la entrega."));
-      setEntregaEliminar(null);
-    }
-  }
-
   return (
     <div className={styles.contenedor}>
       <div className={styles.cabecera}>
         <div>
           <h1 className={styles.titulo}>Entregas</h1>
-          <p className={styles.subtitulo}>Recepción de material de proveedores en bodega.</p>
+          <p className={styles.subtitulo}>Recepción de material por convenio en bodega.</p>
         </div>
         <Button onClick={() => setModalForm(true)}>Registrar entrega</Button>
       </div>
@@ -198,16 +152,16 @@ export function EntregasVista() {
           </Select>
         </div>
         <div className={styles.campoFiltro}>
-          <Label>Proveedor</Label>
-          <Select value={fProveedor} onValueChange={setFProveedor}>
+          <Label>Convenio</Label>
+          <Select value={fConvenio} onValueChange={setFConvenio}>
             <SelectTrigger>
               <SelectValue placeholder="Todos" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={TODOS}>Todos</SelectItem>
-              {proveedores.map((p) => (
-                <SelectItem key={p.id} value={p.id}>
-                  {p.nombre}
+              {convenios.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.nombre}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -260,52 +214,38 @@ export function EntregasVista() {
               <thead>
                 <tr>
                   <th>Código</th>
-                  <th>Proveedor</th>
-                  <th>Material</th>
-                  <th className={styles.derecha}>Peso (kg)</th>
+                  <th>Convenio</th>
+                  <th>Persona que entrega</th>
+                  <th className={styles.derecha}>Total (kg)</th>
                   <th>Bodega</th>
-                  <th>Estado</th>
                   <th>Fecha</th>
-                  <th>Acciones</th>
+                  <th>Recibo</th>
                 </tr>
               </thead>
               <tbody>
-                {entregas.map((entrega) => {
-                  const siguiente = siguienteEstado(entrega.estado);
-                  return (
-                    <tr key={entrega.id}>
-                      <td className={styles.mono}>{entrega.codigo}</td>
-                      <td>{entrega.proveedorNombre}</td>
-                      <td>{entrega.tipoMaterialNombre}</td>
-                      <td className={`${styles.mono} ${styles.derecha}`}>
-                        {entrega.pesoKg.toLocaleString("es-CO")}
-                      </td>
-                      <td>{entrega.bodegaNombre}</td>
-                      <td><ChipEstadoEntrega estado={entrega.estado} /></td>
-                      <td className={styles.mono}>{formatearFecha(entrega.fechaRecepcion)}</td>
-                      <td>
-                        <div className={styles.acciones}>
-                          <Button variant="outline" size="sm" onClick={() => navegar(`/entregas/${entrega.id}`)}>
-                            Ver
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => descargarRecibo(entrega)}>
-                            Recibo
-                          </Button>
-                          {siguiente && (
-                            <Button variant="outline" size="sm" onClick={() => avanzarEstado(entrega)}>
-                              → {siguiente}
-                            </Button>
-                          )}
-                          {admin && (
-                            <Button variant="outline" size="sm" onClick={() => setEntregaEliminar(entrega)}>
-                              Eliminar
-                            </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {entregas.map((entrega) => (
+                  <tr key={entrega.id}>
+                    <td className={styles.mono}>{entrega.codigo}</td>
+                    <td>{entrega.convenioNombre ?? "—"}</td>
+                    <td>{entrega.personaEntregaNombre ?? "—"}</td>
+                    <td className={`${styles.mono} ${styles.derecha}`}>
+                      {entrega.totalKg.toLocaleString("es-CO")}
+                    </td>
+                    <td>{entrega.bodegaNombre}</td>
+                    <td className={styles.mono}>{formatearFecha(entrega.fechaRecepcion)}</td>
+                    <td>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        title="Ver e imprimir recibo"
+                        onClick={() => descargarRecibo(entrega)}
+                      >
+                        <Printer size={15} />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
 
@@ -331,27 +271,10 @@ export function EntregasVista() {
           <DialogHeader>
             <DialogTitle>Registrar entrega</DialogTitle>
             <DialogDescription>
-              Solo se listan proveedores, bodegas y materiales activos.
+              Solo se listan convenios, bodegas y trabajadores activos.
             </DialogDescription>
           </DialogHeader>
           <EntregaFormulario alGuardar={alGuardar} alCerrar={() => setModalForm(false)} />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={entregaEliminar !== null} onOpenChange={(abierto) => !abierto && setEntregaEliminar(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Eliminar entrega</DialogTitle>
-            <DialogDescription>
-              ¿Seguro que deseas eliminar la entrega {entregaEliminar?.codigo}? Esta acción no se puede deshacer.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEntregaEliminar(null)}>
-              Cancelar
-            </Button>
-            <Button onClick={confirmarEliminar}>Eliminar</Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

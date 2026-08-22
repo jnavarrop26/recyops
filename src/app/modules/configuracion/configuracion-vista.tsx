@@ -77,6 +77,7 @@ function FormularioCrearOperario() {
   const [nombre, setNombre] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [cedula, setCedula] = useState("");
   const [telefono, setTelefono] = useState("");
   const [bodegaId, setBodegaId] = useState("");
   const [rolId, setRolId] = useState("");
@@ -96,6 +97,7 @@ function FormularioCrearOperario() {
     if (nombre.trim().length < 3) nuevos.nombre = "El nombre debe tener al menos 3 caracteres.";
     if (!username.trim()) nuevos.username = "El usuario es obligatorio.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) nuevos.email = "Correo con formato inválido.";
+    if (!cedula.trim()) nuevos.cedula = "La cédula es obligatoria.";
     if (!bodegaId) nuevos.bodegaId = "Selecciona una bodega.";
     if (!rolId) nuevos.rolId = "Selecciona un rol.";
     setErrores(nuevos);
@@ -114,6 +116,7 @@ function FormularioCrearOperario() {
         nombreCompleto: nombre.trim(),
         username: username.trim(),
         email: email.trim(),
+        cedula: cedula.trim(),
         telefono: telefono.trim() || undefined,
         bodegaId,
         rolId,
@@ -122,6 +125,7 @@ function FormularioCrearOperario() {
       setNombre("");
       setUsername("");
       setEmail("");
+      setCedula("");
       setTelefono("");
       setBodegaId("");
       setRolId("");
@@ -213,6 +217,20 @@ function FormularioCrearOperario() {
           />
           {errores.email && <span className={styles.errorCampo}>{errores.email}</span>}
         </div>
+        <div className={styles.campo}>
+          <Label htmlFor="cfg-cedula">Cédula *</Label>
+          <Input
+            id="cfg-cedula"
+            inputMode="numeric"
+            value={cedula}
+            onChange={(e) => setCedula(e.target.value)}
+            placeholder="1023456789"
+          />
+          {errores.cedula && <span className={styles.errorCampo}>{errores.cedula}</span>}
+        </div>
+      </div>
+
+      <div className={styles.fila}>
         <div className={styles.campo}>
           <Label htmlFor="cfg-telefono">Teléfono</Label>
           <Input
@@ -392,34 +410,34 @@ export function ConfiguracionVista() {
           <div className={styles.infoGrid}>
             <div className={styles.infoItem}>
               <p className={styles.infoItemLabel}>Consultar datos</p>
-              <p className={styles.infoItemValor} style={{ color: "#166534" }}>✓ Habilitado</p>
+              <p className={styles.infoItemValor} style={{ color: "#166534" }}>Habilitado</p>
             </div>
             <div className={styles.infoItem}>
               <p className={styles.infoItemLabel}>Registrar ingresos</p>
-              <p className={styles.infoItemValor} style={{ color: "#166534" }}>✓ Habilitado</p>
+              <p className={styles.infoItemValor} style={{ color: "#166534" }}>Habilitado</p>
             </div>
             <div className={styles.infoItem}>
               <p className={styles.infoItemLabel}>Administrar entidades</p>
               <p className={styles.infoItemValor} style={{ color: admin ? "#166534" : "#b42318" }}>
-                {admin ? "✓ Habilitado" : "✗ Solo ADMIN"}
+                {admin ? "Habilitado" : "Solo ADMIN"}
               </p>
             </div>
             <div className={styles.infoItem}>
               <p className={styles.infoItemLabel}>Crear usuarios</p>
               <p className={styles.infoItemValor} style={{ color: admin ? "#166534" : "#b42318" }}>
-                {admin ? "✓ Habilitado" : "✗ Solo ADMIN"}
+                {admin ? "Habilitado" : "Solo ADMIN"}
               </p>
             </div>
             <div className={styles.infoItem}>
               <p className={styles.infoItemLabel}>Ver logs del sistema</p>
               <p className={styles.infoItemValor} style={{ color: admin ? "#166534" : "#b42318" }}>
-                {admin ? "✓ Habilitado" : "✗ Solo ADMIN"}
+                {admin ? "Habilitado" : "Solo ADMIN"}
               </p>
             </div>
             <div className={styles.infoItem}>
               <p className={styles.infoItemLabel}>Configuración</p>
               <p className={styles.infoItemValor} style={{ color: admin ? "#166534" : "#b42318" }}>
-                {admin ? "✓ Completa" : "Limitada"}
+                {admin ? "Completa" : "Limitada"}
               </p>
             </div>
           </div>
