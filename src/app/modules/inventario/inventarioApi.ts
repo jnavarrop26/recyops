@@ -79,8 +79,8 @@ export async function listarInventario(filtros: FiltrosInventario): Promise<Pagi
 }
 
 // GET /api/inventario/{id}
-export async function obtenerLinea(id: string): Promise<LineaInventario> {
-  const { data } = await clienteApi.get<LineaInventario>(`/inventario/${id}`);
+export async function obtenerLinea(id: string, signal?: AbortSignal): Promise<LineaInventario> {
+  const { data } = await clienteApi.get<LineaInventario>(`/inventario/${id}`, { signal });
   return data;
 }
 
@@ -89,9 +89,11 @@ export async function obtenerMovimientos(
   id: string,
   page = 0,
   size = 20,
+  signal?: AbortSignal,
 ): Promise<PaginaMovimientos> {
   const { data } = await clienteApi.get(`/inventario/${id}/movimientos`, {
     params: { page, size },
+    signal,
   });
   return normalizarPagina<MovimientoInventario>(data, size);
 }

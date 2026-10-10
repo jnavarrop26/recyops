@@ -3,13 +3,12 @@ import { z } from "zod";
 /**
  * Un material dentro del formulario de ingreso. Los campos numéricos viajan como
  * string crudo (igual que antes) porque filas vacías/parciales son válidas — solo
- * las filas "con intención" (materialId o categoria + peso neto > 0) se validan
- * y se envían al backend; el resto se descarta en silencio (regla de negocio
- * preexistente, no impuesta por el backend).
+ * las filas "con intención" (materialId + peso neto > 0) se validan y se envían
+ * al backend; el resto se descarta en silencio (regla de negocio preexistente,
+ * no impuesta por el backend).
  */
 const detalleIngresoSchema = z.object({
   materialId: z.string(),
-  categoria: z.string(),
   pesoBruto: z.string(),
   tara: z.string(),
   precioKilo: z.string(),
@@ -21,16 +20,18 @@ const neto = (m: { pesoBruto: string; tara: string }) => Math.max(num(m.pesoBrut
 
 /**
  * Replica CuerpoIngreso + CuerpoDetalleIngreso (backend):
- *   cliente/cedula/bodegaDestino/encargado @NotBlank, placaVehiculo (libre),
- *   pesoNetoTotal/total @NotNull @Positive, materiales (@Valid, cada uno con
- *   pesoBruto @NotNull @Positive, tara @NotNull @PositiveOrZero,
- *   precioKilo @PositiveOrZero).
+ *   cliente/cedula/bodegaDestinoId/encargado @NotBlank/@NotNull, placaVehiculo
+ *   (libre), pesoNetoTotal/total @NotNull @Positive, materiales (@NotEmpty
+ *   @Valid, cada uno con materialId @NotNull, pesoBruto @NotNull @Positive,
+ *   tara @NotNull @PositiveOrZero, precioKilo @PositiveOrZero).
  *
- * Bug #3: el filtro de materiales "válidos" (materialId||categoria) && neto>0)
- * antes NO exigía precioKilo > 0 — un material con peso pero precio 0 pasaba el
- * frontend y el backend lo rechazaba con 400 porque `total` (@Positive) daba 0.
- * Ahora, cualquier fila "con intención" (material elegido + peso neto > 0) debe
- * tener precioKilo > 0 o bloquea el envío con un error puntual en esa fila.
+ * El inventario depende estrictamente de los ingresos (InventarioService.
+ * registrarEntrada por cada material), así que el backend ya no acepta
+ * materiales sin materialId — el frontend valida lo mismo.
+ *
+ * El filtro de materiales "válidos" (materialId + peso neto > 0) exige además
+ * precioKilo > 0 — un material con peso pero precio 0 pasaría el frontend y el
+ * backend lo rechazaría con 400 porque `total` (@Positive) daría 0.
  *
  * Las filas sin material seleccionado o con peso neto 0 se siguen descartando en
  * silencio (no bloquean el envío) — es una regla de negocio solo-frontend, no del
@@ -40,7 +41,7 @@ export const ingresoSchema = z
   .object({
     cedula: z.string().trim().min(1, "Ingresa la cédula del cliente."),
     nombreCliente: z.string().trim().min(1, "Ingresa el nombre del cliente."),
-    bodegaDestino: z.string().min(1, "Selecciona la bodega destino."),
+    bodegaDestinoId: z.string().min(1, "Selecciona la bodega destino."),
     encargado: z.string().trim().min(1, "Indica el encargado de recepción."),
     placa: z.string(),
     materiales: z.array(detalleIngresoSchema).min(1),
@@ -58,7 +59,7 @@ export const ingresoSchema = z
 
     const filasConIntencion = data.materiales
       .map((m, idx) => ({ m, idx }))
-      .filter(({ m }) => (m.materialId || m.categoria) && neto(m) > 0);
+      .filter(({ m }) => m.materialId && neto(m) > 0);
 
     if (filasConIntencion.length === 0) {
       ctx.addIssue({

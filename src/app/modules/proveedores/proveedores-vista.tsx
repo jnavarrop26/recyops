@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { toast } from "sonner";
 import { Button } from "@/app/components/ui/button";
 import { Label } from "@/app/components/ui/label";
 import { Input } from "@/app/components/ui/input";
@@ -13,16 +14,13 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/app/components/ui/dialog";
 import { ProveedorFormulario } from "@/app/modules/proveedores/proveedor-formulario";
-import { EstrellasCalificacion } from "@/app/shared/components/estrellas-calificacion";
 import {
   listarProveedores,
   cambiarEstadoProveedor,
-  calificarProveedor,
   obtenerEntregasProveedor,
   ESTADOS_PROVEEDOR,
   type Proveedor,
@@ -30,7 +28,13 @@ import {
   type EntregaProveedor,
 } from "@/app/modules/proveedores/proveedoresApi";
 import { interpretarErrorHttp } from "@/app/http/errores";
+import { DialogoConfirmacion } from "@/app/shared/components/dialogo-confirmacion";
 import styles from "@/app/modules/proveedores/proveedores-vista.module.css";
+
+interface FiltrosProveedores {
+  estado: string;
+  nombre: string;
+}
 
 const TAMANO_PAGINA = 20;
 const TODOS = "__todos__";
@@ -66,14 +70,16 @@ export function ProveedoresVista() {
 
   const [fEstado, setFEstado] = useState(TODOS);
   const [fNombre, setFNombre] = useState("");
-  const [fCalificacionMin, setFCalificacionMin] = useState(TODOS);
+  // Filtros con los que se cargó la lista: paginar y recargar usan estos,
+  // no los que el usuario está editando sin aplicar.
+  const filtrosIniciales: FiltrosProveedores = { estado: TODOS, nombre: "" };
+  const [filtrosAplicados, setFiltrosAplicados] = useState<FiltrosProveedores>(filtrosIniciales);
+  const [cambioPendiente, setCambioPendiente] = useState<{ proveedor: Proveedor; estado: EstadoProveedor } | null>(null);
+  const [cambiandoEstado, setCambiandoEstado] = useState(false);
 
   // Modales
   const [modalForm, setModalForm] = useState(false);
   const [proveedorEditando, setProveedorEditando] = useState<Proveedor | null>(null);
-
-  const [modalCalificar, setModalCalificar] = useState<Proveedor | null>(null);
-  const [calificacionTemporal, setCalificacionTemporal] = useState(0);
 
   const [modalEntregas, setModalEntregas] = useState<Proveedor | null>(null);
   const [entregas, setEntregas] = useState<EntregaProveedor[]>([]);
@@ -82,14 +88,13 @@ export function ProveedoresVista() {
   const valor = (v: string) => (v === TODOS ? undefined : v);
 
   const cargar = useCallback(
-    async (paginaSolicitada: number) => {
+    async (paginaSolicitada: number, filtros: FiltrosProveedores) => {
       setCargando(true);
       setError(null);
       try {
         const datos = await listarProveedores({
-          estado: valor(fEstado),
-          nombre: fNombre.trim() || undefined,
-          calificacionMin: valor(fCalificacionMin),
+          estado: valor(filtros.estado),
+          nombre: filtros.nombre.trim() || undefined,
           page: paginaSolicitada,
           size: TAMANO_PAGINA,
         });
@@ -104,23 +109,25 @@ export function ProveedoresVista() {
         setCargando(false);
       }
     },
-    [fEstado, fNombre, fCalificacionMin],
+    [],
   );
 
   useEffect(() => {
-    cargar(0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    cargar(0, { estado: TODOS, nombre: "" });
+  }, [cargar]);
 
   function aplicarFiltros(evento: React.FormEvent) {
     evento.preventDefault();
-    cargar(0);
+    const filtros = { estado: fEstado, nombre: fNombre };
+    setFiltrosAplicados(filtros);
+    cargar(0, filtros);
   }
 
   function limpiarFiltros() {
     setFEstado(TODOS);
     setFNombre("");
-    setFCalificacionMin(TODOS);
+    setFiltrosAplicados(filtrosIniciales);
+    cargar(0, filtrosIniciales);
   }
 
   function abrirCrear() {
@@ -135,40 +142,29 @@ export function ProveedoresVista() {
 
   function alGuardar() {
     setModalForm(false);
-    cargar(pagina);
+    toast.success(proveedorEditando ? "Proveedor actualizado." : "Proveedor creado.");
+    cargar(pagina, filtrosAplicados);
   }
 
-  async function cambiarEstado(p: Proveedor, nuevoEstado: EstadoProveedor) {
+  // Elegir un estado en la tabla solo abre la confirmación; el cambio se
+  // aplica al confirmar.
+  async function confirmarCambioEstado() {
+    if (!cambioPendiente) return;
+    const { proveedor: p, estado: nuevoEstado } = cambioPendiente;
+    setCambiandoEstado(true);
     try {
       const actualizado = await cambiarEstadoProveedor(p.id, nuevoEstado);
       setProveedores((prev) =>
         prev.map((x) => (x.id === p.id ? { ...x, estado: actualizado.estado } : x)),
       );
+      toast.success(`Proveedor ${p.nombre} ahora está ${actualizado.estado}.`);
     } catch (e) {
-      setError(interpretarErrorHttp(e, {
+      toast.error(interpretarErrorHttp(e, {
         404: "El proveedor no existe o fue eliminado.",
       }, "No se pudo cambiar el estado del proveedor."));
-    }
-  }
-
-  function abrirCalificar(p: Proveedor) {
-    setCalificacionTemporal(p.calificacion);
-    setModalCalificar(p);
-  }
-
-  async function guardarCalificacion() {
-    if (!modalCalificar) return;
-    try {
-      const actualizado = await calificarProveedor(modalCalificar.id, calificacionTemporal);
-      setProveedores((prev) =>
-        prev.map((x) => (x.id === modalCalificar.id ? { ...x, calificacion: actualizado.calificacion } : x)),
-      );
-      setModalCalificar(null);
-    } catch (e) {
-      setError(interpretarErrorHttp(e, {
-        404: "El proveedor no existe o fue eliminado.",
-      }, "No se pudo guardar la calificación."));
-      setModalCalificar(null);
+    } finally {
+      setCambiandoEstado(false);
+      setCambioPendiente(null);
     }
   }
 
@@ -202,9 +198,9 @@ export function ProveedoresVista() {
           <Input id="fNombre" value={fNombre} onChange={(e) => setFNombre(e.target.value)} placeholder="Buscar..." />
         </div>
         <div className={styles.campoFiltro}>
-          <Label>Estado</Label>
+          <Label htmlFor="fEstado">Estado</Label>
           <Select value={fEstado} onValueChange={setFEstado}>
-            <SelectTrigger>
+            <SelectTrigger id="fEstado">
               <SelectValue placeholder="Todos" />
             </SelectTrigger>
             <SelectContent>
@@ -212,22 +208,6 @@ export function ProveedoresVista() {
               {ESTADOS_PROVEEDOR.map((e) => (
                 <SelectItem key={e} value={e}>
                   {e}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className={styles.campoFiltro}>
-          <Label>Calificación mínima</Label>
-          <Select value={fCalificacionMin} onValueChange={setFCalificacionMin}>
-            <SelectTrigger>
-              <SelectValue placeholder="Todas" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={TODOS}>Todas</SelectItem>
-              {[1, 2, 3, 4, 5].map((n) => (
-                <SelectItem key={n} value={String(n)}>
-                  {n}+ estrellas
                 </SelectItem>
               ))}
             </SelectContent>
@@ -247,77 +227,82 @@ export function ProveedoresVista() {
         {cargando ? (
           <div className={styles.estado}>Cargando proveedores...</div>
         ) : error ? (
-          <div className={styles.estado}>{error}</div>
+          <div className={styles.estado} role="alert">{error}</div>
         ) : proveedores.length === 0 ? (
           <div className={styles.estado}>No se encontraron proveedores.</div>
         ) : (
           <>
-            <table className={styles.tabla}>
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>NIT</th>
-                  <th>Contacto</th>
-                  <th>Teléfono</th>
-                  <th>Calificación</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {proveedores.map((p) => (
-                  <tr key={p.id}>
-                    <td>{p.nombre}</td>
-                    <td className={styles.mono}>{p.nit}</td>
-                    <td>{p.contacto ?? "—"}</td>
-                    <td className={styles.mono}>{p.telefono ?? "—"}</td>
-                    <td><EstrellasCalificacion valor={p.calificacion} /></td>
-                    <td><ChipEstadoProveedor estado={p.estado} /></td>
-                    <td>
-                      <div className={styles.acciones}>
-                        <Button variant="outline" size="sm" onClick={() => abrirEntregas(p)}>
-                          Entregas
-                        </Button>
-                        {admin && (
-                          <>
-                            <Button variant="outline" size="sm" onClick={() => abrirEditar(p)}>
-                              Editar
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={() => abrirCalificar(p)}>
-                              Calificar
-                            </Button>
-                            <div className={styles.selectEstado}>
-                              <Select value={p.estado} onValueChange={(v) => cambiarEstado(p, v as EstadoProveedor)}>
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {ESTADOS_PROVEEDOR.map((e) => (
-                                    <SelectItem key={e} value={e}>
-                                      {e}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </td>
+            <div className={styles.tablaScroll}>
+              <table className={styles.tabla}>
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>NIT</th>
+                    <th>Contacto</th>
+                    <th>Teléfono</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {proveedores.map((p) => (
+                    <tr key={p.id}>
+                      <td>{p.nombre}</td>
+                      <td className={styles.mono}>{p.nit}</td>
+                      <td>{p.contacto ?? "—"}</td>
+                      <td className={styles.mono}>{p.telefono ?? "—"}</td>
+                      <td><ChipEstadoProveedor estado={p.estado} /></td>
+                      <td>
+                        <div className={styles.acciones}>
+                          <Button variant="outline" size="sm" onClick={() => abrirEntregas(p)}>
+                            Entregas
+                          </Button>
+                          {admin && (
+                            <>
+                              <Button variant="outline" size="sm" onClick={() => abrirEditar(p)}>
+                                Editar
+                              </Button>
+                              <div className={styles.selectEstado}>
+                                <Select
+                                  value={p.estado}
+                                  disabled={cambiandoEstado && cambioPendiente?.proveedor.id === p.id}
+                                  onValueChange={(v) => {
+                                    if (v !== p.estado) {
+                                      setCambioPendiente({ proveedor: p, estado: v as EstadoProveedor });
+                                    }
+                                  }}
+                                >
+                                  <SelectTrigger aria-label={`Estado del proveedor ${p.nombre}`}>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {ESTADOS_PROVEEDOR.map((e) => (
+                                      <SelectItem key={e} value={e}>
+                                        {e}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             <div className={styles.paginacion}>
               <span>
                 {totalElementos} proveedores · Página {pagina + 1} de {Math.max(totalPaginas, 1)}
               </span>
               <div className={styles.controlesPagina}>
-                <Button variant="outline" size="sm" disabled={pagina <= 0 || cargando} onClick={() => cargar(pagina - 1)}>
+                <Button variant="outline" size="sm" disabled={pagina <= 0 || cargando} onClick={() => cargar(pagina - 1, filtrosAplicados)}>
                   Anterior
                 </Button>
-                <Button variant="outline" size="sm" disabled={pagina >= totalPaginas - 1 || cargando} onClick={() => cargar(pagina + 1)}>
+                <Button variant="outline" size="sm" disabled={pagina >= totalPaginas - 1 || cargando} onClick={() => cargar(pagina + 1, filtrosAplicados)}>
                   Siguiente
                 </Button>
               </div>
@@ -327,12 +312,28 @@ export function ProveedoresVista() {
       </div>
 
       {/* Modal crear/editar */}
+      <DialogoConfirmacion
+        abierto={cambioPendiente !== null}
+        titulo="¿Cambiar el estado del proveedor?"
+        descripcion={
+          cambioPendiente
+            ? `El proveedor ${cambioPendiente.proveedor.nombre} pasará de ${cambioPendiente.proveedor.estado} a ${cambioPendiente.estado}.`
+            : ""
+        }
+        textoConfirmar="Cambiar estado"
+        textoProcesando="Cambiando..."
+        destructivo={cambioPendiente !== null && cambioPendiente.estado !== "ACTIVO"}
+        procesando={cambiandoEstado}
+        alConfirmar={confirmarCambioEstado}
+        alCancelar={() => setCambioPendiente(null)}
+      />
+
       <Dialog open={modalForm} onOpenChange={setModalForm}>
-        <DialogContent>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{proveedorEditando ? "Editar proveedor" : "Nuevo proveedor"}</DialogTitle>
             <DialogDescription>
-              Los campos con * son obligatorios. El estado y la calificación se gestionan desde la tabla.
+              Los campos con * son obligatorios. El estado se gestiona desde la tabla.
             </DialogDescription>
           </DialogHeader>
           <ProveedorFormulario
@@ -343,33 +344,9 @@ export function ProveedoresVista() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal calificar */}
-      <Dialog open={modalCalificar !== null} onOpenChange={(abierto) => !abierto && setModalCalificar(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Calificar proveedor</DialogTitle>
-            <DialogDescription>{modalCalificar?.nombre}</DialogDescription>
-          </DialogHeader>
-          <div className={styles.calificarCaja}>
-            <EstrellasCalificacion
-              valor={calificacionTemporal}
-              interactivo
-              grande
-              alCambiar={setCalificacionTemporal}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setModalCalificar(null)}>
-              Cancelar
-            </Button>
-            <Button onClick={guardarCalificacion}>Guardar calificación</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Modal entregas */}
       <Dialog open={modalEntregas !== null} onOpenChange={(abierto) => !abierto && setModalEntregas(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Historial de entregas</DialogTitle>
             <DialogDescription>{modalEntregas?.nombre}</DialogDescription>
@@ -385,11 +362,11 @@ export function ProveedoresVista() {
                   <div className={styles.entregaInfo}>
                     <span className={styles.entregaCodigo}>{entrega.codigo}</span>
                     <span className={styles.entregaMeta}>
-                      {entrega.tipoMaterialNombre} · {entrega.estado} · {formatearFecha(entrega.fechaRecepcion)}
+                      {entrega.estado} · {formatearFecha(entrega.fechaRecepcion)}
                     </span>
                   </div>
                   <span className={styles.entregaPeso}>
-                    {entrega.pesoKg.toLocaleString("es-CO")} kg
+                    {entrega.totalKg.toLocaleString("es-CO")} kg
                   </span>
                 </div>
               ))}

@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from "react-router";
+import { createBrowserRouter } from "react-router";
 import { LoginScreen } from "@/app/modules/auth/login-screen";
 import { RestablecerScreen } from "@/app/modules/auth/restablecer-screen";
 import { DashboardLayout } from "@/app/shared/layout/dashboard-layout";
@@ -27,6 +27,7 @@ import {
   ReportesPage,
   ServiciosExternosPage,
 } from "@/app/shared/components/pages";
+import { ErrorRuta, NoEncontrada } from "@/app/shared/components/error-ruta";
 
 function Admin({ children }: { children: React.ReactNode }) {
   return <RutaAdmin>{children}</RutaAdmin>;
@@ -37,34 +38,45 @@ function SuperAdmin({ children }: { children: React.ReactNode }) {
 }
 
 export const router = createBrowserRouter([
-  { path: "/", Component: LoginScreen },
-  { path: "/restablecer", Component: RestablecerScreen },
+  { path: "/", Component: LoginScreen, errorElement: <ErrorRuta /> },
+  { path: "/restablecer", Component: RestablecerScreen, errorElement: <ErrorRuta /> },
   {
     path: "/",
     Component: DashboardLayout,
+    // Error del propio layout: pantalla completa.
+    errorElement: <ErrorRuta />,
     children: [
-      { path: "inicio", Component: HomeView },
-      { path: "tareas", element: <Admin><TareasVista /></Admin> },
-      { path: "mis-tareas", Component: MisTareasVista },
-      { path: "ingreso", Component: IngresoPage },
-      { path: "ingreso/historial", Component: HistorialIngresos },
-      { path: "trabajadores", element: <Admin><TrabajadoresVista /></Admin> },
-      { path: "materiales", element: <Admin><MaterialesVista /></Admin> },
-      { path: "bodegas", element: <Admin><BodegasVista /></Admin> },
-      { path: "bodegas/:id", element: <Admin><BodegaDetalle /></Admin> },
-      { path: "proveedores", element: <Admin><ProveedoresVista /></Admin> },
-      { path: "inventario", element: <Admin><InventarioVista /></Admin> },
-      { path: "inventario/:id", element: <Admin><InventarioDetalle /></Admin> },
-      { path: "entregas", element: <Admin><EntregasVista /></Admin> },
-      { path: "entregas/historial", element: <Admin><HistorialEntregasVista /></Admin> },
-      { path: "entregas/:id", element: <Admin><EntregaDetalle /></Admin> },
-      { path: "convenios", element: <Admin><ConveniosPage /></Admin> },
-      { path: "reportes", element: <Admin><ReportesPage /></Admin> },
-      { path: "logs", element: <Admin><LogsPage /></Admin> },
-      { path: "plataforma", element: <SuperAdmin><PlataformaVista /></SuperAdmin> },
-      { path: "configuracion", Component: ConfiguracionPage },
-      { path: "servicios-externos", element: <Admin><ServiciosExternosPage /></Admin> },
+      {
+        // Ruta sin path: un error en cualquier vista se muestra dentro del
+        // layout, sin perder la barra lateral.
+        errorElement: <ErrorRuta />,
+        children: [
+          { path: "inicio", Component: HomeView },
+          { path: "tareas", element: <Admin><TareasVista /></Admin> },
+          { path: "mis-tareas", Component: MisTareasVista },
+          { path: "ingreso", Component: IngresoPage },
+          { path: "ingreso/historial", Component: HistorialIngresos },
+          { path: "trabajadores", element: <Admin><TrabajadoresVista /></Admin> },
+          { path: "materiales", element: <Admin><MaterialesVista /></Admin> },
+          { path: "bodegas", element: <Admin><BodegasVista /></Admin> },
+          { path: "bodegas/:id", element: <Admin><BodegaDetalle /></Admin> },
+          { path: "proveedores", element: <Admin><ProveedoresVista /></Admin> },
+          { path: "inventario", element: <Admin><InventarioVista /></Admin> },
+          { path: "inventario/:id", element: <Admin><InventarioDetalle /></Admin> },
+          { path: "entregas", element: <Admin><EntregasVista /></Admin> },
+          { path: "entregas/historial", element: <Admin><HistorialEntregasVista /></Admin> },
+          { path: "entregas/:id", element: <Admin><EntregaDetalle /></Admin> },
+          { path: "convenios", element: <Admin><ConveniosPage /></Admin> },
+          { path: "reportes", element: <Admin><ReportesPage /></Admin> },
+          { path: "logs", element: <Admin><LogsPage /></Admin> },
+          { path: "plataforma", element: <SuperAdmin><PlataformaVista /></SuperAdmin> },
+          { path: "configuracion", Component: ConfiguracionPage },
+          { path: "servicios-externos", element: <Admin><ServiciosExternosPage /></Admin> },
+          // Ruta desconocida: con sesión muestra "no encontrada" dentro del
+          // dashboard; sin sesión, DashboardLayout redirige al login.
+          { path: "*", Component: NoEncontrada },
+        ],
+      },
     ],
   },
-  { path: "*", Component: () => <Navigate to="/" replace /> },
 ]);

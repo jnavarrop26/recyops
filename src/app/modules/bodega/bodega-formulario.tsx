@@ -86,48 +86,48 @@ export function BodegaFormulario({
 
   return (
     <form className={styles.formulario} onSubmit={handleSubmit(onSubmit)}>
-      {errorGeneral && <div className={styles.alertaError}>{errorGeneral}</div>}
+      {errorGeneral && <div className={styles.alertaError} role="alert">{errorGeneral}</div>}
 
       <div className={styles.campo}>
         <Label htmlFor="nombre">Nombre *</Label>
-        <Input id="nombre" {...register("nombre")} placeholder="Bodega Central" />
-        {errors.nombre && <span className={styles.errorCampo}>{errors.nombre.message}</span>}
+        <Input id="nombre" aria-invalid={!!errors.nombre} aria-describedby={errors.nombre ? "nombre-error" : undefined} {...register("nombre")} placeholder="Bodega Central" />
+        {errors.nombre && <span id="nombre-error" role="alert" className={styles.errorCampo}>{errors.nombre.message}</span>}
       </div>
 
       <div className={styles.campo}>
         <Label htmlFor="direccion">Dirección *</Label>
-        <Input id="direccion" {...register("direccion")} placeholder="Cra 10 # 20-30" />
-        {errors.direccion && <span className={styles.errorCampo}>{errors.direccion.message}</span>}
+        <Input id="direccion" aria-invalid={!!errors.direccion} aria-describedby={errors.direccion ? "direccion-error" : undefined} {...register("direccion")} placeholder="Cra 10 # 20-30" />
+        {errors.direccion && <span id="direccion-error" role="alert" className={styles.errorCampo}>{errors.direccion.message}</span>}
       </div>
 
       <div className={styles.fila}>
         <div className={styles.campo}>
           <Label htmlFor="telefono">Teléfono</Label>
-          <Input id="telefono" inputMode="numeric" {...register("telefono")} placeholder="3001234567" />
-          {errors.telefono && <span className={styles.errorCampo}>{errors.telefono.message}</span>}
+          <Input id="telefono" aria-invalid={!!errors.telefono} aria-describedby={errors.telefono ? "telefono-error" : undefined} inputMode="numeric" {...register("telefono")} placeholder="3001234567" />
+          {errors.telefono && <span id="telefono-error" role="alert" className={styles.errorCampo}>{errors.telefono.message}</span>}
         </div>
         <div className={styles.campo}>
           <Label htmlFor="nit">NIT *</Label>
-          <Input id="nit" {...register("nit")} placeholder="900123456-7" />
-          {errors.nit && <span className={styles.errorCampo}>{errors.nit.message}</span>}
+          <Input id="nit" aria-invalid={!!errors.nit} aria-describedby={errors.nit ? "nit-error" : undefined} {...register("nit")} placeholder="900123456-7" />
+          {errors.nit && <span id="nit-error" role="alert" className={styles.errorCampo}>{errors.nit.message}</span>}
         </div>
       </div>
 
       <div className={styles.campo}>
         <Label htmlFor="email">Email</Label>
-        <Input id="email" type="email" {...register("email")} placeholder="central@recyops.com" />
-        {errors.email && <span className={styles.errorCampo}>{errors.email.message}</span>}
+        <Input id="email" aria-invalid={!!errors.email} aria-describedby={errors.email ? "email-error" : undefined} type="email" {...register("email")} placeholder="central@recyops.com" />
+        {errors.email && <span id="email-error" role="alert" className={styles.errorCampo}>{errors.email.message}</span>}
       </div>
 
       <div className={styles.fila}>
         <div className={styles.campo}>
-          <Label>Tipo de organización *</Label>
+          <Label htmlFor="tipoOrganizacion">Tipo de organización *</Label>
           <Controller
             name="tipoOrganizacion"
             control={control}
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger>
+                <SelectTrigger id="tipoOrganizacion" aria-invalid={!!errors.tipoOrganizacion} aria-describedby={errors.tipoOrganizacion ? "tipoOrganizacion-error" : undefined}>
                   <SelectValue placeholder="Selecciona tipo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -140,20 +140,20 @@ export function BodegaFormulario({
               </Select>
             )}
           />
-          {errors.tipoOrganizacion && <span className={styles.errorCampo}>{errors.tipoOrganizacion.message}</span>}
+          {errors.tipoOrganizacion && <span id="tipoOrganizacion-error" role="alert" className={styles.errorCampo}>{errors.tipoOrganizacion.message}</span>}
         </div>
       </div>
 
       <div className={styles.fila}>
         <div className={styles.campo}>
           <Label htmlFor="latitud">Latitud</Label>
-          <Input id="latitud" type="number" step="0.00001" {...register("latitud")} placeholder="4.60971" />
-          {errors.latitud && <span className={styles.errorCampo}>{errors.latitud.message}</span>}
+          <Input id="latitud" aria-invalid={!!errors.latitud} aria-describedby={errors.latitud ? "latitud-error" : undefined} type="number" step="0.00001" {...register("latitud")} placeholder="4.60971" />
+          {errors.latitud && <span id="latitud-error" role="alert" className={styles.errorCampo}>{errors.latitud.message}</span>}
         </div>
         <div className={styles.campo}>
           <Label htmlFor="longitud">Longitud</Label>
-          <Input id="longitud" type="number" step="0.00001" {...register("longitud")} placeholder="-74.08175" />
-          {errors.longitud && <span className={styles.errorCampo}>{errors.longitud.message}</span>}
+          <Input id="longitud" aria-invalid={!!errors.longitud} aria-describedby={errors.longitud ? "longitud-error" : undefined} type="number" step="0.00001" {...register("longitud")} placeholder="-74.08175" />
+          {errors.longitud && <span id="longitud-error" role="alert" className={styles.errorCampo}>{errors.longitud.message}</span>}
         </div>
       </div>
 

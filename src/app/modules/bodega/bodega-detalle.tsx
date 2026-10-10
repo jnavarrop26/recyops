@@ -22,24 +22,30 @@ export function BodegaDetalle() {
 
   useEffect(() => {
     if (!id) return;
+    // Cambiar de bodega aborta la carga anterior.
+    const controlador = new AbortController();
+    const { signal } = controlador;
     (async () => {
       setCargando(true);
       setError(null);
       try {
         const [datosBodega, datosUsuarios] = await Promise.all([
-          obtenerBodega(id),
-          obtenerUsuariosBodega(id).catch(() => []),
+          obtenerBodega(id, signal),
+          obtenerUsuariosBodega(id, signal).catch(() => []),
         ]);
+        if (signal.aborted) return;
         setBodega(datosBodega);
         setUsuarios(datosUsuarios);
       } catch (e) {
+        if (signal.aborted) return;
         setError(interpretarErrorHttp(e, {
           404: "La bodega no existe o fue eliminada.",
         }, "No se pudo cargar la información de la bodega."));
       } finally {
-        setCargando(false);
+        if (!signal.aborted) setCargando(false);
       }
     })();
+    return () => controlador.abort();
   }, [id]);
 
   if (cargando) return <div className={styles.estado}>Cargando bodega...</div>;

@@ -43,3 +43,22 @@
   gap: 10px;
   margin-top: 8px;
 }
+
+/* ── Responsive ── */
+.campo {
+  min-width: 0;
+}
+
+@media (max-width: 639px) {
+  .fila {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .acciones {
+    flex-wrap: wrap;
+  }
+
+  .acciones > * {
+    flex: 1 1 auto;
+  }
+}

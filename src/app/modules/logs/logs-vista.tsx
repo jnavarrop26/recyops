@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
@@ -16,6 +16,7 @@ import {
   type LineaLog,
   obtenerLogs,
 } from "@/app/modules/logs/logsApi";
+import { usePeticionCancelable } from "@/app/shared/hooks/use-peticion-cancelable";
 import styles from "@/app/modules/logs/logs-vista.module.css";
 
 const NIVELES = ["TODOS", "DEBUG", "INFO", "WARN", "ERROR"] as const;
@@ -40,27 +41,43 @@ export function LogsVista() {
   const [lineas, setLineas] = useState<LineaLog[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [expandida, setExpandida] = useState<number | null>(null);
+  // Clave estable de la fila expandida (no un índice en la lista filtrada,
+  // que cambia al buscar o filtrar por nivel).
+  const [expandida, setExpandida] = useState<string | null>(null);
 
+  const nuevaPeticion = usePeticionCancelable();
+
+  // Cambiar de archivo rápido cancela la petición anterior.
   const cargar = useCallback(async () => {
+    const signal = nuevaPeticion();
     setCargando(true);
     setError(null);
     setExpandida(null);
     try {
-      setLineas(await obtenerLogs(archivo, 300));
+      const datos = await obtenerLogs(archivo, 300, signal);
+      if (!signal.aborted) setLineas(datos);
     } catch {
-      setError("No se pudieron cargar los logs. Revisa la conexión con el servidor.");
+      if (!signal.aborted) {
+        setError("No se pudieron cargar los logs. Revisa la conexión con el servidor.");
+      }
     } finally {
-      setCargando(false);
+      if (!signal.aborted) setCargando(false);
     }
-  }, [archivo]);
+  }, [archivo, nuevaPeticion]);
 
   useEffect(() => {
     cargar();
   }, [cargar]);
 
+  // La posición en la respuesta completa identifica la línea mientras no se
+  // recargue (recargar ya colapsa la fila expandida).
+  const lineasConClave = useMemo(
+    () => lineas.map((l, i) => ({ ...l, clave: `${i}-${l.fecha}` })),
+    [lineas],
+  );
+
   const texto = busqueda.trim().toLowerCase();
-  const visibles = lineas.filter(
+  const visibles = lineasConClave.filter(
     (l) =>
       (nivel === "TODOS" || l.nivel === nivel) &&
       (texto === "" ||
@@ -78,9 +95,9 @@ export function LogsVista() {
 
       <div className={styles.filtros}>
         <div className={styles.campo}>
-          <Label>Archivo</Label>
+          <Label htmlFor="archivo-logs">Archivo</Label>
           <Select value={archivo} onValueChange={(v) => setArchivo(v as ArchivoLog)}>
-            <SelectTrigger>
+            <SelectTrigger id="archivo-logs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -94,9 +111,9 @@ export function LogsVista() {
         </div>
 
         <div className={styles.campo}>
-          <Label>Nivel</Label>
+          <Label htmlFor="nivel-logs">Nivel</Label>
           <Select value={nivel} onValueChange={(v) => setNivel(v as (typeof NIVELES)[number])}>
-            <SelectTrigger>
+            <SelectTrigger id="nivel-logs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -121,7 +138,7 @@ export function LogsVista() {
 
         <div className={styles.acciones}>
           <Button variant="outline" onClick={cargar} disabled={cargando}>
-            <RefreshCw size={15} />
+            <RefreshCw size={15} aria-hidden="true" />
             Actualizar
           </Button>
         </div>
@@ -131,50 +148,52 @@ export function LogsVista() {
         {cargando ? (
           <div className={styles.estado}>Cargando logs...</div>
         ) : error ? (
-          <div className={`${styles.estado} ${styles.error}`}>{error}</div>
+          <div className={`${styles.estado} ${styles.error}`} role="alert">{error}</div>
         ) : visibles.length === 0 ? (
           <div className={styles.estado}>No hay entradas para el filtro seleccionado.</div>
         ) : (
-          <table className={styles.tabla}>
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Nivel</th>
-                <th>Usuario</th>
-                <th>Empresa</th>
-                <th>Mensaje</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visibles.map((l, i) => (
-                <Fragment key={`${l.fecha}-${i}`}>
-                  <tr
-                    className={l.detalle ? styles.filaClicable : undefined}
-                    onClick={() => l.detalle && setExpandida(expandida === i ? null : i)}
-                    title={l.detalle ? "Clic para ver el detalle completo" : undefined}
-                  >
-                    <td className={styles.mono}>{l.fecha}</td>
-                    <td>
-                      <span className={`${styles.nivel} ${claseNivel(l.nivel)}`}>{l.nivel}</span>
-                    </td>
-                    <td className={styles.mono}>{l.usuario || "—"}</td>
-                    <td className={styles.mono}>{l.empresa || "—"}</td>
-                    <td className={styles.mensaje}>
-                      {l.mensaje}
-                      {l.detalle && expandida !== i && " …"}
-                    </td>
-                  </tr>
-                  {l.detalle && expandida === i && (
-                    <tr>
-                      <td colSpan={5} style={{ padding: 0 }}>
-                        <pre className={styles.detalle}>{l.detalle}</pre>
+          <div className={styles.tablaScroll}>
+            <table className={styles.tabla}>
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Nivel</th>
+                  <th>Usuario</th>
+                  <th>Empresa</th>
+                  <th>Mensaje</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibles.map((l) => (
+                  <Fragment key={l.clave}>
+                    <tr
+                      className={l.detalle ? styles.filaClicable : undefined}
+                      onClick={() => l.detalle && setExpandida(expandida === l.clave ? null : l.clave)}
+                      title={l.detalle ? "Clic para ver el detalle completo" : undefined}
+                    >
+                      <td className={styles.mono}>{l.fecha}</td>
+                      <td>
+                        <span className={`${styles.nivel} ${claseNivel(l.nivel)}`}>{l.nivel}</span>
+                      </td>
+                      <td className={styles.mono}>{l.usuario || "—"}</td>
+                      <td className={styles.mono}>{l.empresa || "—"}</td>
+                      <td className={styles.mensaje}>
+                        {l.mensaje}
+                        {l.detalle && expandida !== l.clave && " …"}
                       </td>
                     </tr>
-                  )}
-                </Fragment>
-              ))}
-            </tbody>
-          </table>
+                    {l.detalle && expandida === l.clave && (
+                      <tr>
+                        <td colSpan={5} style={{ padding: 0 }}>
+                          <pre className={styles.detalle}>{l.detalle}</pre>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

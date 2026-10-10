@@ -116,26 +116,28 @@ export function ConvenioFormulario({
 
   return (
     <form className={styles.formulario} onSubmit={handleSubmit(onSubmit)}>
-      {errorGeneral && <div className={styles.alertaError}>{errorGeneral}</div>}
+      {errorGeneral && <div className={styles.alertaError} role="alert">{errorGeneral}</div>}
 
       <div className={styles.fila}>
         <div className={`${styles.campo} ${styles.campoAncho}`}>
           <Label htmlFor="nombre">Nombre *</Label>
           <Input
             id="nombre"
+            aria-invalid={!!errors.nombre}
+            aria-describedby={errors.nombre ? "nombre-error" : undefined}
             {...register("nombre")}
             placeholder="Convenio de compra de PET 2025"
           />
-          {errors.nombre && <span className={styles.errorCampo}>{errors.nombre.message}</span>}
+          {errors.nombre && <span id="nombre-error" role="alert" className={styles.errorCampo}>{errors.nombre.message}</span>}
         </div>
         <div className={styles.campo}>
-          <Label>Tipo *</Label>
+          <Label htmlFor="tipo">Tipo *</Label>
           <Controller
             name="tipo"
             control={control}
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger>
+                <SelectTrigger id="tipo" aria-invalid={!!errors.tipo} aria-describedby={errors.tipo ? "tipo-error" : undefined}>
                   <SelectValue placeholder="Selecciona tipo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -148,19 +150,19 @@ export function ConvenioFormulario({
               </Select>
             )}
           />
-          {errors.tipo && <span className={styles.errorCampo}>{errors.tipo.message}</span>}
+          {errors.tipo && <span id="tipo-error" role="alert" className={styles.errorCampo}>{errors.tipo.message}</span>}
         </div>
       </div>
 
       <div className={styles.fila}>
         <div className={styles.campo}>
-          <Label>Proveedor</Label>
+          <Label htmlFor="proveedorId">Proveedor</Label>
           <Controller
             name="proveedorId"
             control={control}
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger>
+                <SelectTrigger id="proveedorId">
                   <SelectValue placeholder="Sin proveedor" />
                 </SelectTrigger>
                 <SelectContent>
@@ -176,13 +178,13 @@ export function ConvenioFormulario({
           />
         </div>
         <div className={styles.campo}>
-          <Label>Bodega</Label>
+          <Label htmlFor="bodegaId">Bodega</Label>
           <Controller
             name="bodegaId"
             control={control}
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger>
+                <SelectTrigger id="bodegaId">
                   <SelectValue placeholder="Sin bodega" />
                 </SelectTrigger>
                 <SelectContent>
@@ -202,13 +204,13 @@ export function ConvenioFormulario({
       <div className={styles.fila}>
         <div className={styles.campo}>
           <Label htmlFor="fechaInicio">Fecha de inicio *</Label>
-          <Input id="fechaInicio" type="date" {...register("fechaInicio")} />
-          {errors.fechaInicio && <span className={styles.errorCampo}>{errors.fechaInicio.message}</span>}
+          <Input id="fechaInicio" aria-invalid={!!errors.fechaInicio} aria-describedby={errors.fechaInicio ? "fechaInicio-error" : undefined} type="date" {...register("fechaInicio")} />
+          {errors.fechaInicio && <span id="fechaInicio-error" role="alert" className={styles.errorCampo}>{errors.fechaInicio.message}</span>}
         </div>
         <div className={styles.campo}>
           <Label htmlFor="fechaFin">Fecha de fin</Label>
-          <Input id="fechaFin" type="date" {...register("fechaFin")} />
-          {errors.fechaFin && <span className={styles.errorCampo}>{errors.fechaFin.message}</span>}
+          <Input id="fechaFin" aria-invalid={!!errors.fechaFin} aria-describedby={errors.fechaFin ? "fechaFin-error" : undefined} type="date" {...register("fechaFin")} />
+          {errors.fechaFin && <span id="fechaFin-error" role="alert" className={styles.errorCampo}>{errors.fechaFin.message}</span>}
         </div>
       </div>
 
@@ -217,13 +219,15 @@ export function ConvenioFormulario({
           <Label htmlFor="valorTotal">Valor total (COP)</Label>
           <Input
             id="valorTotal"
+            aria-invalid={!!errors.valorTotal}
+            aria-describedby={errors.valorTotal ? "valorTotal-error" : undefined}
             type="number"
             step="0.01"
             min="0"
             {...register("valorTotal")}
             placeholder="5000000.00"
           />
-          {errors.valorTotal && <span className={styles.errorCampo}>{errors.valorTotal.message}</span>}
+          {errors.valorTotal && <span id="valorTotal-error" role="alert" className={styles.errorCampo}>{errors.valorTotal.message}</span>}
         </div>
         <div className={styles.campo}>
           <Label htmlFor="responsable">Responsable</Label>

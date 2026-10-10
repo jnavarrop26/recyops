@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Plus, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/app/components/ui/button";
 import {
   Dialog,
@@ -18,6 +19,7 @@ import {
   type EstadoTarea,
   type Tarea,
 } from "@/app/modules/tareas/tareasApi";
+import { DialogoConfirmacion } from "@/app/shared/components/dialogo-confirmacion";
 import styles from "@/app/modules/tareas/tareas-vista.module.css";
 
 const COLUMNAS: EstadoTarea[] = ["PENDIENTE", "EN_PROGRESO", "COMPLETADA", "REVISION", "CANCELADA"];
@@ -49,6 +51,7 @@ export function TareasVista() {
   const [editando, setEditando] = useState<Tarea | null>(null);
   const [detalle, setDetalle] = useState<Tarea | null>(null);
   const [moviendo, setMoviendo] = useState<string | null>(null);
+  const [porEliminar, setPorEliminar] = useState<Tarea | null>(null);
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -81,19 +84,19 @@ export function TareasVista() {
     }
   }
 
-  async function eliminar(tarea: Tarea) {
-    const confirmado = window.confirm(
-      `¿Eliminar definitivamente "${tarea.titulo}"? Se borra la tarea y toda su bitácora de avances. Esta acción no se puede deshacer.`,
-    );
-    if (!confirmado) return;
+  async function confirmarEliminar() {
+    if (!porEliminar) return;
+    const tarea = porEliminar;
     setMoviendo(tarea.id);
     try {
       await eliminarTarea(tarea.id);
       setTareas((lista) => lista.filter((t) => t.id !== tarea.id));
+      toast.success(`Tarea "${tarea.titulo}" eliminada.`);
     } catch {
-      setError("No se pudo eliminar la tarea. Intenta de nuevo.");
+      toast.error("No se pudo eliminar la tarea. Intenta de nuevo.");
     } finally {
       setMoviendo(null);
+      setPorEliminar(null);
     }
   }
 
@@ -200,7 +203,7 @@ export function TareasVista() {
                             variant="destructive"
                             size="sm"
                             disabled={moviendo === tarea.id}
-                            onClick={() => eliminar(tarea)}
+                            onClick={() => setPorEliminar(tarea)}
                           >
                             Eliminar
                           </Button>
@@ -227,7 +230,7 @@ export function TareasVista() {
 
       {/* Modal: detalle con bitácora de avances */}
       <Dialog open={detalle !== null} onOpenChange={(abierto) => !abierto && setDetalle(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{detalle?.titulo}</DialogTitle>
             <DialogDescription>
@@ -247,7 +250,7 @@ export function TareasVista() {
           }
         }}
       >
-        <DialogContent>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editando ? "Editar tarea" : "Nueva tarea"}</DialogTitle>
             <DialogDescription>
@@ -266,6 +269,21 @@ export function TareasVista() {
           />
         </DialogContent>
       </Dialog>
+      <DialogoConfirmacion
+        abierto={porEliminar !== null}
+        titulo="¿Eliminar la tarea?"
+        descripcion={
+          porEliminar
+            ? `Se eliminará definitivamente "${porEliminar.titulo}" junto con toda su bitácora de avances. Esta acción no se puede deshacer.`
+            : ""
+        }
+        textoConfirmar="Eliminar"
+        textoProcesando="Eliminando..."
+        destructivo
+        procesando={porEliminar !== null && moviendo === porEliminar.id}
+        alConfirmar={confirmarEliminar}
+        alCancelar={() => setPorEliminar(null)}
+      />
     </div>
   );
 }

@@ -59,18 +59,18 @@ export function RestablecerScreen() {
 
   return (
     <AuthLayout>
-      <div style={{ background: "#fff", border: "1px solid #dbe7de", borderRadius: 16, padding: 32 }}>
+      <div style={{ background: "#fff", border: "1px solid #dbe7de", borderRadius: 16, padding: "clamp(20px, 5vw, 32px)" }}>
         <div style={{ marginBottom: 24 }}>
           <h1 style={{ fontSize: "1.4rem", fontWeight: 700, marginBottom: 6, color: "#0F5132" }}>
             Nueva contraseña
           </h1>
-          <p style={{ fontSize: "0.9rem", color: "#6b8c77" }}>
+          <p style={{ fontSize: "0.9rem", color: "var(--ink-muted)" }}>
             Define la contraseña con la que entrarás a RecyOPS.
           </p>
         </div>
 
         {!accessToken ? (
-          <div style={{
+          <div role="alert" style={{
             borderRadius: 8, border: "1px solid #fca5a5", background: "#fef2f2",
             padding: "12px 16px", fontSize: "0.875rem", color: "#b91c1c",
           }}>
@@ -82,7 +82,7 @@ export function RestablecerScreen() {
             y usa "¿Olvidaste tu contraseña?" para pedir uno nuevo.
           </div>
         ) : listo ? (
-          <div style={{
+          <div role="status" style={{
             borderRadius: 8, border: "1px solid #b7dcc4", background: "#f0f9f3",
             padding: "12px 16px", fontSize: "0.875rem", color: "#0F5132",
           }}>
@@ -91,7 +91,7 @@ export function RestablecerScreen() {
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             {error && (
-              <div style={{
+              <div role="alert" style={{
                 borderRadius: 8, border: "1px solid #fca5a5", background: "#fef2f2",
                 padding: "12px 16px", fontSize: "0.875rem", color: "#b91c1c",
               }}>
@@ -102,41 +102,49 @@ export function RestablecerScreen() {
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <Label htmlFor="password">Nueva contraseña</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Lock aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 <Input
                   id="password"
                   type={showPwd ? "text" : "password"}
                   placeholder="Mínimo 6 caracteres"
-                  className="pl-9 pr-9"
+                  autoComplete="new-password"
+                  className="pl-9 pr-10"
+                  aria-invalid={!!errors.password}
+                  aria-describedby={errors.password ? "password-error" : undefined}
                   {...register("password")}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPwd((s) => !s)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label={showPwd ? "Ocultar contraseñas" : "Mostrar contraseñas"}
+                  aria-pressed={showPwd}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
                 >
-                  {showPwd ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  {showPwd ? <EyeOff aria-hidden="true" className="size-4" /> : <Eye aria-hidden="true" className="size-4" />}
                 </button>
               </div>
               {errors.password && (
-                <span style={{ fontSize: "0.8rem", color: "#b91c1c" }}>{errors.password.message}</span>
+                <span id="password-error" role="alert" style={{ fontSize: "0.8rem", color: "#b91c1c" }}>{errors.password.message}</span>
               )}
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <Label htmlFor="confirmacion">Confirmar contraseña</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Lock aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 <Input
                   id="confirmacion"
                   type={showPwd ? "text" : "password"}
                   placeholder="Repite la contraseña"
+                  autoComplete="new-password"
                   className="pl-9"
+                  aria-invalid={!!errors.confirmacion}
+                  aria-describedby={errors.confirmacion ? "confirmacion-error" : undefined}
                   {...register("confirmacion")}
                 />
               </div>
               {errors.confirmacion && (
-                <span style={{ fontSize: "0.8rem", color: "#b91c1c" }}>{errors.confirmacion.message}</span>
+                <span id="confirmacion-error" role="alert" style={{ fontSize: "0.8rem", color: "#b91c1c" }}>{errors.confirmacion.message}</span>
               )}
             </div>
 

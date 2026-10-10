@@ -139,24 +139,28 @@ export function TareaDetalle({
               <Label htmlFor="avanceCantidad">Cantidad</Label>
               <Input
                 id="avanceCantidad"
+                aria-invalid={!!errors.cantidad}
+                aria-describedby={errors.cantidad ? "cantidad-error" : undefined}
                 type="number"
                 step="0.01"
                 min="0"
                 placeholder="15"
                 {...register("cantidad")}
               />
-              {errors.cantidad && <span className={styles.avanceError}>{errors.cantidad.message}</span>}
+              {errors.cantidad && <span id="cantidad-error" role="alert" className={styles.avanceError}>{errors.cantidad.message}</span>}
             </div>
             <div style={{ flex: 1 }}>
               <Label htmlFor="avanceDesc">¿Qué hiciste?</Label>
               <Input
                 id="avanceDesc"
+                aria-invalid={!!errors.descripcion}
+                aria-describedby={errors.descripcion ? "descripcion-error" : undefined}
                 placeholder="globos de HDPE azul"
                 maxLength={300}
                 {...register("descripcion")}
               />
               {errors.descripcion && (
-                <span className={styles.avanceError}>{errors.descripcion.message}</span>
+                <span id="descripcion-error" role="alert" className={styles.avanceError}>{errors.descripcion.message}</span>
               )}
             </div>
             <Button type="submit" disabled={enviando} style={{ alignSelf: "flex-end" }}>

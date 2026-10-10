@@ -11,7 +11,6 @@ export interface Proveedor {
   telefono: string | null;
   email: string | null;
   direccion: string | null;
-  calificacion: number;
   estado: EstadoProveedor;
   fechaCreacion: string;
 }
@@ -21,7 +20,6 @@ export type PaginaProveedores = Pagina<Proveedor>;
 export interface FiltrosProveedores {
   estado?: string;
   nombre?: string;
-  calificacionMin?: string;
   page?: number;
   size?: number;
 }
@@ -38,8 +36,7 @@ export interface CuerpoProveedor {
 export interface EntregaProveedor {
   id: string;
   codigo: string;
-  tipoMaterialNombre: string;
-  pesoKg: number;
+  totalKg: number;
   estado: string;
   fechaRecepcion: string;
 }
@@ -55,7 +52,6 @@ export async function listarProveedores(
     params: {
       estado: filtros.estado || undefined,
       nombre: filtros.nombre || undefined,
-      calificacionMin: filtros.calificacionMin || undefined,
       page: filtros.page ?? 0,
       size,
     },
@@ -84,14 +80,6 @@ export async function cambiarEstadoProveedor(
   valor: EstadoProveedor,
 ): Promise<Proveedor> {
   const { data } = await clienteApi.patch<Proveedor>(`/proveedores/${id}/estado`, null, {
-    params: { valor },
-  });
-  return data;
-}
-
-// PATCH /api/proveedores/{id}/calificacion?valor=
-export async function calificarProveedor(id: string, valor: number): Promise<Proveedor> {
-  const { data } = await clienteApi.patch<Proveedor>(`/proveedores/${id}/calificacion`, null, {
     params: { valor },
   });
   return data;

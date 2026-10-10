@@ -4,7 +4,7 @@ import { RecyOPSIcon } from "@/app/shared/components/recyops-icon";
 
 export function AuthLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="relative min-h-screen w-full flex flex-col bg-background overflow-hidden">
+    <div className="relative min-h-dvh w-full flex flex-col bg-background overflow-hidden">
 
       {/* Logo — esquina superior derecha, colores originales */}
       <div

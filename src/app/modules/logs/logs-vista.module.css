@@ -144,3 +144,13 @@
 .error {
   color: var(--destructive);
 }
+
+/* ── Responsive ── */
+.tablaScroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.tablaScroll .tabla {
+  min-width: 760px;
+}

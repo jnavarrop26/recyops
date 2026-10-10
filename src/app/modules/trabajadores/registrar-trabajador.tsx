@@ -46,6 +46,7 @@ export function RegistrarTrabajador({
       nombreCompleto: "",
       username: "",
       email: "",
+      cedula: "",
       telefono: "",
       bodegaId: "",
       rolId: "",
@@ -86,6 +87,7 @@ export function RegistrarTrabajador({
         nombreCompleto: valores.nombreCompleto.trim(),
         username: valores.username.trim(),
         email: valores.email.trim(),
+        cedula: valores.cedula.trim(),
         telefono: valores.telefono.trim() || undefined,
         bodegaId: valores.bodegaId,
         rolId: valores.rolId,
@@ -105,16 +107,18 @@ export function RegistrarTrabajador({
 
   return (
     <form className={styles.formulario} onSubmit={handleSubmit(onSubmit)}>
-      {errorGeneral && <div className={styles.alertaError}>{errorGeneral}</div>}
+      {errorGeneral && <div className={styles.alertaError} role="alert">{errorGeneral}</div>}
 
       <div className={styles.campo}>
         <Label htmlFor="nombreCompleto">Nombre completo *</Label>
         <Input
           id="nombreCompleto"
+          aria-invalid={!!errors.nombreCompleto}
+          aria-describedby={errors.nombreCompleto ? "nombreCompleto-error" : undefined}
           {...register("nombreCompleto")}
           placeholder="Ana Torres"
         />
-        {errors.nombreCompleto && <span className={styles.errorCampo}>{errors.nombreCompleto.message}</span>}
+        {errors.nombreCompleto && <span id="nombreCompleto-error" role="alert" className={styles.errorCampo}>{errors.nombreCompleto.message}</span>}
       </div>
 
       <div className={styles.fila}>
@@ -122,43 +126,63 @@ export function RegistrarTrabajador({
           <Label htmlFor="username">Username *</Label>
           <Input
             id="username"
+            aria-invalid={!!errors.username}
+            aria-describedby={errors.username ? "username-error" : undefined}
             {...register("username")}
             placeholder="atorres"
           />
-          {errors.username && <span className={styles.errorCampo}>{errors.username.message}</span>}
+          {errors.username && <span id="username-error" role="alert" className={styles.errorCampo}>{errors.username.message}</span>}
         </div>
         <div className={styles.campo}>
           <Label htmlFor="telefono">Teléfono</Label>
           <Input
             id="telefono"
+            aria-invalid={!!errors.telefono}
+            aria-describedby={errors.telefono ? "telefono-error" : undefined}
             inputMode="numeric"
             {...register("telefono")}
             placeholder="3001234567"
           />
-          {errors.telefono && <span className={styles.errorCampo}>{errors.telefono.message}</span>}
+          {errors.telefono && <span id="telefono-error" role="alert" className={styles.errorCampo}>{errors.telefono.message}</span>}
         </div>
-      </div>
-
-      <div className={styles.campo}>
-        <Label htmlFor="email">Email *</Label>
-        <Input
-          id="email"
-          type="email"
-          {...register("email")}
-          placeholder="ana@recyops.com"
-        />
-        {errors.email && <span className={styles.errorCampo}>{errors.email.message}</span>}
       </div>
 
       <div className={styles.fila}>
         <div className={styles.campo}>
-          <Label>Bodega *</Label>
+          <Label htmlFor="email">Email *</Label>
+          <Input
+            id="email"
+            aria-invalid={!!errors.email}
+            aria-describedby={errors.email ? "email-error" : undefined}
+            type="email"
+            {...register("email")}
+            placeholder="ana@recyops.com"
+          />
+          {errors.email && <span id="email-error" role="alert" className={styles.errorCampo}>{errors.email.message}</span>}
+        </div>
+        <div className={styles.campo}>
+          <Label htmlFor="cedula">Cédula *</Label>
+          <Input
+            id="cedula"
+            aria-invalid={!!errors.cedula}
+            aria-describedby={errors.cedula ? "cedula-error" : undefined}
+            inputMode="numeric"
+            {...register("cedula")}
+            placeholder="1023456789"
+          />
+          {errors.cedula && <span id="cedula-error" role="alert" className={styles.errorCampo}>{errors.cedula.message}</span>}
+        </div>
+      </div>
+
+      <div className={styles.fila}>
+        <div className={styles.campo}>
+          <Label htmlFor="bodegaId">Bodega *</Label>
           <Controller
             name="bodegaId"
             control={control}
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger>
+                <SelectTrigger id="bodegaId" aria-invalid={!!errors.bodegaId} aria-describedby={errors.bodegaId ? "bodegaId-error" : undefined}>
                   <SelectValue placeholder="Selecciona bodega" />
                 </SelectTrigger>
                 <SelectContent>
@@ -171,16 +195,16 @@ export function RegistrarTrabajador({
               </Select>
             )}
           />
-          {errors.bodegaId && <span className={styles.errorCampo}>{errors.bodegaId.message}</span>}
+          {errors.bodegaId && <span id="bodegaId-error" role="alert" className={styles.errorCampo}>{errors.bodegaId.message}</span>}
         </div>
         <div className={styles.campo}>
-          <Label>Rol *</Label>
+          <Label htmlFor="rolId">Rol *</Label>
           <Controller
             name="rolId"
             control={control}
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger>
+                <SelectTrigger id="rolId" aria-invalid={!!errors.rolId} aria-describedby={errors.rolId ? "rolId-error" : undefined}>
                   <SelectValue placeholder="Selecciona rol" />
                 </SelectTrigger>
                 <SelectContent>
@@ -193,7 +217,7 @@ export function RegistrarTrabajador({
               </Select>
             )}
           />
-          {errors.rolId && <span className={styles.errorCampo}>{errors.rolId.message}</span>}
+          {errors.rolId && <span id="rolId-error" role="alert" className={styles.errorCampo}>{errors.rolId.message}</span>}
         </div>
       </div>
 
@@ -217,11 +241,14 @@ export function RegistrarTrabajador({
           <Label htmlFor="password">Contraseña</Label>
           <Input
             id="password"
+            aria-invalid={!!errors.password}
+            aria-describedby={errors.password ? "password-error" : undefined}
             type="password"
+            autoComplete="new-password"
             {...register("password")}
             placeholder="Mínimo 8 caracteres"
           />
-          {errors.password && <span className={styles.errorCampo}>{errors.password.message}</span>}
+          {errors.password && <span id="password-error" role="alert" className={styles.errorCampo}>{errors.password.message}</span>}
         </div>
       )}
 

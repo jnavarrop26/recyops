@@ -24,9 +24,11 @@ export const ARCHIVOS_LOG: { valor: ArchivoLog; etiqueta: string }[] = [
 export async function obtenerLogs(
   archivo: ArchivoLog,
   lineas = 200,
+  signal?: AbortSignal,
 ): Promise<LineaLog[]> {
   const { data } = await clienteApi.get("/admin/logs", {
     params: { archivo, lineas },
+    signal,
   });
   return Array.isArray(data) ? data : [];
 }

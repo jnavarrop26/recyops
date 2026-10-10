@@ -78,19 +78,19 @@ export function ProveedorFormulario({
 
   return (
     <form className={styles.formulario} onSubmit={handleSubmit(onSubmit)}>
-      {errorGeneral && <div className={styles.alertaError}>{errorGeneral}</div>}
+      {errorGeneral && <div className={styles.alertaError} role="alert">{errorGeneral}</div>}
 
       <div className={styles.campo}>
         <Label htmlFor="nombre">Nombre *</Label>
-        <Input id="nombre" {...register("nombre")} placeholder="Reciclados del Norte S.A.S" />
-        {errors.nombre && <span className={styles.errorCampo}>{errors.nombre.message}</span>}
+        <Input id="nombre" aria-invalid={!!errors.nombre} aria-describedby={errors.nombre ? "nombre-error" : undefined} {...register("nombre")} placeholder="Reciclados del Norte S.A.S" />
+        {errors.nombre && <span id="nombre-error" role="alert" className={styles.errorCampo}>{errors.nombre.message}</span>}
       </div>
 
       <div className={styles.fila}>
         <div className={styles.campo}>
           <Label htmlFor="nit">NIT *</Label>
-          <Input id="nit" {...register("nit")} placeholder="901234567-8" />
-          {errors.nit && <span className={styles.errorCampo}>{errors.nit.message}</span>}
+          <Input id="nit" aria-invalid={!!errors.nit} aria-describedby={errors.nit ? "nit-error" : undefined} {...register("nit")} placeholder="901234567-8" />
+          {errors.nit && <span id="nit-error" role="alert" className={styles.errorCampo}>{errors.nit.message}</span>}
         </div>
         <div className={styles.campo}>
           <Label htmlFor="contacto">Contacto</Label>
@@ -101,13 +101,13 @@ export function ProveedorFormulario({
       <div className={styles.fila}>
         <div className={styles.campo}>
           <Label htmlFor="telefono">Teléfono</Label>
-          <Input id="telefono" inputMode="numeric" {...register("telefono")} placeholder="3009876543" />
-          {errors.telefono && <span className={styles.errorCampo}>{errors.telefono.message}</span>}
+          <Input id="telefono" aria-invalid={!!errors.telefono} aria-describedby={errors.telefono ? "telefono-error" : undefined} inputMode="numeric" {...register("telefono")} placeholder="3009876543" />
+          {errors.telefono && <span id="telefono-error" role="alert" className={styles.errorCampo}>{errors.telefono.message}</span>}
         </div>
         <div className={styles.campo}>
           <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" {...register("email")} placeholder="contacto@recicladosnorte.com" />
-          {errors.email && <span className={styles.errorCampo}>{errors.email.message}</span>}
+          <Input id="email" aria-invalid={!!errors.email} aria-describedby={errors.email ? "email-error" : undefined} type="email" {...register("email")} placeholder="contacto@recicladosnorte.com" />
+          {errors.email && <span id="email-error" role="alert" className={styles.errorCampo}>{errors.email.message}</span>}
         </div>
       </div>
 

@@ -10,19 +10,19 @@
 .encabezado h1 {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--brand-dark, #0F5132);
+  color: var(--brand-dark);
   margin: 0 0 4px;
 }
 
 .encabezado p {
   font-size: 0.875rem;
-  color: var(--ink-muted, #6b8c77);
+  color: var(--ink-muted);
   margin: 0;
 }
 
 .tarjeta {
   background: #fff;
-  border: 1px solid var(--line, #e2e8e4);
+  border: 1px solid var(--line);
   border-radius: 12px;
   padding: 28px;
 }
@@ -30,10 +30,10 @@
 .tarjeta h2 {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--brand-dark, #0F5132);
+  color: var(--brand-dark);
   margin: 0 0 20px;
   padding-bottom: 12px;
-  border-bottom: 1px solid var(--line, #e2e8e4);
+  border-bottom: 1px solid var(--line);
 }
 
 .formulario {
@@ -47,7 +47,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--ink-muted, #6b8c77);
+  color: var(--ink-muted);
   margin: 8px 0 4px;
 }
 
@@ -65,7 +65,7 @@
 
 .errorCampo {
   font-size: 12px;
-  color: var(--destructive, #ef4444);
+  color: var(--destructive);
 }
 
 .checkbox {
@@ -84,7 +84,7 @@
 }
 
 .resultado {
-  background: var(--brand-soft, #f0f9f3);
+  background: var(--brand-soft);
   border: 1px solid #b7dcc4;
   border-radius: 12px;
   padding: 24px;
@@ -96,7 +96,7 @@
 .resultado h2 {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--brand-dark, #0F5132);
+  color: var(--brand-dark);
   margin: 0 0 4px;
 }
 
@@ -114,18 +114,51 @@
 }
 
 .fila-dato span:first-child {
-  color: var(--ink-muted, #6b8c77);
+  color: var(--ink-muted);
   font-weight: 500;
 }
 
 .fila-dato span:last-child {
-  font-family: var(--font-mono, monospace);
-  color: var(--brand-dark, #0F5132);
+  font-family: var(--font-mono);
+  color: var(--brand-dark);
   word-break: break-all;
 }
 
 .aviso {
   font-size: 13px;
-  color: var(--ink-muted, #6b8c77);
+  color: var(--ink-muted);
   margin-top: 4px;
+}
+
+/* ── Responsive ── */
+.campo {
+  min-width: 0;
+}
+
+.fila-dato span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 639px) {
+  .pagina {
+    padding: 16px 0;
+    gap: 24px;
+  }
+
+  .tarjeta {
+    padding: 20px 16px;
+  }
+
+  .fila {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .resultado {
+    padding: 16px;
+  }
+
+  .fila-dato {
+    flex-wrap: wrap;
+  }
 }

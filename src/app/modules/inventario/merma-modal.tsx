@@ -70,7 +70,7 @@ export function MermaModal({
 
   return (
     <Dialog open onOpenChange={(abierto) => !abierto && alCerrar()}>
-      <DialogContent>
+      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Registrar merma</DialogTitle>
           <DialogDescription>
@@ -78,32 +78,36 @@ export function MermaModal({
           </DialogDescription>
         </DialogHeader>
         <form className={styles.formulario} onSubmit={handleSubmit(onSubmit)}>
-          {errorGeneral && <div className={styles.alertaError}>{errorGeneral}</div>}
+          {errorGeneral && <div className={styles.alertaError} role="alert">{errorGeneral}</div>}
           <div className={styles.campo}>
-            <Label>Stock actual</Label>
-            <Input value={`${linea.stockActual.toLocaleString("es-CO")}`} disabled />
+            <Label htmlFor="merma-stock-actual">Stock actual</Label>
+            <Input id="merma-stock-actual" value={`${linea.stockActual.toLocaleString("es-CO")}`} disabled />
           </div>
           <div className={styles.campo}>
             <Label htmlFor="cantidad">Cantidad a descontar *</Label>
             <Input
               id="cantidad"
+              aria-invalid={!!errors.cantidad}
+              aria-describedby={errors.cantidad ? "cantidad-error" : undefined}
               type="number"
               step="0.01"
               min="0"
               {...register("cantidad")}
               placeholder="50.00"
             />
-            {errors.cantidad && <span className={styles.errorCampo}>{errors.cantidad.message}</span>}
+            {errors.cantidad && <span id="cantidad-error" role="alert" className={styles.errorCampo}>{errors.cantidad.message}</span>}
           </div>
           <div className={styles.campo}>
             <Label htmlFor="motivo">Motivo *</Label>
             <Textarea
               id="motivo"
+              aria-invalid={!!errors.motivo}
+              aria-describedby={errors.motivo ? "motivo-error" : undefined}
               rows={3}
               {...register("motivo")}
               placeholder="Material contaminado descartado"
             />
-            {errors.motivo && <span className={styles.errorCampo}>{errors.motivo.message}</span>}
+            {errors.motivo && <span id="motivo-error" role="alert" className={styles.errorCampo}>{errors.motivo.message}</span>}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={alCerrar}>

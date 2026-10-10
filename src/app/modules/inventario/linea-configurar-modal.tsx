@@ -116,7 +116,7 @@ export function LineaConfigurarModal({
 
   return (
     <Dialog open onOpenChange={(abierto) => !abierto && alCerrar()}>
-      <DialogContent>
+      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{esEdicion ? "Editar topes de la línea" : "Dar de alta material en bodega"}</DialogTitle>
           <DialogDescription>
@@ -126,18 +126,18 @@ export function LineaConfigurarModal({
           </DialogDescription>
         </DialogHeader>
         <form className={styles.formulario} onSubmit={handleSubmit(onSubmit)}>
-          {errorGeneral && <div className={styles.alertaError}>{errorGeneral}</div>}
+          {errorGeneral && <div className={styles.alertaError} role="alert">{errorGeneral}</div>}
 
           {!esEdicion && (
             <>
               <div className={styles.campo}>
-                <Label>Bodega *</Label>
+                <Label htmlFor="bodegaId">Bodega *</Label>
                 <Controller
                   name="bodegaId"
                   control={control}
                   render={({ field }) => (
                     <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger>
+                      <SelectTrigger id="bodegaId" aria-invalid={!!errors.bodegaId} aria-describedby={errors.bodegaId ? "bodegaId-error" : undefined}>
                         <SelectValue placeholder="Selecciona bodega" />
                       </SelectTrigger>
                       <SelectContent>
@@ -150,16 +150,16 @@ export function LineaConfigurarModal({
                     </Select>
                   )}
                 />
-                {errors.bodegaId && <span className={styles.errorCampo}>{errors.bodegaId.message}</span>}
+                {errors.bodegaId && <span id="bodegaId-error" role="alert" className={styles.errorCampo}>{errors.bodegaId.message}</span>}
               </div>
               <div className={styles.campo}>
-                <Label>Material *</Label>
+                <Label htmlFor="tipoMaterialId">Material *</Label>
                 <Controller
                   name="tipoMaterialId"
                   control={control}
                   render={({ field }) => (
                     <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger>
+                      <SelectTrigger id="tipoMaterialId" aria-invalid={!!errors.tipoMaterialId} aria-describedby={errors.tipoMaterialId ? "tipoMaterialId-error" : undefined}>
                         <SelectValue placeholder="Selecciona material" />
                       </SelectTrigger>
                       <SelectContent>
@@ -172,7 +172,7 @@ export function LineaConfigurarModal({
                     </Select>
                   )}
                 />
-                {errors.tipoMaterialId && <span className={styles.errorCampo}>{errors.tipoMaterialId.message}</span>}
+                {errors.tipoMaterialId && <span id="tipoMaterialId-error" role="alert" className={styles.errorCampo}>{errors.tipoMaterialId.message}</span>}
               </div>
             </>
           )}
@@ -180,13 +180,13 @@ export function LineaConfigurarModal({
           <div className={styles.fila}>
             <div className={styles.campo}>
               <Label htmlFor="stockMinimo">Stock mínimo</Label>
-              <Input id="stockMinimo" type="number" step="0.01" min="0" {...register("stockMinimo")} />
-              {errors.stockMinimo && <span className={styles.errorCampo}>{errors.stockMinimo.message}</span>}
+              <Input id="stockMinimo" aria-invalid={!!errors.stockMinimo} aria-describedby={errors.stockMinimo ? "stockMinimo-error" : undefined} type="number" step="0.01" min="0" {...register("stockMinimo")} />
+              {errors.stockMinimo && <span id="stockMinimo-error" role="alert" className={styles.errorCampo}>{errors.stockMinimo.message}</span>}
             </div>
             <div className={styles.campo}>
               <Label htmlFor="stockMaximo">Stock máximo</Label>
-              <Input id="stockMaximo" type="number" step="0.01" min="0" {...register("stockMaximo")} />
-              {errors.stockMaximo && <span className={styles.errorCampo}>{errors.stockMaximo.message}</span>}
+              <Input id="stockMaximo" aria-invalid={!!errors.stockMaximo} aria-describedby={errors.stockMaximo ? "stockMaximo-error" : undefined} type="number" step="0.01" min="0" {...register("stockMaximo")} />
+              {errors.stockMaximo && <span id="stockMaximo-error" role="alert" className={styles.errorCampo}>{errors.stockMaximo.message}</span>}
             </div>
           </div>
 

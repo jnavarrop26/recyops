@@ -40,6 +40,22 @@ function esAdmin(): boolean {
 const formatearPrecio = (valor: number) =>
   "$ " + valor.toLocaleString("es-CO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+interface FiltrosMateriales {
+  categoria: string;
+  resina: string;
+  color: string;
+  empaque: string;
+  activo: string;
+}
+
+const FILTROS_INICIALES: FiltrosMateriales = {
+  categoria: TODOS,
+  resina: TODOS,
+  color: TODOS,
+  empaque: TODOS,
+  activo: TODOS,
+};
+
 export function MaterialesVista() {
   const admin = esAdmin();
 
@@ -56,6 +72,9 @@ export function MaterialesVista() {
   const [fColor, setFColor] = useState(TODOS);
   const [fEmpaque, setFEmpaque] = useState(TODOS);
   const [fActivo, setFActivo] = useState(TODOS);
+  // Filtros con los que se cargó la lista: paginar y recargar usan estos,
+  // no los que el usuario está editando sin aplicar.
+  const [filtrosAplicados, setFiltrosAplicados] = useState<FiltrosMateriales>(FILTROS_INICIALES);
 
   // Catálogos para los filtros
   const [categorias, setCategorias] = useState<OpcionCatalogo[]>([]);
@@ -69,16 +88,16 @@ export function MaterialesVista() {
   const valor = (v: string) => (v === TODOS ? undefined : v);
 
   const cargar = useCallback(
-    async (paginaSolicitada: number) => {
+    async (paginaSolicitada: number, filtros: FiltrosMateriales) => {
       setCargando(true);
       setError(null);
       try {
         const datos = await listarMateriales({
-          categoria: valor(fCategoria),
-          resina: valor(fResina),
-          color: valor(fColor),
-          empaque: valor(fEmpaque),
-          activo: valor(fActivo),
+          categoria: valor(filtros.categoria),
+          resina: valor(filtros.resina),
+          color: valor(filtros.color),
+          empaque: valor(filtros.empaque),
+          activo: valor(filtros.activo),
           page: paginaSolicitada,
           size: TAMANO_PAGINA,
         });
@@ -93,7 +112,7 @@ export function MaterialesVista() {
         setCargando(false);
       }
     },
-    [fCategoria, fResina, fColor, fEmpaque, fActivo],
+    [],
   );
 
   useEffect(() => {
@@ -111,13 +130,20 @@ export function MaterialesVista() {
         /* los filtros simplemente quedarán vacíos */
       }
     })();
-    cargar(0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    cargar(0, FILTROS_INICIALES);
+  }, [cargar]);
 
   function aplicarFiltros(evento: React.FormEvent) {
     evento.preventDefault();
-    cargar(0);
+    const filtros = {
+      categoria: fCategoria,
+      resina: fResina,
+      color: fColor,
+      empaque: fEmpaque,
+      activo: fActivo,
+    };
+    setFiltrosAplicados(filtros);
+    cargar(0, filtros);
   }
 
   function limpiarFiltros() {
@@ -126,6 +152,8 @@ export function MaterialesVista() {
     setFColor(TODOS);
     setFEmpaque(TODOS);
     setFActivo(TODOS);
+    setFiltrosAplicados(FILTROS_INICIALES);
+    cargar(0, FILTROS_INICIALES);
   }
 
   function abrirCrear() {
@@ -140,7 +168,7 @@ export function MaterialesVista() {
 
   function alGuardar() {
     setModalAbierto(false);
-    cargar(pagina);
+    cargar(pagina, filtrosAplicados);
   }
 
   async function alternarEstado(material: Material) {
@@ -168,9 +196,9 @@ export function MaterialesVista() {
 
       <form className={styles.filtros} onSubmit={aplicarFiltros}>
         <div className={styles.campoFiltro}>
-          <Label>Categoría</Label>
+          <Label htmlFor="fCategoria">Categoría</Label>
           <Select value={fCategoria} onValueChange={setFCategoria}>
-            <SelectTrigger>
+            <SelectTrigger id="fCategoria">
               <SelectValue placeholder="Todas" />
             </SelectTrigger>
             <SelectContent>
@@ -184,9 +212,9 @@ export function MaterialesVista() {
           </Select>
         </div>
         <div className={styles.campoFiltro}>
-          <Label>Resina</Label>
+          <Label htmlFor="fResina">Resina</Label>
           <Select value={fResina} onValueChange={setFResina}>
-            <SelectTrigger>
+            <SelectTrigger id="fResina">
               <SelectValue placeholder="Todas" />
             </SelectTrigger>
             <SelectContent>
@@ -200,9 +228,9 @@ export function MaterialesVista() {
           </Select>
         </div>
         <div className={styles.campoFiltro}>
-          <Label>Color</Label>
+          <Label htmlFor="fColor">Color</Label>
           <Select value={fColor} onValueChange={setFColor}>
-            <SelectTrigger>
+            <SelectTrigger id="fColor">
               <SelectValue placeholder="Todos" />
             </SelectTrigger>
             <SelectContent>
@@ -216,9 +244,9 @@ export function MaterialesVista() {
           </Select>
         </div>
         <div className={styles.campoFiltro}>
-          <Label>Empaque</Label>
+          <Label htmlFor="fEmpaque">Empaque</Label>
           <Select value={fEmpaque} onValueChange={setFEmpaque}>
-            <SelectTrigger>
+            <SelectTrigger id="fEmpaque">
               <SelectValue placeholder="Todos" />
             </SelectTrigger>
             <SelectContent>
@@ -229,9 +257,9 @@ export function MaterialesVista() {
           </Select>
         </div>
         <div className={styles.campoFiltro}>
-          <Label>Estado</Label>
+          <Label htmlFor="fActivo">Estado</Label>
           <Select value={fActivo} onValueChange={setFActivo}>
-            <SelectTrigger>
+            <SelectTrigger id="fActivo">
               <SelectValue placeholder="Todos" />
             </SelectTrigger>
             <SelectContent>
@@ -260,59 +288,61 @@ export function MaterialesVista() {
           <div className={styles.estado}>No se encontraron materiales.</div>
         ) : (
           <>
-            <table className={styles.tabla}>
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>Categoría</th>
-                  <th>Resina</th>
-                  <th>Color</th>
-                  <th>Empaque</th>
-                  <th className={styles.derecha}>Precio base</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {materiales.map((material) => (
-                  <tr key={material.id}>
-                    <td>{material.nombre}</td>
-                    <td>{material.categoriaNombre}</td>
-                    <td>{material.resinaNombre ?? "—"}</td>
-                    <td>{material.colorNombre ?? "—"}</td>
-                    <td>{material.unidadEmpaque}</td>
-                    <td className={`${styles.mono} ${styles.derecha}`}>
-                      {formatearPrecio(material.precioBase)}
-                    </td>
-                    <td>
-                      <span
-                        className={`${styles.badge} ${
-                          material.activo ? styles.badgeActivo : styles.badgeInactivo
-                        }`}
-                      >
-                        {material.activo ? "Activo" : "Inactivo"}
-                      </span>
-                    </td>
-                    <td>
-                      {admin ? (
-                        <div className={styles.acciones}>
-                          <Button variant="outline" size="sm" onClick={() => abrirEditar(material)}>
-                            Editar
-                          </Button>
-                          <Switch
-                            checked={material.activo}
-                            onCheckedChange={() => alternarEstado(material)}
-                            aria-label="Activar o desactivar material"
-                          />
-                        </div>
-                      ) : (
-                        <span className={styles.subtitulo}>—</span>
-                      )}
-                    </td>
+            <div className={styles.tablaScroll}>
+              <table className={styles.tabla}>
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Categoría</th>
+                    <th>Resina</th>
+                    <th>Color</th>
+                    <th>Empaque</th>
+                    <th className={styles.derecha}>Precio base</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {materiales.map((material) => (
+                    <tr key={material.id}>
+                      <td>{material.nombre}</td>
+                      <td>{material.categoriaNombre}</td>
+                      <td>{material.resinaNombre ?? "—"}</td>
+                      <td>{material.colorNombre ?? "—"}</td>
+                      <td>{material.unidadEmpaque}</td>
+                      <td className={`${styles.mono} ${styles.derecha}`}>
+                        {formatearPrecio(material.precioBase)}
+                      </td>
+                      <td>
+                        <span
+                          className={`${styles.badge} ${
+                            material.activo ? styles.badgeActivo : styles.badgeInactivo
+                          }`}
+                        >
+                          {material.activo ? "Activo" : "Inactivo"}
+                        </span>
+                      </td>
+                      <td>
+                        {admin ? (
+                          <div className={styles.acciones}>
+                            <Button variant="outline" size="sm" onClick={() => abrirEditar(material)}>
+                              Editar
+                            </Button>
+                            <Switch
+                              checked={material.activo}
+                              onCheckedChange={() => alternarEstado(material)}
+                              aria-label="Activar o desactivar material"
+                            />
+                          </div>
+                        ) : (
+                          <span className={styles.subtitulo}>—</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             <div className={styles.paginacion}>
               <span>
@@ -323,7 +353,7 @@ export function MaterialesVista() {
                   variant="outline"
                   size="sm"
                   disabled={pagina <= 0 || cargando}
-                  onClick={() => cargar(pagina - 1)}
+                  onClick={() => cargar(pagina - 1, filtrosAplicados)}
                 >
                   Anterior
                 </Button>
@@ -331,7 +361,7 @@ export function MaterialesVista() {
                   variant="outline"
                   size="sm"
                   disabled={pagina >= totalPaginas - 1 || cargando}
-                  onClick={() => cargar(pagina + 1)}
+                  onClick={() => cargar(pagina + 1, filtrosAplicados)}
                 >
                   Siguiente
                 </Button>
@@ -342,7 +372,7 @@ export function MaterialesVista() {
       </div>
 
       <Dialog open={modalAbierto} onOpenChange={setModalAbierto}>
-        <DialogContent>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{materialEditando ? "Editar material" : "Nuevo material"}</DialogTitle>
             <DialogDescription>

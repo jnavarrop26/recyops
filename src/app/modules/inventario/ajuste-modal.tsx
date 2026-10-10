@@ -68,7 +68,7 @@ export function AjusteModal({
 
   return (
     <Dialog open onOpenChange={(abierto) => !abierto && alCerrar()}>
-      <DialogContent>
+      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Ajuste manual de inventario</DialogTitle>
           <DialogDescription>
@@ -76,31 +76,35 @@ export function AjusteModal({
           </DialogDescription>
         </DialogHeader>
         <form className={styles.formulario} onSubmit={handleSubmit(onSubmit)}>
-          {errorGeneral && <div className={styles.alertaError}>{errorGeneral}</div>}
+          {errorGeneral && <div className={styles.alertaError} role="alert">{errorGeneral}</div>}
           <div className={styles.campo}>
-            <Label>Stock actual</Label>
-            <Input value={`${linea.stockActual.toLocaleString("es-CO")}`} disabled />
+            <Label htmlFor="ajuste-stock-actual">Stock actual</Label>
+            <Input id="ajuste-stock-actual" value={`${linea.stockActual.toLocaleString("es-CO")}`} disabled />
           </div>
           <div className={styles.campo}>
             <Label htmlFor="cantidadNueva">Nuevo valor de stock *</Label>
             <Input
               id="cantidadNueva"
+              aria-invalid={!!errors.cantidadNueva}
+              aria-describedby={errors.cantidadNueva ? "cantidadNueva-error" : undefined}
               type="number"
               step="0.01"
               min="0"
               {...register("cantidadNueva")}
             />
-            {errors.cantidadNueva && <span className={styles.errorCampo}>{errors.cantidadNueva.message}</span>}
+            {errors.cantidadNueva && <span id="cantidadNueva-error" role="alert" className={styles.errorCampo}>{errors.cantidadNueva.message}</span>}
           </div>
           <div className={styles.campo}>
             <Label htmlFor="motivo">Motivo *</Label>
             <Textarea
               id="motivo"
+              aria-invalid={!!errors.motivo}
+              aria-describedby={errors.motivo ? "motivo-error" : undefined}
               rows={3}
               {...register("motivo")}
               placeholder="Conteo físico - corrección de inventario"
             />
-            {errors.motivo && <span className={styles.errorCampo}>{errors.motivo.message}</span>}
+            {errors.motivo && <span id="motivo-error" role="alert" className={styles.errorCampo}>{errors.motivo.message}</span>}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={alCerrar}>

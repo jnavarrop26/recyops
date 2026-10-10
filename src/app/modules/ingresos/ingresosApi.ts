@@ -97,16 +97,14 @@ export async function obtenerIngresoPorId(id: number): Promise<Ingreso> {
 }
 
 // GET /api/ingresos/uuid/{uuid} — identificador público no enumerable
-export async function obtenerIngresoPorUuid(uuid: string): Promise<Ingreso> {
-  const respuesta = await clienteApi.get<Ingreso>(`/ingresos/uuid/${uuid}`);
+export async function obtenerIngresoPorUuid(uuid: string, signal?: AbortSignal): Promise<Ingreso> {
+  const respuesta = await clienteApi.get<Ingreso>(`/ingresos/uuid/${uuid}`, { signal });
   return respuesta.data;
 }
 
 export interface CuerpoDetalleIngreso {
-  // Con materialId el backend resuelve categoría y precio desde el catálogo;
-  // sin él, categoria es obligatoria (flujo viejo de texto libre).
-  materialId: string | null;
-  categoria: string;
+  // El backend resuelve categoría y precio base desde el catálogo.
+  materialId: string;
   pesoBruto: number;
   tara: number;
   precioKilo: number;
@@ -114,11 +112,13 @@ export interface CuerpoDetalleIngreso {
 }
 
 // Cuerpo que espera el backend para registrar un ingreso en báscula.
-// Si van materiales, el backend recalcula pesoNetoTotal y total desde ellos.
+// El backend siempre recalcula pesoNetoTotal y total desde los materiales, y
+// cada uno alimenta el inventario de la bodega destino (InventarioService.
+// registrarEntrada) — bodegaDestinoId y materialId son obligatorios.
 export interface CuerpoIngreso {
   cliente: string;
   cedula: string;
-  bodegaDestino: string;
+  bodegaDestinoId: string;
   encargado: string;
   placaVehiculo: string | null;
   pesoNetoTotal: number;

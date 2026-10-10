@@ -26,14 +26,20 @@
 
 .tablero {
   display: grid;
-  grid-template-columns: repeat(5, minmax(210px, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
   align-items: start;
 }
 
-@media (max-width: 1250px) {
+@media (min-width: 640px) {
   .tablero {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .tablero {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 }
 
@@ -247,4 +253,20 @@
   font-size: 12.5px;
   color: #b91c1c;
   margin-bottom: 10px;
+}
+
+@media (max-width: 639px) {
+  .cabecera {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .avanceCampos {
+    flex-wrap: wrap;
+  }
+}
+
+.tarjetaTitulo {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }

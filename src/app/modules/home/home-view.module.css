@@ -48,7 +48,7 @@
   margin-bottom: 24px;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   .graficas {
     grid-template-columns: 1fr;
   }
@@ -139,4 +139,38 @@
 
 .error {
   color: var(--destructive);
+}
+
+/* ── Responsive ── */
+.tablaScroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.tablaScroll .tabla {
+  min-width: 520px;
+}
+
+@media (max-width: 639px) {
+  .filtros {
+    padding: 16px;
+  }
+
+  .campo {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .acciones {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .acciones > * {
+    flex: 1 1 0;
+  }
+
+  .graficaTarjeta {
+    padding: 16px 16px 8px;
+  }
 }

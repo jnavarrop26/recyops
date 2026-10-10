@@ -125,9 +125,9 @@ export function InventarioVista() {
 
       <div className={styles.barraControles}>
         <div className={styles.campo}>
-          <Label>Bodega</Label>
+          <Label htmlFor="inv-bodega">Bodega</Label>
           <Select value={bodegaId} onValueChange={setBodegaId}>
-            <SelectTrigger>
+            <SelectTrigger id="inv-bodega">
               <SelectValue placeholder="Selecciona bodega" />
             </SelectTrigger>
             <SelectContent>
@@ -172,67 +172,69 @@ export function InventarioVista() {
           <div className={styles.estado}>No hay materiales registrados en esta bodega.</div>
         ) : (
           <>
-            <table className={styles.tabla}>
-              <thead>
-                <tr>
-                  <th>Material</th>
-                  <th>Categoría</th>
-                  <th className={styles.derecha}>Stock actual</th>
-                  <th className={styles.derecha}>Mínimo</th>
-                  <th className={styles.derecha}>Máximo</th>
-                  <th>Estado</th>
-                  <th>Actualización</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {lineas.map((linea) => {
-                  const baja = linea.bajoMinimo || linea.stockActual < linea.stockMinimo;
-                  return (
-                    <tr key={linea.id} className={baja ? styles.filaBaja : undefined}>
-                      <td>{linea.tipoMaterialNombre}</td>
-                      <td>{linea.categoriaNombre}</td>
-                      <td className={`${styles.mono} ${styles.derecha}`}>
-                        {linea.stockActual.toLocaleString("es-CO")}
-                      </td>
-                      <td className={`${styles.mono} ${styles.derecha}`}>
-                        {linea.stockMinimo.toLocaleString("es-CO")}
-                      </td>
-                      <td className={`${styles.mono} ${styles.derecha}`}>
-                        {linea.stockMaximo.toLocaleString("es-CO")}
-                      </td>
-                      <td>
-                        <IndicadorStock linea={linea} />
-                        <div style={{ marginTop: 4 }}>
-                          <ChipStock linea={linea} />
-                        </div>
-                      </td>
-                      <td className={styles.mono}>{formatearFecha(linea.fechaActualizacion)}</td>
-                      <td>
-                        <div className={styles.acciones}>
-                          <Button variant="outline" size="sm" onClick={() => navegar(`/inventario/${linea.id}`)}>
-                            Historial
-                          </Button>
-                          {admin && (
-                            <>
-                              <Button variant="outline" size="sm" onClick={() => setLineaAjuste(linea)}>
-                                Ajuste
-                              </Button>
-                              <Button variant="outline" size="sm" onClick={() => setLineaMerma(linea)}>
-                                Merma
-                              </Button>
-                              <Button variant="outline" size="sm" onClick={() => abrirEditarTopes(linea)}>
-                                Topes
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div className={styles.tablaScroll}>
+              <table className={styles.tabla}>
+                <thead>
+                  <tr>
+                    <th>Material</th>
+                    <th>Categoría</th>
+                    <th className={styles.derecha}>Stock actual</th>
+                    <th className={styles.derecha}>Mínimo</th>
+                    <th className={styles.derecha}>Máximo</th>
+                    <th>Estado</th>
+                    <th>Actualización</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lineas.map((linea) => {
+                    const baja = linea.bajoMinimo || linea.stockActual < linea.stockMinimo;
+                    return (
+                      <tr key={linea.id} className={baja ? styles.filaBaja : undefined}>
+                        <td>{linea.tipoMaterialNombre}</td>
+                        <td>{linea.categoriaNombre}</td>
+                        <td className={`${styles.mono} ${styles.derecha}`}>
+                          {linea.stockActual.toLocaleString("es-CO")}
+                        </td>
+                        <td className={`${styles.mono} ${styles.derecha}`}>
+                          {linea.stockMinimo.toLocaleString("es-CO")}
+                        </td>
+                        <td className={`${styles.mono} ${styles.derecha}`}>
+                          {linea.stockMaximo.toLocaleString("es-CO")}
+                        </td>
+                        <td>
+                          <IndicadorStock linea={linea} />
+                          <div style={{ marginTop: 4 }}>
+                            <ChipStock linea={linea} />
+                          </div>
+                        </td>
+                        <td className={styles.mono}>{formatearFecha(linea.fechaActualizacion)}</td>
+                        <td>
+                          <div className={styles.acciones}>
+                            <Button variant="outline" size="sm" onClick={() => navegar(`/inventario/${linea.id}`)}>
+                              Historial
+                            </Button>
+                            {admin && (
+                              <>
+                                <Button variant="outline" size="sm" onClick={() => setLineaAjuste(linea)}>
+                                  Ajuste
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={() => setLineaMerma(linea)}>
+                                  Merma
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={() => abrirEditarTopes(linea)}>
+                                  Topes
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
             <div className={styles.paginacion}>
               <span>

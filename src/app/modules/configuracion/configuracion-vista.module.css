@@ -1,6 +1,7 @@
 .pagina {
   font-family: var(--font-sans);
   max-width: 780px;
+  margin: 0 auto;
 }
 
 /* ── Cabecera ─────────────────────────────────── */
@@ -293,4 +294,69 @@
   font-size: 14px;
   font-weight: 500;
   color: var(--ink);
+}
+
+/* ── Responsive ───────────────────────────────── */
+.perfilDatos,
+.campo,
+.credValor {
+  min-width: 0;
+}
+
+.credValor,
+.infoItemValor {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1023px) {
+  .infoGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 639px) {
+  .cabecera {
+    margin-bottom: 24px;
+  }
+
+  .tarjetaPerfil {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .seccionCabecera {
+    padding: 16px;
+  }
+
+  .seccionCuerpo {
+    padding: 16px;
+  }
+
+  .fila,
+  .infoGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .acciones {
+    flex-wrap: wrap;
+  }
+
+  .acciones > * {
+    flex: 1 1 auto;
+  }
+
+  .credenciales {
+    padding: 14px 16px;
+  }
+
+  .credItem {
+    flex-wrap: wrap;
+  }
+
+  .filaAccion {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }

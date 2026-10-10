@@ -126,7 +126,7 @@ export function PlataformaVista() {
       <div className={styles.tarjeta}>
         <h2>Nueva Empresa</h2>
         <form className={styles.formulario} onSubmit={handleSubmit(onSubmit)}>
-          {errorGeneral && <div className={styles.alertaError}>{errorGeneral}</div>}
+          {errorGeneral && <div className={styles.alertaError} role="alert">{errorGeneral}</div>}
 
           <p className={styles.seccion}>Datos de la empresa</p>
 
@@ -134,10 +134,12 @@ export function PlataformaVista() {
             <Label htmlFor="nombre">Nombre *</Label>
             <Input
               id="nombre"
+              aria-invalid={!!errors.nombre}
+              aria-describedby={errors.nombre ? "nombre-error" : undefined}
               {...register("nombre")}
               placeholder="EcoVerde S.A.S"
             />
-            {errors.nombre && <span className={styles.errorCampo}>{errors.nombre.message}</span>}
+            {errors.nombre && <span id="nombre-error" role="alert" className={styles.errorCampo}>{errors.nombre.message}</span>}
           </div>
 
           <div className={styles.fila}>
@@ -145,10 +147,12 @@ export function PlataformaVista() {
               <Label htmlFor="nit">NIT *</Label>
               <Input
                 id="nit"
+                aria-invalid={!!errors.nit}
+                aria-describedby={errors.nit ? "nit-error" : undefined}
                 {...register("nit")}
                 placeholder="900123456-1"
               />
-              {errors.nit && <span className={styles.errorCampo}>{errors.nit.message}</span>}
+              {errors.nit && <span id="nit-error" role="alert" className={styles.errorCampo}>{errors.nit.message}</span>}
             </div>
             <div className={styles.campo}>
               <Label htmlFor="schemaNombre">Schema de BD *</Label>
@@ -158,6 +162,8 @@ export function PlataformaVista() {
                 render={({ field }) => (
                   <Input
                     id="schemaNombre"
+                    aria-invalid={!!errors.schemaNombre}
+                    aria-describedby={errors.schemaNombre ? "schemaNombre-error" : undefined}
                     value={field.value}
                     onChange={(e) => field.onChange(e.target.value.toLowerCase().replace(/\s/g, "_"))}
                     placeholder="empresa_ecoverde"
@@ -165,7 +171,7 @@ export function PlataformaVista() {
                 )}
               />
               {errors.schemaNombre && (
-                <span className={styles.errorCampo}>{errors.schemaNombre.message}</span>
+                <span id="schemaNombre-error" role="alert" className={styles.errorCampo}>{errors.schemaNombre.message}</span>
               )}
             </div>
           </div>
@@ -176,11 +182,13 @@ export function PlataformaVista() {
             <Label htmlFor="adminNombreCompleto">Nombre completo *</Label>
             <Input
               id="adminNombreCompleto"
+              aria-invalid={!!errors.adminNombreCompleto}
+              aria-describedby={errors.adminNombreCompleto ? "adminNombreCompleto-error" : undefined}
               {...register("adminNombreCompleto")}
               placeholder="Carlos Ruiz"
             />
             {errors.adminNombreCompleto && (
-              <span className={styles.errorCampo}>{errors.adminNombreCompleto.message}</span>
+              <span id="adminNombreCompleto-error" role="alert" className={styles.errorCampo}>{errors.adminNombreCompleto.message}</span>
             )}
           </div>
 
@@ -189,23 +197,27 @@ export function PlataformaVista() {
               <Label htmlFor="adminEmail">Correo *</Label>
               <Input
                 id="adminEmail"
+                aria-invalid={!!errors.adminEmail}
+                aria-describedby={errors.adminEmail ? "adminEmail-error" : undefined}
                 type="email"
                 {...register("adminEmail")}
                 placeholder="admin@ecoverde.com"
               />
               {errors.adminEmail && (
-                <span className={styles.errorCampo}>{errors.adminEmail.message}</span>
+                <span id="adminEmail-error" role="alert" className={styles.errorCampo}>{errors.adminEmail.message}</span>
               )}
             </div>
             <div className={styles.campo}>
               <Label htmlFor="adminUsername">Username *</Label>
               <Input
                 id="adminUsername"
+                aria-invalid={!!errors.adminUsername}
+                aria-describedby={errors.adminUsername ? "adminUsername-error" : undefined}
                 {...register("adminUsername")}
                 placeholder="cruiz"
               />
               {errors.adminUsername && (
-                <span className={styles.errorCampo}>{errors.adminUsername.message}</span>
+                <span id="adminUsername-error" role="alert" className={styles.errorCampo}>{errors.adminUsername.message}</span>
               )}
             </div>
           </div>
@@ -230,12 +242,15 @@ export function PlataformaVista() {
               <Label htmlFor="adminPassword">Contraseña</Label>
               <Input
                 id="adminPassword"
+                aria-invalid={!!errors.adminPassword}
+                aria-describedby={errors.adminPassword ? "adminPassword-error" : undefined}
                 type="password"
+                autoComplete="new-password"
                 {...register("adminPassword")}
                 placeholder="Mínimo 8 caracteres"
               />
               {errors.adminPassword && (
-                <span className={styles.errorCampo}>{errors.adminPassword.message}</span>
+                <span id="adminPassword-error" role="alert" className={styles.errorCampo}>{errors.adminPassword.message}</span>
               )}
             </div>
           )}

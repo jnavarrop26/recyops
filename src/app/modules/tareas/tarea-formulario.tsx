@@ -99,16 +99,18 @@ export function TareaFormulario({
 
   return (
     <form className={styles.formulario} onSubmit={handleSubmit(onSubmit)}>
-      {error && <div className={styles.alertaError}>{error}</div>}
+      {error && <div className={styles.alertaError} role="alert">{error}</div>}
 
       <div className={styles.campo}>
         <Label htmlFor="tareaTitulo">Título *</Label>
         <Input
           id="tareaTitulo"
+          aria-invalid={!!errors.titulo}
+          aria-describedby={errors.titulo ? "titulo-error" : undefined}
           {...register("titulo")}
           placeholder="Clasificar lote de PET recibido"
         />
-        {errors.titulo && <span className={styles.errorCampo}>{errors.titulo.message}</span>}
+        {errors.titulo && <span id="titulo-error" role="alert" className={styles.errorCampo}>{errors.titulo.message}</span>}
       </div>
 
       <div className={styles.campo}>
@@ -123,13 +125,13 @@ export function TareaFormulario({
 
       <div className={styles.fila}>
         <div className={styles.campo}>
-          <Label>Asignar a *</Label>
+          <Label htmlFor="asignadoId">Asignar a *</Label>
           <Controller
             name="asignadoId"
             control={control}
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger>
+                <SelectTrigger id="asignadoId" aria-invalid={!!errors.asignadoId} aria-describedby={errors.asignadoId ? "asignadoId-error" : undefined}>
                   <SelectValue placeholder="Selecciona trabajador" />
                 </SelectTrigger>
                 <SelectContent>
@@ -142,16 +144,16 @@ export function TareaFormulario({
               </Select>
             )}
           />
-          {errors.asignadoId && <span className={styles.errorCampo}>{errors.asignadoId.message}</span>}
+          {errors.asignadoId && <span id="asignadoId-error" role="alert" className={styles.errorCampo}>{errors.asignadoId.message}</span>}
         </div>
         <div className={styles.campo}>
-          <Label>Bodega</Label>
+          <Label htmlFor="tareaBodega">Bodega</Label>
           <Controller
             name="bodegaId"
             control={control}
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger>
+                <SelectTrigger id="tareaBodega">
                   <SelectValue placeholder="Sin bodega" />
                 </SelectTrigger>
                 <SelectContent>
@@ -170,13 +172,13 @@ export function TareaFormulario({
 
       <div className={styles.fila}>
         <div className={styles.campo}>
-          <Label>Prioridad *</Label>
+          <Label htmlFor="tareaPrioridad">Prioridad *</Label>
           <Controller
             name="prioridad"
             control={control}
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger>
+                <SelectTrigger id="tareaPrioridad">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

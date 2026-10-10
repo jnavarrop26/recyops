@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router";
+import { Eye, Printer } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Label } from "@/app/components/ui/label";
 import { Input } from "@/app/components/ui/input";
@@ -10,14 +10,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/components/ui/select";
-import { ChipEstadoEntrega } from "@/app/modules/entregas/chip-estado-entrega";
-import {
-  listarEntregas,
-  abrirReciboEntrega,
-  ESTADOS_ENTREGA,
-  type Entrega,
-} from "@/app/modules/entregas/entregasApi";
-import { listarProveedores, type Proveedor } from "@/app/modules/proveedores/proveedoresApi";
+import { listarEntregas, ESTADOS_ENTREGA, type Entrega } from "@/app/modules/entregas/entregasApi";
+import { abrirReciboEntrega, cargarHtmlReciboEntrega } from "@/app/modules/entregas/recibo-entrega";
+import { VisorRecibo } from "@/app/shared/components/visor-recibo";
+import { notificarErrorRecibo } from "@/app/shared/ventana-emergente";
+import { listarConvenios, type Convenio } from "@/app/modules/convenios/conveniosApi";
 import { listarBodegas, type Bodega } from "@/app/modules/bodega/bodegasApi";
 import { obtenerTodo } from "@/app/http/paginacion";
 import styles from "@/app/modules/entregas/historial-entregas-vista.module.css";
@@ -52,9 +49,23 @@ function entregasDelMes(entregas: Entrega[], clave: string): Entrega[] {
   });
 }
 
-export function HistorialEntregasVista() {
-  const navegar = useNavigate();
+interface FiltrosEntregas {
+  bodega: string;
+  convenio: string;
+  estado: string;
+  desde: string;
+  hasta: string;
+}
 
+const FILTROS_INICIALES: FiltrosEntregas = {
+  bodega: TODOS,
+  convenio: TODOS,
+  estado: TODOS,
+  desde: "",
+  hasta: "",
+};
+
+export function HistorialEntregasVista() {
   const [entregas, setEntregas] = useState<Entrega[]>([]);
   const [totalElementos, setTotalElementos] = useState(0);
   const [totalPaginas, setTotalPaginas] = useState(0);
@@ -63,27 +74,32 @@ export function HistorialEntregasVista() {
   const [error, setError] = useState<string | null>(null);
 
   const [fBodega, setFBodega] = useState(TODOS);
-  const [fProveedor, setFProveedor] = useState(TODOS);
+  const [fConvenio, setFConvenio] = useState(TODOS);
   const [fEstado, setFEstado] = useState(TODOS);
   const [fDesde, setFDesde] = useState("");
   const [fHasta, setFHasta] = useState("");
+  // Filtros con los que se cargó la lista: paginar y recargar usan estos,
+  // no los que el usuario está editando sin aplicar.
+  const [filtrosAplicados, setFiltrosAplicados] = useState<FiltrosEntregas>(FILTROS_INICIALES);
 
   const [bodegas, setBodegas] = useState<Bodega[]>([]);
-  const [proveedores, setProveedores] = useState<Proveedor[]>([]);
+  const [convenios, setConvenios] = useState<Convenio[]>([]);
+  const [visorAbierto, setVisorAbierto] = useState(false);
+  const [entregaRecibo, setEntregaRecibo] = useState<Entrega | null>(null);
 
   const valor = (v: string) => (v === TODOS ? undefined : v);
 
   const cargar = useCallback(
-    async (paginaSolicitada: number) => {
+    async (paginaSolicitada: number, filtros: FiltrosEntregas) => {
       setCargando(true);
       setError(null);
       try {
         const datos = await listarEntregas({
-          bodegaId: valor(fBodega),
-          proveedorId: valor(fProveedor),
-          estado: valor(fEstado),
-          fechaDesde: fDesde || undefined,
-          fechaHasta: fHasta || undefined,
+          bodegaId: valor(filtros.bodega),
+          convenioId: valor(filtros.convenio),
+          estado: valor(filtros.estado),
+          fechaDesde: filtros.desde || undefined,
+          fechaHasta: filtros.hasta || undefined,
           page: paginaSolicitada,
           size: TAMANO_PAGINA,
         });
@@ -98,46 +114,54 @@ export function HistorialEntregasVista() {
         setCargando(false);
       }
     },
-    [fBodega, fProveedor, fEstado, fDesde, fHasta],
+    [],
   );
 
   useEffect(() => {
     (async () => {
       try {
-        const [bs, ps] = await Promise.all([
+        const [bs, cs] = await Promise.all([
           obtenerTodo((page, size) => listarBodegas({ page, size })),
-          obtenerTodo((page, size) => listarProveedores({ page, size })),
+          obtenerTodo((page, size) => listarConvenios({ page, size })),
         ]);
         setBodegas(bs);
-        setProveedores(ps);
+        setConvenios(cs);
       } catch { /* sin filtros */ }
     })();
-    cargar(0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    cargar(0, FILTROS_INICIALES);
+  }, [cargar]);
 
   function aplicarFiltros(e: React.FormEvent) {
     e.preventDefault();
-    cargar(0);
+    const filtros = { bodega: fBodega, convenio: fConvenio, estado: fEstado, desde: fDesde, hasta: fHasta };
+    setFiltrosAplicados(filtros);
+    cargar(0, filtros);
   }
 
   function limpiar() {
     setFBodega(TODOS);
-    setFProveedor(TODOS);
+    setFConvenio(TODOS);
     setFEstado(TODOS);
     setFDesde("");
     setFHasta("");
+    setFiltrosAplicados(FILTROS_INICIALES);
+    cargar(0, FILTROS_INICIALES);
   }
 
-  async function verRecibo(entrega: Entrega) {
+  async function imprimirRecibo(entrega: Entrega) {
     try { await abrirReciboEntrega(entrega.id); }
-    catch { setError("No se pudo generar el recibo."); }
+    catch (e) { notificarErrorRecibo(e); }
+  }
+
+  function verRecibo(entrega: Entrega) {
+    setEntregaRecibo(entrega);
+    setVisorAbierto(true);
   }
 
   // Métricas de la página actual
-  const totalKg = entregas.reduce((s, e) => s + e.pesoKg, 0);
+  const totalKg = entregas.reduce((s, e) => s + e.totalKg, 0);
   const totalDespachadas = entregas.filter((e) => e.estado === "DESPACHADA").length;
-  const proveedoresUnicos = new Set(entregas.map((e) => e.proveedorId)).size;
+  const conveniosUnicos = new Set(entregas.map((e) => e.convenioId)).size;
 
   const meses = clavesMes(entregas);
 
@@ -153,9 +177,9 @@ export function HistorialEntregasVista() {
       {/* Filtros */}
       <form className={styles.filtros} onSubmit={aplicarFiltros}>
         <div className={styles.campoFiltro}>
-          <Label>Bodega</Label>
+          <Label htmlFor="hBodega">Bodega</Label>
           <Select value={fBodega} onValueChange={setFBodega}>
-            <SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger>
+            <SelectTrigger id="hBodega"><SelectValue placeholder="Todas" /></SelectTrigger>
             <SelectContent>
               <SelectItem value={TODOS}>Todas</SelectItem>
               {bodegas.map((b) => <SelectItem key={b.id} value={b.id}>{b.nombre}</SelectItem>)}
@@ -163,19 +187,19 @@ export function HistorialEntregasVista() {
           </Select>
         </div>
         <div className={styles.campoFiltro}>
-          <Label>Proveedor</Label>
-          <Select value={fProveedor} onValueChange={setFProveedor}>
-            <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
+          <Label htmlFor="hConvenio">Convenio</Label>
+          <Select value={fConvenio} onValueChange={setFConvenio}>
+            <SelectTrigger id="hConvenio"><SelectValue placeholder="Todos" /></SelectTrigger>
             <SelectContent>
               <SelectItem value={TODOS}>Todos</SelectItem>
-              {proveedores.map((p) => <SelectItem key={p.id} value={p.id}>{p.nombre}</SelectItem>)}
+              {convenios.map((c) => <SelectItem key={c.id} value={c.id}>{c.nombre}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
         <div className={styles.campoFiltro}>
-          <Label>Estado</Label>
+          <Label htmlFor="hEstado">Estado</Label>
           <Select value={fEstado} onValueChange={setFEstado}>
-            <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
+            <SelectTrigger id="hEstado"><SelectValue placeholder="Todos" /></SelectTrigger>
             <SelectContent>
               <SelectItem value={TODOS}>Todos</SelectItem>
               {ESTADOS_ENTREGA.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}
@@ -212,8 +236,8 @@ export function HistorialEntregasVista() {
             <p className={styles.metricaValor}>{totalDespachadas}</p>
           </div>
           <div className={styles.metrica}>
-            <p className={styles.metricaLabel}>Proveedores</p>
-            <p className={styles.metricaValor}>{proveedoresUnicos}</p>
+            <p className={styles.metricaLabel}>Convenios</p>
+            <p className={styles.metricaValor}>{conveniosUnicos}</p>
           </div>
         </div>
       )}
@@ -238,43 +262,59 @@ export function HistorialEntregasVista() {
                 </div>
 
                 <div className={styles.tarjeta}>
-                  <table className={styles.tabla}>
-                    <thead>
-                      <tr>
-                        <th>Código</th>
-                        <th>Proveedor</th>
-                        <th>Material</th>
-                        <th className={styles.derecha}>Peso (kg)</th>
-                        <th>Bodega</th>
-                        <th>Estado</th>
-                        <th>Fecha</th>
-                        <th>Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {grupo.map((entrega) => (
-                        <tr key={entrega.id}>
-                          <td className={styles.mono}>{entrega.codigo}</td>
-                          <td>{entrega.proveedorNombre}</td>
-                          <td>{entrega.tipoMaterialNombre}</td>
-                          <td className={`${styles.mono} ${styles.derecha}`}>
-                            {fmtPeso.format(entrega.pesoKg)}
-                          </td>
-                          <td>{entrega.bodegaNombre}</td>
-                          <td><ChipEstadoEntrega estado={entrega.estado} /></td>
-                          <td className={styles.mono} style={{ fontSize: 12 }}>
-                            {fmt.format(new Date(entrega.fechaRecepcion))}
-                          </td>
-                          <td>
-                            <div className={styles.acciones}>
-                              <Button variant="outline" size="sm" onClick={() => navegar(`/entregas/${entrega.id}`)}>Ver</Button>
-                              <Button variant="outline" size="sm" onClick={() => verRecibo(entrega)}>Recibo</Button>
-                            </div>
-                          </td>
+                  <div className={styles.tablaScroll}>
+                    <table className={styles.tabla}>
+                      <thead>
+                        <tr>
+                          <th>Código</th>
+                          <th>Convenio</th>
+                          <th>Persona que entrega</th>
+                          <th className={styles.derecha}>Total (kg)</th>
+                          <th>Bodega</th>
+                          <th>Fecha</th>
+                          <th>Recibo</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {grupo.map((entrega) => (
+                          <tr key={entrega.id}>
+                            <td className={styles.mono}>{entrega.codigo}</td>
+                            <td>{entrega.convenioNombre ?? "—"}</td>
+                            <td>{entrega.personaEntregaNombre ?? "—"}</td>
+                            <td className={`${styles.mono} ${styles.derecha}`}>
+                              {fmtPeso.format(entrega.totalKg)}
+                            </td>
+                            <td>{entrega.bodegaNombre}</td>
+                            <td className={styles.mono} style={{ fontSize: 12 }}>
+                              {fmt.format(new Date(entrega.fechaRecepcion))}
+                            </td>
+                            <td>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                title="Ver recibo"
+                                onClick={() => verRecibo(entrega)}
+                                aria-label={`Ver recibo de la entrega ${entrega.codigo}`}
+                              >
+                                <Eye size={15} aria-hidden="true" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                title="Imprimir recibo (abre una pestaña nueva)"
+                                onClick={() => imprimirRecibo(entrega)}
+                                aria-label={`Imprimir recibo de la entrega ${entrega.codigo} en una pestaña nueva`}
+                              >
+                                <Printer size={15} aria-hidden="true" />
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             );
@@ -283,12 +323,22 @@ export function HistorialEntregasVista() {
           <div className={styles.paginacion}>
             <span>{totalElementos} entregas en total · Página {pagina + 1} de {Math.max(totalPaginas, 1)}</span>
             <div className={styles.controlesPagina}>
-              <Button variant="outline" size="sm" disabled={pagina <= 0 || cargando} onClick={() => cargar(pagina - 1)}>Anterior</Button>
-              <Button variant="outline" size="sm" disabled={pagina >= totalPaginas - 1 || cargando} onClick={() => cargar(pagina + 1)}>Siguiente</Button>
+              <Button variant="outline" size="sm" disabled={pagina <= 0 || cargando} onClick={() => cargar(pagina - 1, filtrosAplicados)}>Anterior</Button>
+              <Button variant="outline" size="sm" disabled={pagina >= totalPaginas - 1 || cargando} onClick={() => cargar(pagina + 1, filtrosAplicados)}>Siguiente</Button>
             </div>
           </div>
         </div>
       )}
+
+      <VisorRecibo
+        abierto={visorAbierto}
+        onOpenChange={setVisorAbierto}
+        titulo={`Recibo de la entrega ${entregaRecibo?.codigo ?? ""}`}
+        cargarHtml={(signal) =>
+          entregaRecibo ? cargarHtmlReciboEntrega(entregaRecibo.id, signal) : Promise.reject(new Error("Sin entrega"))
+        }
+        onAbrirEnPestana={() => entregaRecibo && imprimirRecibo(entregaRecibo)}
+      />
     </div>
   );
 }

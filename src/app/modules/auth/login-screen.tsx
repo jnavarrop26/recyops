@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { Mail, Lock, Eye, EyeOff, LogIn, ArrowLeft } from "lucide-react";
 import Logo1Recyops from "@/app/shared/components/logo-recyops";
 import { RecyOPSIcon } from "@/app/shared/components/recyops-icon";
@@ -16,6 +16,10 @@ import styles from "@/app/modules/auth/login-screen.module.css";
 
 export function LoginScreen() {
   const navigate = useNavigate();
+  const location = useLocation();
+  // Ruta protegida que el usuario intentó abrir antes de iniciar sesión
+  // (la deja DashboardLayout en el state del redirect).
+  const destinoPrevio = (location.state as { from?: { pathname?: string; search?: string } } | null)?.from;
   const [fase, setFase] = useState<"splash" | "saliendo" | "formulario">("splash");
   const [showPwd, setShowPwd] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,6 +31,7 @@ export function LoginScreen() {
     register,
     handleSubmit,
     getValues,
+    setFocus,
     setError: setFieldError,
     formState: { errors },
     reset,
@@ -40,6 +45,11 @@ export function LoginScreen() {
     setTimeout(() => setFase("formulario"), 560);
   }
 
+  // Al mostrar el formulario, el foco pasa al primer campo.
+  useEffect(() => {
+    if (fase === "formulario") setFocus("username");
+  }, [fase, setFocus]);
+
   function volverAlSplash() {
     setFase("splash");
     setError(null);
@@ -52,13 +62,18 @@ export function LoginScreen() {
     try {
       const resp = await login({ username: valores.username.trim(), password: valores.password });
       guardarSesion(resp);
-      navigate(resp.rol.toUpperCase() === "SUPERADMIN" ? "/plataforma" : "/inicio");
+      const destinoPorRol = resp.rol.toUpperCase() === "SUPERADMIN" ? "/plataforma" : "/inicio";
+      const destino =
+        destinoPrevio?.pathname && destinoPrevio.pathname !== "/"
+          ? `${destinoPrevio.pathname}${destinoPrevio.search ?? ""}`
+          : destinoPorRol;
+      navigate(destino, { replace: true });
     } catch (err) {
       const estado = estadoHttp(err);
       if (estado === 401 || estado === 403) {
         setError("Usuario o contraseña incorrectos.");
       } else if (estado === undefined || estado === 0) {
-        setError("No se pudo conectar al servidor. Usa el acceso demo.");
+        setError("No se pudo conectar al servidor. Verifica tu conexión e intenta de nuevo.");
       } else {
         setError("Ocurrió un error al iniciar sesión. Intenta de nuevo.");
       }
@@ -112,7 +127,11 @@ export function LoginScreen() {
       )}
 
       {/* ── FASE 2: Formulario ── */}
-      <div className={`${styles.formPanel} ${enForm ? styles.visible : ""}`}>
+      <div
+        className={`${styles.formPanel} ${enForm ? styles.visible : ""}`}
+        inert={!enForm}
+        aria-hidden={!enForm}
+      >
 
         {/* Formulario centrado */}
         <div className={styles.formBody}>
@@ -121,7 +140,7 @@ export function LoginScreen() {
               <h1 style={{ fontSize: "1.6rem", fontWeight: 700, marginBottom: "8px", color: "#0F5132" }}>
                 Bienvenido a RecyOPS
               </h1>
-              <p style={{ fontSize: "0.9rem", color: "#6b8c77", lineHeight: 1.6 }}>
+              <p style={{ fontSize: "0.9rem", color: "var(--ink-muted)", lineHeight: 1.6 }}>
                 Gestiona tu operación de reciclaje desde un solo lugar.<br />
                 Ingresa tus credenciales para continuar.
               </p>
@@ -129,7 +148,7 @@ export function LoginScreen() {
 
             <form onSubmit={handleSubmit(onSubmit)} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
               {error && (
-                <div style={{
+                <div role="alert" style={{
                   borderRadius: "8px",
                   border: "1px solid #fca5a5",
                   background: "#fef2f2",
@@ -141,7 +160,7 @@ export function LoginScreen() {
                 </div>
               )}
               {info && (
-                <div style={{
+                <div role="status" style={{
                   borderRadius: "8px",
                   border: "1px solid #b7dcc4",
                   background: "#f0f9f3",
@@ -156,16 +175,19 @@ export function LoginScreen() {
               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                 <Label htmlFor="username">Usuario</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                  <Mail aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                   <Input
                     id="username"
-                    placeholder="admin"
+                    placeholder="usuario o correo"
+                    autoComplete="username"
                     className="pl-9"
+                    aria-invalid={!!errors.username}
+                    aria-describedby={errors.username ? "username-error" : undefined}
                     {...register("username")}
                   />
                 </div>
                 {errors.username && (
-                  <span style={{ fontSize: "0.8rem", color: "#b91c1c" }}>{errors.username.message}</span>
+                  <span id="username-error" role="alert" style={{ fontSize: "0.8rem", color: "#b91c1c" }}>{errors.username.message}</span>
                 )}
               </div>
 
@@ -190,24 +212,29 @@ export function LoginScreen() {
                   </button>
                 </div>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                  <Lock aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                   <Input
                     id="password"
                     type={showPwd ? "text" : "password"}
                     placeholder="••••••••"
-                    className="pl-9 pr-9"
+                    autoComplete="current-password"
+                    className="pl-9 pr-10"
+                    aria-invalid={!!errors.password}
+                    aria-describedby={errors.password ? "password-error" : undefined}
                     {...register("password")}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPwd((s) => !s)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    aria-label={showPwd ? "Ocultar contraseña" : "Mostrar contraseña"}
+                    aria-pressed={showPwd}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
                   >
-                    {showPwd ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    {showPwd ? <EyeOff aria-hidden="true" className="size-4" /> : <Eye aria-hidden="true" className="size-4" />}
                   </button>
                 </div>
                 {errors.password && (
-                  <span style={{ fontSize: "0.8rem", color: "#b91c1c" }}>{errors.password.message}</span>
+                  <span id="password-error" role="alert" style={{ fontSize: "0.8rem", color: "#b91c1c" }}>{errors.password.message}</span>
                 )}
               </div>
 

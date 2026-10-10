@@ -1,6 +1,22 @@
 import { useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router";
-import { LogOut } from "lucide-react";
+import {
+  Boxes,
+  Building2,
+  ChartColumn,
+  ChevronRight,
+  Factory,
+  Handshake,
+  LayoutDashboard,
+  LogOut,
+  PackagePlus,
+  Recycle,
+  Settings,
+  Truck,
+  Users,
+  Warehouse,
+  type LucideIcon,
+} from "lucide-react";
 import { cerrarSesion } from "@/app/modules/auth/authApi";
 import { RecyOPSIcon } from "@/app/shared/components/recyops-icon";
 import styles from "@/app/shared/layout/sidebar.module.css";
@@ -14,6 +30,8 @@ interface SubOpcion {
 interface OpcionMenu {
   ruta: string;
   etiqueta: string;
+  /** Icono decorativo junto a la etiqueta; solo en el primer nivel del menú. */
+  icono: LucideIcon;
   etiquetaPrincipal?: string;
   subopciones?: SubOpcion[];
   soloAdmin?: boolean;
@@ -41,13 +59,14 @@ interface SeccionMenu {
 const secciones: SeccionMenu[] = [
   {
     opciones: [
-      { ruta: "/plataforma", etiqueta: "Empresas", soloSuperAdmin: true },
-      { ruta: "/inicio", etiqueta: "Inicio" },
+      { ruta: "/plataforma", etiqueta: "Empresas", icono: Building2, soloSuperAdmin: true },
+      { ruta: "/inicio", etiqueta: "Inicio", icono: LayoutDashboard },
       {
         // Todo lo del equipo vive bajo Trabajadores: el principal es la vista
         // de trabajadores (admin) y las tareas cuelgan como subopciones.
         ruta: "/trabajadores",
         etiqueta: "Trabajadores",
+        icono: Users,
         principalSoloAdmin: true,
         subopciones: [
           { ruta: "/tareas", etiqueta: "Tareas", soloAdmin: true },
@@ -62,35 +81,44 @@ const secciones: SeccionMenu[] = [
       {
         ruta: "/ingreso",
         etiqueta: "Ingreso",
+        icono: PackagePlus,
         etiquetaPrincipal: "Registrar ingreso",
         subopciones: [{ ruta: "/ingreso/historial", etiqueta: "Historial de ingresos" }],
       },
-      {
-        ruta: "/entregas",
-        etiqueta: "Entregas",
-        etiquetaPrincipal: "Registrar entrega",
-        soloAdmin: true,
-        subopciones: [{ ruta: "/entregas/historial", etiqueta: "Historial de entregas" }],
-      },
-      { ruta: "/inventario", etiqueta: "Inventario", soloAdmin: true },
-      { ruta: "/bodegas", etiqueta: "Bodegas", soloAdmin: true },
+      { ruta: "/inventario", etiqueta: "Inventario", icono: Boxes, soloAdmin: true },
+      { ruta: "/bodegas", etiqueta: "Bodegas", icono: Warehouse, soloAdmin: true },
     ],
   },
   {
     etiqueta: "Administración",
     opciones: [
-      { ruta: "/materiales", etiqueta: "Materiales", soloAdmin: true },
-      { ruta: "/proveedores", etiqueta: "Proveedores", soloAdmin: true },
-      { ruta: "/convenios", etiqueta: "Convenios", soloAdmin: true },
+      { ruta: "/materiales", etiqueta: "Materiales", icono: Recycle, soloAdmin: true },
+      { ruta: "/proveedores", etiqueta: "Proveedores", icono: Factory, soloAdmin: true },
+      { ruta: "/convenios", etiqueta: "Convenios", icono: Handshake, soloAdmin: true },
     ],
   },
   {
     etiqueta: "Sistema",
     opciones: [
-      { ruta: "/reportes", etiqueta: "Reportes", soloAdmin: true },
-      { ruta: "/logs", etiqueta: "Logs", soloAdmin: true },
-      { ruta: "/configuracion", etiqueta: "Configuración" },
-      { ruta: "/servicios-externos", etiqueta: "Servicios externos", soloAdmin: true },
+      { ruta: "/reportes", etiqueta: "Reportes", icono: ChartColumn, soloAdmin: true },
+      {
+        ruta: "/configuracion",
+        etiqueta: "Configuración",
+        icono: Settings,
+        subopciones: [{ ruta: "/logs", etiqueta: "Logs", soloAdmin: true }],
+      },
+      {
+        // Entregas es una integración con el proveedor/servicio externo que
+        // recoge el material, así que vive dentro de Servicios externos.
+        ruta: "/servicios-externos",
+        etiqueta: "Servicios externos",
+        icono: Truck,
+        soloAdmin: true,
+        subopciones: [
+          { ruta: "/entregas", etiqueta: "Entregas" },
+          { ruta: "/entregas/historial", etiqueta: "Historial de entregas" },
+        ],
+      },
     ],
   },
 ];
@@ -126,6 +154,7 @@ function GrupoConSubmenu({
   const rutasDelGrupo = [opcion.ruta, ...(opcion.subopciones ?? []).map((sub) => sub.ruta)];
   const rutaActivaEnGrupo = rutasDelGrupo.some((ruta) => ubicacion.pathname.startsWith(ruta));
   const [abierto, setAbierto] = useState(rutaActivaEnGrupo);
+  const Icono = opcion.icono;
 
   return (
     <div className={styles.grupo}>
@@ -135,8 +164,14 @@ function GrupoConSubmenu({
         aria-expanded={abierto}
         onClick={() => setAbierto((previo) => !previo)}
       >
-        <span>{opcion.etiqueta}</span>
-        <span className={`${styles.flecha} ${abierto ? styles.flechaAbierta : ""}`}>›</span>
+        <span className={styles.etiquetaConIcono}>
+          <Icono className={styles.icono} aria-hidden="true" />
+          {opcion.etiqueta}
+        </span>
+        <ChevronRight
+          className={`${styles.flecha} ${abierto ? styles.flechaAbierta : ""}`}
+          aria-hidden="true"
+        />
       </button>
 
       {abierto && (
@@ -222,7 +257,7 @@ export function Sidebar({ abierto = false, onNavegar }: SidebarProps) {
   }
 
   return (
-    <aside className={`${styles.sidebar} ${abierto ? styles.abierta : ""}`}>
+    <aside id="menu-lateral" className={`${styles.sidebar} ${abierto ? styles.abierta : ""}`}>
       <div className={styles.brand}>
         <div className={styles.brandRow}>
           <RecyOPSIcon size={28} variant="light" />
@@ -252,6 +287,7 @@ export function Sidebar({ abierto = false, onNavegar }: SidebarProps) {
                     isActive ? `${styles.link} ${styles.active}` : styles.link
                   }
                 >
+                  <opcion.icono className={styles.icono} aria-hidden="true" />
                   {opcion.etiqueta}
                 </NavLink>
               ),

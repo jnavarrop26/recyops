@@ -15,6 +15,7 @@ export interface Trabajador {
   nombreCompleto: string;
   username: string;
   email: string;
+  cedula: string | null;
   telefono?: string;
   estado: string;
   rolId: string;
@@ -25,6 +26,7 @@ export interface Trabajador {
 
 export interface CuerpoEditarTrabajador {
   nombreCompleto: string;
+  cedula: string;
   telefono: string | null;
   bodegaId: string;
   rolId: string;
@@ -34,6 +36,7 @@ export interface NuevoTrabajador {
   nombreCompleto: string;
   username: string;
   email: string;
+  cedula: string;
   telefono?: string;
   bodegaId: string;
   rolId: string;

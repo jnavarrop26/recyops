@@ -9,6 +9,7 @@ import {
   type TipoOperacion,
 } from "@/app/modules/inventario/inventarioApi";
 import { interpretarErrorHttp } from "@/app/http/errores";
+import { usePeticionCancelable } from "@/app/shared/hooks/use-peticion-cancelable";
 import styles from "@/app/modules/inventario/inventario-detalle.module.css";
 
 const TAMANO_PAGINA = 20;
@@ -37,36 +38,49 @@ export function InventarioDetalle() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Movimientos: la página pedida más reciente cancela la anterior.
+  const nuevaPeticionMovimientos = usePeticionCancelable();
+
   const cargarMovimientos = useCallback(
     async (paginaSolicitada: number) => {
       if (!id) return;
+      const signal = nuevaPeticionMovimientos();
       try {
-        const datos = await obtenerMovimientos(id, paginaSolicitada, TAMANO_PAGINA);
+        const datos = await obtenerMovimientos(id, paginaSolicitada, TAMANO_PAGINA, signal);
+        if (signal.aborted) return;
         setMovimientos(datos.content);
         setTotalPaginas(datos.totalPages);
         setPagina(datos.number);
       } catch {
-        setMovimientos([]);
+        if (!signal.aborted) setMovimientos([]);
       }
     },
-    [id],
+    [id, nuevaPeticionMovimientos],
   );
 
+  // Pasar de /inventario/1 a /inventario/2 aborta la carga de la línea anterior.
   useEffect(() => {
     if (!id) return;
+    const controlador = new AbortController();
+    const { signal } = controlador;
     (async () => {
       setCargando(true);
       setError(null);
       try {
-        const datosLinea = await obtenerLinea(id);
-        setLinea(datosLinea);
-        await cargarMovimientos(0);
+        const [datosLinea] = await Promise.all([
+          obtenerLinea(id, signal),
+          cargarMovimientos(0),
+        ]);
+        if (!signal.aborted) setLinea(datosLinea);
       } catch (e) {
-        setError(interpretarErrorHttp(e, {}, "No se pudo cargar la línea de inventario."));
+        if (!signal.aborted) {
+          setError(interpretarErrorHttp(e, {}, "No se pudo cargar la línea de inventario."));
+        }
       } finally {
-        setCargando(false);
+        if (!signal.aborted) setCargando(false);
       }
     })();
+    return () => controlador.abort();
   }, [id, cargarMovimientos]);
 
   function abrirReferencia(referencia: string | null) {
@@ -116,48 +130,50 @@ export function InventarioDetalle() {
           <div className={styles.estado}>No hay movimientos registrados.</div>
         ) : (
           <>
-            <table className={styles.tabla}>
-              <thead>
-                <tr>
-                  <th>Operación</th>
-                  <th className={styles.derecha}>Cantidad</th>
-                  <th className={styles.derecha}>Anterior</th>
-                  <th className={styles.derecha}>Nueva</th>
-                  <th>Referencia</th>
-                  <th>Usuario</th>
-                  <th>Fecha</th>
-                </tr>
-              </thead>
-              <tbody>
-                {movimientos.map((m) => (
-                  <tr key={m.id}>
-                    <td>
-                      <span className={`${styles.opChip} ${CLASE_OP[m.tipoOperacion]}`}>
-                        {m.tipoOperacion}
-                      </span>
-                    </td>
-                    <td className={`${styles.mono} ${styles.derecha}`}>{m.cantidad.toLocaleString("es-CO")}</td>
-                    <td className={`${styles.mono} ${styles.derecha}`}>{m.cantidadAnterior.toLocaleString("es-CO")}</td>
-                    <td className={`${styles.mono} ${styles.derecha}`}>{m.cantidadNueva.toLocaleString("es-CO")}</td>
-                    <td>
-                      {m.referencia ? (
-                        m.referencia.startsWith("ENT-") || m.referencia.startsWith("CNV-") ? (
-                          <button type="button" className={styles.refLink} onClick={() => abrirReferencia(m.referencia)}>
-                            {m.referencia}
-                          </button>
-                        ) : (
-                          <span className={styles.mono}>{m.referencia}</span>
-                        )
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    <td>{m.usuarioNombre}</td>
-                    <td className={styles.mono}>{formatearFecha(m.fechaRegistro)}</td>
+            <div className={styles.tablaScroll}>
+              <table className={styles.tabla}>
+                <thead>
+                  <tr>
+                    <th>Operación</th>
+                    <th className={styles.derecha}>Cantidad</th>
+                    <th className={styles.derecha}>Anterior</th>
+                    <th className={styles.derecha}>Nueva</th>
+                    <th>Referencia</th>
+                    <th>Usuario</th>
+                    <th>Fecha</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {movimientos.map((m) => (
+                    <tr key={m.id}>
+                      <td>
+                        <span className={`${styles.opChip} ${CLASE_OP[m.tipoOperacion]}`}>
+                          {m.tipoOperacion}
+                        </span>
+                      </td>
+                      <td className={`${styles.mono} ${styles.derecha}`}>{m.cantidad.toLocaleString("es-CO")}</td>
+                      <td className={`${styles.mono} ${styles.derecha}`}>{m.cantidadAnterior.toLocaleString("es-CO")}</td>
+                      <td className={`${styles.mono} ${styles.derecha}`}>{m.cantidadNueva.toLocaleString("es-CO")}</td>
+                      <td>
+                        {m.referencia ? (
+                          m.referencia.startsWith("ENT-") || m.referencia.startsWith("CNV-") ? (
+                            <button type="button" className={styles.refLink} onClick={() => abrirReferencia(m.referencia)}>
+                              {m.referencia}
+                            </button>
+                          ) : (
+                            <span className={styles.mono}>{m.referencia}</span>
+                          )
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td>{m.usuarioNombre}</td>
+                      <td className={styles.mono}>{formatearFecha(m.fechaRegistro)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             <div className={styles.paginacion}>
               <span>Página {pagina + 1} de {Math.max(totalPaginas, 1)}</span>

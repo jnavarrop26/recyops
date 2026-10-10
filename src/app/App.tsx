@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { RouterProvider } from "react-router";
 import faviconHref from "@/app/public/icons/favicon-recyops.svg";
 import { router } from "@/app/routes";
+import { Toaster } from "@/app/components/ui/sonner";
 
 export default function App() {
   useEffect(() => {
@@ -16,5 +17,12 @@ export default function App() {
     document.title = "RecyOPS";
   }, []);
 
-  return <RouterProvider router={router} />;
+  // La app no tiene modo oscuro (no hay ThemeProvider de next-themes): el
+  // wrapper de sonner cae al contexto por defecto, así que se fija "light".
+  return (
+    <>
+      <RouterProvider router={router} />
+      <Toaster theme="light" position="top-right" richColors closeButton />
+    </>
+  );
 }

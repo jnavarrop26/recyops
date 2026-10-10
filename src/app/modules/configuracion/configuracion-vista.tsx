@@ -77,6 +77,7 @@ function FormularioCrearOperario() {
   const [nombre, setNombre] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [cedula, setCedula] = useState("");
   const [telefono, setTelefono] = useState("");
   const [bodegaId, setBodegaId] = useState("");
   const [rolId, setRolId] = useState("");
@@ -96,6 +97,7 @@ function FormularioCrearOperario() {
     if (nombre.trim().length < 3) nuevos.nombre = "El nombre debe tener al menos 3 caracteres.";
     if (!username.trim()) nuevos.username = "El usuario es obligatorio.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) nuevos.email = "Correo con formato inválido.";
+    if (!cedula.trim()) nuevos.cedula = "La cédula es obligatoria.";
     if (!bodegaId) nuevos.bodegaId = "Selecciona una bodega.";
     if (!rolId) nuevos.rolId = "Selecciona un rol.";
     setErrores(nuevos);
@@ -114,6 +116,7 @@ function FormularioCrearOperario() {
         nombreCompleto: nombre.trim(),
         username: username.trim(),
         email: email.trim(),
+        cedula: cedula.trim(),
         telefono: telefono.trim() || undefined,
         bodegaId,
         rolId,
@@ -122,6 +125,7 @@ function FormularioCrearOperario() {
       setNombre("");
       setUsername("");
       setEmail("");
+      setCedula("");
       setTelefono("");
       setBodegaId("");
       setRolId("");
@@ -176,28 +180,32 @@ function FormularioCrearOperario() {
 
   return (
     <form className={styles.formulario} onSubmit={manejarEnvio}>
-      {errorGeneral && <div className={styles.alertaError}>{errorGeneral}</div>}
+      {errorGeneral && <div className={styles.alertaError} role="alert">{errorGeneral}</div>}
 
       <div className={styles.fila}>
         <div className={styles.campo}>
           <Label htmlFor="cfg-nombre">Nombre completo *</Label>
           <Input
             id="cfg-nombre"
+            aria-invalid={!!errores.nombre}
+            aria-describedby={errores.nombre ? "cfg-nombre-error" : undefined}
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
             placeholder="Ana Torres Gómez"
           />
-          {errores.nombre && <span className={styles.errorCampo}>{errores.nombre}</span>}
+          {errores.nombre && <span id="cfg-nombre-error" role="alert" className={styles.errorCampo}>{errores.nombre}</span>}
         </div>
         <div className={styles.campo}>
           <Label htmlFor="cfg-username">Nombre de usuario *</Label>
           <Input
             id="cfg-username"
+            aria-invalid={!!errores.username}
+            aria-describedby={errores.username ? "cfg-username-error" : undefined}
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="a.torres"
           />
-          {errores.username && <span className={styles.errorCampo}>{errores.username}</span>}
+          {errores.username && <span id="cfg-username-error" role="alert" className={styles.errorCampo}>{errores.username}</span>}
         </div>
       </div>
 
@@ -206,13 +214,31 @@ function FormularioCrearOperario() {
           <Label htmlFor="cfg-email">Correo electrónico *</Label>
           <Input
             id="cfg-email"
+            aria-invalid={!!errores.email}
+            aria-describedby={errores.email ? "cfg-email-error" : undefined}
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="a.torres@recyops.com"
           />
-          {errores.email && <span className={styles.errorCampo}>{errores.email}</span>}
+          {errores.email && <span id="cfg-email-error" role="alert" className={styles.errorCampo}>{errores.email}</span>}
         </div>
+        <div className={styles.campo}>
+          <Label htmlFor="cfg-cedula">Cédula *</Label>
+          <Input
+            id="cfg-cedula"
+            aria-invalid={!!errores.cedula}
+            aria-describedby={errores.cedula ? "cfg-cedula-error" : undefined}
+            inputMode="numeric"
+            value={cedula}
+            onChange={(e) => setCedula(e.target.value)}
+            placeholder="1023456789"
+          />
+          {errores.cedula && <span id="cfg-cedula-error" role="alert" className={styles.errorCampo}>{errores.cedula}</span>}
+        </div>
+      </div>
+
+      <div className={styles.fila}>
         <div className={styles.campo}>
           <Label htmlFor="cfg-telefono">Teléfono</Label>
           <Input
@@ -227,9 +253,13 @@ function FormularioCrearOperario() {
 
       <div className={styles.fila}>
         <div className={styles.campo}>
-          <Label>Bodega *</Label>
+          <Label htmlFor="cfg-bodega">Bodega *</Label>
           <Select value={bodegaId} onValueChange={setBodegaId}>
-            <SelectTrigger>
+            <SelectTrigger
+              id="cfg-bodega"
+              aria-invalid={!!errores.bodegaId}
+              aria-describedby={errores.bodegaId ? "cfg-bodega-error" : undefined}
+            >
               <SelectValue placeholder="Selecciona bodega" />
             </SelectTrigger>
             <SelectContent>
@@ -246,12 +276,16 @@ function FormularioCrearOperario() {
               )}
             </SelectContent>
           </Select>
-          {errores.bodegaId && <span className={styles.errorCampo}>{errores.bodegaId}</span>}
+          {errores.bodegaId && <span id="cfg-bodega-error" role="alert" className={styles.errorCampo}>{errores.bodegaId}</span>}
         </div>
         <div className={styles.campo}>
-          <Label>Rol *</Label>
+          <Label htmlFor="cfg-rol">Rol *</Label>
           <Select value={rolId} onValueChange={setRolId}>
-            <SelectTrigger>
+            <SelectTrigger
+              id="cfg-rol"
+              aria-invalid={!!errores.rolId}
+              aria-describedby={errores.rolId ? "cfg-rol-error" : undefined}
+            >
               <SelectValue placeholder="Selecciona rol" />
             </SelectTrigger>
             <SelectContent>
@@ -268,7 +302,7 @@ function FormularioCrearOperario() {
               )}
             </SelectContent>
           </Select>
-          {errores.rolId && <span className={styles.errorCampo}>{errores.rolId}</span>}
+          {errores.rolId && <span id="cfg-rol-error" role="alert" className={styles.errorCampo}>{errores.rolId}</span>}
         </div>
       </div>
 
@@ -392,34 +426,34 @@ export function ConfiguracionVista() {
           <div className={styles.infoGrid}>
             <div className={styles.infoItem}>
               <p className={styles.infoItemLabel}>Consultar datos</p>
-              <p className={styles.infoItemValor} style={{ color: "#166534" }}>✓ Habilitado</p>
+              <p className={styles.infoItemValor} style={{ color: "#166534" }}>Habilitado</p>
             </div>
             <div className={styles.infoItem}>
               <p className={styles.infoItemLabel}>Registrar ingresos</p>
-              <p className={styles.infoItemValor} style={{ color: "#166534" }}>✓ Habilitado</p>
+              <p className={styles.infoItemValor} style={{ color: "#166534" }}>Habilitado</p>
             </div>
             <div className={styles.infoItem}>
               <p className={styles.infoItemLabel}>Administrar entidades</p>
               <p className={styles.infoItemValor} style={{ color: admin ? "#166534" : "#b42318" }}>
-                {admin ? "✓ Habilitado" : "✗ Solo ADMIN"}
+                {admin ? "Habilitado" : "Solo ADMIN"}
               </p>
             </div>
             <div className={styles.infoItem}>
               <p className={styles.infoItemLabel}>Crear usuarios</p>
               <p className={styles.infoItemValor} style={{ color: admin ? "#166534" : "#b42318" }}>
-                {admin ? "✓ Habilitado" : "✗ Solo ADMIN"}
+                {admin ? "Habilitado" : "Solo ADMIN"}
               </p>
             </div>
             <div className={styles.infoItem}>
               <p className={styles.infoItemLabel}>Ver logs del sistema</p>
               <p className={styles.infoItemValor} style={{ color: admin ? "#166534" : "#b42318" }}>
-                {admin ? "✓ Habilitado" : "✗ Solo ADMIN"}
+                {admin ? "Habilitado" : "Solo ADMIN"}
               </p>
             </div>
             <div className={styles.infoItem}>
               <p className={styles.infoItemLabel}>Configuración</p>
               <p className={styles.infoItemValor} style={{ color: admin ? "#166534" : "#b42318" }}>
-                {admin ? "✓ Completa" : "Limitada"}
+                {admin ? "Completa" : "Limitada"}
               </p>
             </div>
           </div>

@@ -66,14 +66,17 @@ export async function listarBodegas(filtros: FiltrosBodegas = {}): Promise<Pagin
 }
 
 // GET /api/bodegas/{id}
-export async function obtenerBodega(id: string): Promise<Bodega> {
-  const { data } = await clienteApi.get<Bodega>(`/bodegas/${id}`);
+export async function obtenerBodega(id: string, signal?: AbortSignal): Promise<Bodega> {
+  const { data } = await clienteApi.get<Bodega>(`/bodegas/${id}`, { signal });
   return data;
 }
 
 // GET /api/bodegas/{id}/usuarios
-export async function obtenerUsuariosBodega(id: string): Promise<UsuarioBodega[]> {
-  const { data } = await clienteApi.get(`/bodegas/${id}/usuarios`);
+export async function obtenerUsuariosBodega(
+  id: string,
+  signal?: AbortSignal,
+): Promise<UsuarioBodega[]> {
+  const { data } = await clienteApi.get(`/bodegas/${id}/usuarios`, { signal });
   return Array.isArray(data) ? data : [];
 }
 

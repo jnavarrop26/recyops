@@ -97,3 +97,29 @@
   font-size: 13px;
   color: var(--ink-muted);
 }
+
+/* ── Responsive ── */
+.tablaScroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.tablaScroll .tabla {
+  min-width: 640px;
+}
+
+@media (max-width: 639px) {
+  .cabecera {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .credLinea {
+    flex-wrap: wrap;
+  }
+
+  .credLinea span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}

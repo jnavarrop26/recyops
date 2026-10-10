@@ -86,7 +86,7 @@ export function MisTareasVista() {
       ) : error && tareas.length === 0 ? (
         <div className={`${styles.estado} ${styles.error}`}>{error}</div>
       ) : tareas.length === 0 ? (
-        <div className={styles.estado}>No tienes tareas asignadas. 🎉</div>
+        <div className={styles.estado}>No tienes tareas asignadas.</div>
       ) : (
         <div className={styles.lista}>
           {activas.map((tarea) => (
@@ -152,7 +152,7 @@ export function MisTareasVista() {
 
       {/* Modal: bitácora de avances (registrar solo si está en progreso) */}
       <Dialog open={detalle !== null} onOpenChange={(abierto) => !abierto && setDetalle(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{detalle?.titulo}</DialogTitle>
             <DialogDescription>
