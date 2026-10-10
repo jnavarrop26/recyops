@@ -1,6 +1,7 @@
 import logoMarcaAgua from "@/app/public/icons/logo-1-recyops.svg?raw";
 import faviconRecyops from "@/app/public/icons/favicon-recyops.svg?raw";
 import { obtenerIngresoPorUuid, type Ingreso } from "@/app/modules/ingresos/ingresosApi";
+import { VentanaBloqueadaError } from "@/app/shared/ventana-emergente";
 
 /**
  * Plantilla HTML imprimible del recibo de ingreso de material.
@@ -384,9 +385,14 @@ export function plantillaReciboIngreso(ingreso: Ingreso): string {
 /** Abre el recibo en una pestaña nueva listo para imprimir o guardar en PDF. */
 export function abrirReciboIngreso(ingreso: Ingreso) {
   const ventana = window.open("", "_blank");
-  if (!ventana) return;
+  if (!ventana) throw new VentanaBloqueadaError();
   ventana.document.write(plantillaReciboIngreso(ingreso));
   ventana.document.close();
+}
+
+/** HTML del recibo para la vista previa embebida (VisorRecibo). */
+export async function cargarHtmlReciboIngreso(uuid: string, signal?: AbortSignal): Promise<string> {
+  return plantillaReciboIngreso(await obtenerIngresoPorUuid(uuid, signal));
 }
 
 /**
@@ -397,10 +403,11 @@ export function abrirReciboIngreso(ingreso: Ingreso) {
  * un Blob URL en lugar de document.write, que algunos navegadores bloquean o
  * ignoran cuando se invoca de forma asíncrona sobre un documento ya cargado
  * (la ventana queda entonces colgada en el mensaje de "Generando recibo…").
+ * Lanza VentanaBloqueadaError si el navegador bloquea la pestaña nueva.
  */
 export async function abrirReciboIngresoPorUuid(uuid: string) {
   const ventana = window.open("", "_blank");
-  if (!ventana) return;
+  if (!ventana) throw new VentanaBloqueadaError();
   ventana.document.title = "Generando recibo…";
   try {
     const ingreso = await obtenerIngresoPorUuid(uuid);

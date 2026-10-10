@@ -1,6 +1,7 @@
 import logoMarcaAgua from "@/app/public/icons/logo-1-recyops.svg?raw";
 import faviconRecyops from "@/app/public/icons/favicon-recyops.svg?raw";
 import { obtenerEntrega, type Entrega, type EstadoEntrega } from "@/app/modules/entregas/entregasApi";
+import { VentanaBloqueadaError } from "@/app/shared/ventana-emergente";
 
 /**
  * Plantilla HTML imprimible del recibo de entrega de material a bodega.
@@ -351,16 +352,22 @@ export function plantillaReciboEntrega(entrega: Entrega): string {
 </html>`;
 }
 
+/** HTML del recibo para la vista previa embebida (VisorRecibo). */
+export async function cargarHtmlReciboEntrega(id: string, signal?: AbortSignal): Promise<string> {
+  return plantillaReciboEntrega(await obtenerEntrega(id, signal));
+}
+
 /**
  * Trae la entrega completa y abre el recibo. La ventana se abre primero
  * (sincrónicamente, en el gesto del clic) para no chocar con el bloqueador
  * de emergentes; el contenido se navega después vía un Blob URL en lugar de
  * document.write, que algunos navegadores bloquean o ignoran cuando se
  * invoca de forma asíncrona sobre un documento ya cargado.
+ * Lanza VentanaBloqueadaError si el navegador bloquea la pestaña nueva.
  */
 export async function abrirReciboEntrega(id: string): Promise<void> {
   const ventana = window.open("", "_blank");
-  if (!ventana) return;
+  if (!ventana) throw new VentanaBloqueadaError();
   ventana.document.title = "Generando recibo…";
   try {
     const entrega = await obtenerEntrega(id);
