@@ -9,6 +9,7 @@ import {
   type TipoOperacion,
 } from "@/app/modules/inventario/inventarioApi";
 import { interpretarErrorHttp } from "@/app/http/errores";
+import { usePeticionCancelable } from "@/app/shared/hooks/use-peticion-cancelable";
 import styles from "@/app/modules/inventario/inventario-detalle.module.css";
 
 const TAMANO_PAGINA = 20;
@@ -37,36 +38,49 @@ export function InventarioDetalle() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Movimientos: la página pedida más reciente cancela la anterior.
+  const nuevaPeticionMovimientos = usePeticionCancelable();
+
   const cargarMovimientos = useCallback(
     async (paginaSolicitada: number) => {
       if (!id) return;
+      const signal = nuevaPeticionMovimientos();
       try {
-        const datos = await obtenerMovimientos(id, paginaSolicitada, TAMANO_PAGINA);
+        const datos = await obtenerMovimientos(id, paginaSolicitada, TAMANO_PAGINA, signal);
+        if (signal.aborted) return;
         setMovimientos(datos.content);
         setTotalPaginas(datos.totalPages);
         setPagina(datos.number);
       } catch {
-        setMovimientos([]);
+        if (!signal.aborted) setMovimientos([]);
       }
     },
-    [id],
+    [id, nuevaPeticionMovimientos],
   );
 
+  // Pasar de /inventario/1 a /inventario/2 aborta la carga de la línea anterior.
   useEffect(() => {
     if (!id) return;
+    const controlador = new AbortController();
+    const { signal } = controlador;
     (async () => {
       setCargando(true);
       setError(null);
       try {
-        const datosLinea = await obtenerLinea(id);
-        setLinea(datosLinea);
-        await cargarMovimientos(0);
+        const [datosLinea] = await Promise.all([
+          obtenerLinea(id, signal),
+          cargarMovimientos(0),
+        ]);
+        if (!signal.aborted) setLinea(datosLinea);
       } catch (e) {
-        setError(interpretarErrorHttp(e, {}, "No se pudo cargar la línea de inventario."));
+        if (!signal.aborted) {
+          setError(interpretarErrorHttp(e, {}, "No se pudo cargar la línea de inventario."));
+        }
       } finally {
-        setCargando(false);
+        if (!signal.aborted) setCargando(false);
       }
     })();
+    return () => controlador.abort();
   }, [id, cargarMovimientos]);
 
   function abrirReferencia(referencia: string | null) {

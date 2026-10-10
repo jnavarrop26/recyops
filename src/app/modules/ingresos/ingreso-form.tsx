@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm, useFieldArray, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router";
+import { toast } from "sonner";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Textarea } from "@/app/components/ui/textarea";
@@ -13,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/components/ui/select";
+import { interpretarErrorHttp } from "@/app/http/errores";
 import { registrarIngreso } from "@/app/modules/ingresos/ingresosApi";
 import { listarBodegas, type Bodega } from "@/app/modules/bodega/bodegasApi";
 import { listarMateriales, type Material as MaterialCatalogo } from "@/app/modules/materiales/materialesApi";
@@ -67,6 +69,14 @@ export function IngresoForm() {
   const [enviando, setEnviando] = useState(false);
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [exito, setExito] = useState(false);
+  const timeoutNavegacion = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Si el usuario abandona la vista antes de la redirección, no navegar.
+  useEffect(() => {
+    return () => {
+      if (timeoutNavegacion.current) clearTimeout(timeoutNavegacion.current);
+    };
+  }, []);
 
   useEffect(() => {
     listarBodegas({ estado: "ACTIVA", size: 100 })
@@ -90,6 +100,7 @@ export function IngresoForm() {
   const errorMateriales = errors.materiales?.root?.message ?? errors.materiales?.message;
 
   async function onSubmit(valores: IngresoFormValues) {
+    if (exito) return;
     setErrorGeneral(null);
     setExito(false);
 
@@ -113,11 +124,19 @@ export function IngresoForm() {
           observaciones: m.observaciones.trim() || null,
         })),
       });
+      // exito mantiene el botón deshabilitado hasta la navegación (evita doble envío).
       setExito(true);
+      toast.success("Ingreso registrado", { description: "Abriendo el historial..." });
       // Al historial, donde el ingreso recién creado aparece de primero.
-      setTimeout(() => navigate("/ingreso/historial"), 900);
-    } catch {
-      setErrorGeneral("No se pudo registrar el ingreso. Revisa la conexión con el servidor.");
+      timeoutNavegacion.current = setTimeout(() => navigate("/ingreso/historial"), 900);
+    } catch (e) {
+      setErrorGeneral(
+        interpretarErrorHttp(
+          e,
+          {},
+          "No se pudo registrar el ingreso. Revisa la conexión con el servidor.",
+        ),
+      );
     } finally {
       setEnviando(false);
     }
@@ -131,23 +150,27 @@ export function IngresoForm() {
         <p className={styles.sectionDesc}>Datos de la persona o entidad que entrega el material.</p>
         <div className={styles.grid}>
           <div className={styles.field}>
-            <Label htmlFor="cedula">Número de cédula</Label>
+            <Label htmlFor="cedula">Número de cédula *</Label>
             <Input
               id="cedula"
+              aria-invalid={!!errors.cedula}
+              aria-describedby={errors.cedula ? "cedula-error" : undefined}
               className={styles.mono}
               placeholder="1.020.345.678"
               {...register("cedula")}
             />
-            {errors.cedula && <span className={styles.errorCampo}>{errors.cedula.message}</span>}
+            {errors.cedula && <span id="cedula-error" role="alert" className={styles.errorCampo}>{errors.cedula.message}</span>}
           </div>
           <div className={styles.field}>
-            <Label htmlFor="nombre">Nombre completo</Label>
+            <Label htmlFor="nombre">Nombre completo *</Label>
             <Input
               id="nombre"
+              aria-invalid={!!errors.nombreCliente}
+              aria-describedby={errors.nombreCliente ? "nombreCliente-error" : undefined}
               placeholder="Ana Torres"
               {...register("nombreCliente")}
             />
-            {errors.nombreCliente && <span className={styles.errorCampo}>{errors.nombreCliente.message}</span>}
+            {errors.nombreCliente && <span id="nombreCliente-error" role="alert" className={styles.errorCampo}>{errors.nombreCliente.message}</span>}
           </div>
           <div className={styles.field}>
             <Label htmlFor="telefono">Teléfono</Label>
@@ -192,13 +215,13 @@ export function IngresoForm() {
             <Input id="lugar" placeholder="Calle 80 # 12-34, Bodega 5" />
           </div>
           <div className={styles.field}>
-            <Label>Bodega destino</Label>
+            <Label htmlFor="bodegaDestinoId">Bodega destino *</Label>
             <Controller
               name="bodegaDestinoId"
               control={control}
               render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger>
+                  <SelectTrigger id="bodegaDestinoId" aria-invalid={!!errors.bodegaDestinoId} aria-describedby={errors.bodegaDestinoId ? "bodegaDestinoId-error" : undefined}>
                     <SelectValue
                       placeholder={bodegas.length ? "Selecciona bodega" : "Sin bodegas disponibles"}
                     />
@@ -214,17 +237,19 @@ export function IngresoForm() {
               )}
             />
             {errors.bodegaDestinoId && (
-              <span className={styles.errorCampo}>{errors.bodegaDestinoId.message}</span>
+              <span id="bodegaDestinoId-error" role="alert" className={styles.errorCampo}>{errors.bodegaDestinoId.message}</span>
             )}
           </div>
           <div className={styles.field}>
-            <Label htmlFor="encargado">Encargado de recepción</Label>
+            <Label htmlFor="encargado">Encargado de recepción *</Label>
             <Input
               id="encargado"
+              aria-invalid={!!errors.encargado}
+              aria-describedby={errors.encargado ? "encargado-error" : undefined}
               placeholder="Carlos Méndez"
               {...register("encargado")}
             />
-            {errors.encargado && <span className={styles.errorCampo}>{errors.encargado.message}</span>}
+            {errors.encargado && <span id="encargado-error" role="alert" className={styles.errorCampo}>{errors.encargado.message}</span>}
           </div>
           <div className={styles.field}>
             <Label htmlFor="fecha">Fecha y hora</Label>
@@ -249,7 +274,7 @@ export function IngresoForm() {
           El peso neto y el total se calculan automáticamente por material.
         </p>
 
-        {errorMateriales && <div className={styles.errorCampo}>{errorMateriales}</div>}
+        {errorMateriales && <div role="alert" className={styles.errorCampo}>{errorMateriales}</div>}
 
         {fields.map((field, index) => {
           const filaActual = materialesWatch[index] ?? FILA_VACIA;
@@ -266,7 +291,7 @@ export function IngresoForm() {
               </div>
               <div className={styles.grid}>
                 <div className={styles.field}>
-                  <Label>Material</Label>
+                  <Label htmlFor={`mat-${field.id}-material`}>Material</Label>
                   {catalogo.length > 0 ? (
                     <Controller
                       name={`materiales.${index}.materialId`}
@@ -276,7 +301,7 @@ export function IngresoForm() {
                           value={selectField.value}
                           onValueChange={(v) => seleccionarMaterial(index, v)}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger id={`mat-${field.id}-material`} aria-invalid={!!erroresFila?.materialId} aria-describedby={erroresFila?.materialId ? `mat-${field.id}-material-error` : undefined}>
                             <SelectValue placeholder="Selecciona material" />
                           </SelectTrigger>
                           <SelectContent>
@@ -292,34 +317,52 @@ export function IngresoForm() {
                   ) : (
                     <div className={styles.computed}>No hay materiales configurados en el catálogo</div>
                   )}
+                  {erroresFila?.materialId && (
+                    <span id={`mat-${field.id}-material-error`} role="alert" className={styles.errorCampo}>{erroresFila.materialId.message}</span>
+                  )}
                 </div>
                 <div className={styles.field}>
-                  <Label>Peso bruto (kg)</Label>
+                  <Label htmlFor={`mat-${field.id}-bruto`}>Peso bruto (kg)</Label>
                   <Input
+                    id={`mat-${field.id}-bruto`}
+                    aria-invalid={!!erroresFila?.pesoBruto}
+                    aria-describedby={erroresFila?.pesoBruto ? `mat-${field.id}-bruto-error` : undefined}
                     type="number"
                     step="0.01"
                     className={styles.mono}
                     {...register(`materiales.${index}.pesoBruto`)}
                     placeholder="0.00"
                   />
+                  {erroresFila?.pesoBruto && (
+                    <span id={`mat-${field.id}-bruto-error`} role="alert" className={styles.errorCampo}>{erroresFila.pesoBruto.message}</span>
+                  )}
                 </div>
                 <div className={styles.field}>
-                  <Label>Tara (kg)</Label>
+                  <Label htmlFor={`mat-${field.id}-tara`}>Tara (kg)</Label>
                   <Input
+                    id={`mat-${field.id}-tara`}
+                    aria-invalid={!!erroresFila?.tara}
+                    aria-describedby={erroresFila?.tara ? `mat-${field.id}-tara-error` : undefined}
                     type="number"
                     step="0.01"
                     className={styles.mono}
                     {...register(`materiales.${index}.tara`)}
                     placeholder="0.00"
                   />
+                  {erroresFila?.tara && (
+                    <span id={`mat-${field.id}-tara-error`} role="alert" className={styles.errorCampo}>{erroresFila.tara.message}</span>
+                  )}
                 </div>
                 <div className={styles.field}>
                   <Label>Peso neto (kg)</Label>
                   <div className={styles.computed}>{fmt(neto(filaActual))}</div>
                 </div>
                 <div className={styles.field}>
-                  <Label>Precio por kilo</Label>
+                  <Label htmlFor={`mat-${field.id}-precio`}>Precio por kilo</Label>
                   <Input
+                    id={`mat-${field.id}-precio`}
+                    aria-invalid={!!erroresFila?.precioKilo}
+                    aria-describedby={erroresFila?.precioKilo ? `mat-${field.id}-precio-error` : undefined}
                     type="number"
                     step="0.01"
                     className={styles.mono}
@@ -327,7 +370,7 @@ export function IngresoForm() {
                     placeholder="0.00"
                   />
                   {erroresFila?.precioKilo && (
-                    <span className={styles.errorCampo}>{erroresFila.precioKilo.message}</span>
+                    <span id={`mat-${field.id}-precio-error`} role="alert" className={styles.errorCampo}>{erroresFila.precioKilo.message}</span>
                   )}
                 </div>
                 <div className={styles.field}>
@@ -335,8 +378,9 @@ export function IngresoForm() {
                   <div className={styles.computed}>$ {fmt(total(filaActual))}</div>
                 </div>
                 <div className={`${styles.field} ${styles.full}`}>
-                  <Label>Observaciones del material</Label>
+                  <Label htmlFor={`mat-${field.id}-obs`}>Observaciones del material</Label>
                   <Textarea
+                    id={`mat-${field.id}-obs`}
                     rows={2}
                     {...register(`materiales.${index}.observaciones`)}
                     placeholder="Estado, humedad, contaminación, etc."
@@ -370,13 +414,8 @@ export function IngresoForm() {
             {errorGeneral}
           </span>
         )}
-        {exito && (
-          <span role="status" style={{ color: "#178E3B", fontSize: 13 }}>
-            Ingreso registrado, abriendo el historial...
-          </span>
-        )}
-        <Button type="submit" disabled={enviando}>
-          {enviando ? "Registrando..." : "Registrar ingreso"}
+        <Button type="submit" disabled={enviando || exito} aria-busy={enviando}>
+          {enviando ? "Registrando..." : exito ? "Ingreso registrado" : "Registrar ingreso"}
         </Button>
       </div>
     </form>

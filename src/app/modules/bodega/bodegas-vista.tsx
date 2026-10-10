@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router";
+import { toast } from "sonner";
 import { Button } from "@/app/components/ui/button";
 import { Label } from "@/app/components/ui/label";
 import { Input } from "@/app/components/ui/input";
@@ -28,10 +29,19 @@ import {
   type EstadoBodega,
 } from "@/app/modules/bodega/bodegasApi";
 import { interpretarErrorHttp } from "@/app/http/errores";
+import { DialogoConfirmacion } from "@/app/shared/components/dialogo-confirmacion";
 import styles from "@/app/modules/bodega/bodegas-vista.module.css";
 
 const TAMANO_PAGINA = 20;
 const TODOS = "__todos__";
+
+interface FiltrosBodegas {
+  estado: string;
+  tipo: string;
+  nombre: string;
+}
+
+const FILTROS_INICIALES: FiltrosBodegas = { estado: TODOS, tipo: TODOS, nombre: "" };
 
 function esAdmin(): boolean {
   return (localStorage.getItem("recyops_rol") || "").toUpperCase() === "ADMIN";
@@ -51,6 +61,11 @@ export function BodegasVista() {
   const [fEstado, setFEstado] = useState(TODOS);
   const [fTipo, setFTipo] = useState(TODOS);
   const [fNombre, setFNombre] = useState("");
+  // Filtros con los que se cargó la lista: paginar y recargar usan estos,
+  // no los que el usuario está editando sin aplicar.
+  const [filtrosAplicados, setFiltrosAplicados] = useState<FiltrosBodegas>(FILTROS_INICIALES);
+  const [cambioPendiente, setCambioPendiente] = useState<{ bodega: Bodega; estado: EstadoBodega } | null>(null);
+  const [cambiandoEstado, setCambiandoEstado] = useState(false);
 
   const [modalAbierto, setModalAbierto] = useState(false);
   const [bodegaEditando, setBodegaEditando] = useState<Bodega | null>(null);
@@ -58,14 +73,14 @@ export function BodegasVista() {
   const valor = (v: string) => (v === TODOS ? undefined : v);
 
   const cargar = useCallback(
-    async (paginaSolicitada: number) => {
+    async (paginaSolicitada: number, filtros: FiltrosBodegas) => {
       setCargando(true);
       setError(null);
       try {
         const datos = await listarBodegas({
-          estado: valor(fEstado),
-          tipoOrganizacion: valor(fTipo),
-          nombre: fNombre.trim() || undefined,
+          estado: valor(filtros.estado),
+          tipoOrganizacion: valor(filtros.tipo),
+          nombre: filtros.nombre.trim() || undefined,
           page: paginaSolicitada,
           size: TAMANO_PAGINA,
         });
@@ -80,23 +95,26 @@ export function BodegasVista() {
         setCargando(false);
       }
     },
-    [fEstado, fTipo, fNombre],
+    [],
   );
 
   useEffect(() => {
-    cargar(0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    cargar(0, FILTROS_INICIALES);
+  }, [cargar]);
 
   function aplicarFiltros(evento: React.FormEvent) {
     evento.preventDefault();
-    cargar(0);
+    const filtros = { estado: fEstado, tipo: fTipo, nombre: fNombre };
+    setFiltrosAplicados(filtros);
+    cargar(0, filtros);
   }
 
   function limpiarFiltros() {
     setFEstado(TODOS);
     setFTipo(TODOS);
     setFNombre("");
+    setFiltrosAplicados(FILTROS_INICIALES);
+    cargar(0, FILTROS_INICIALES);
   }
 
   function abrirCrear() {
@@ -111,19 +129,29 @@ export function BodegasVista() {
 
   function alGuardar() {
     setModalAbierto(false);
-    cargar(pagina);
+    toast.success(bodegaEditando ? "Bodega actualizada." : "Bodega creada.");
+    cargar(pagina, filtrosAplicados);
   }
 
-  async function cambiarEstado(bodega: Bodega, nuevoEstado: EstadoBodega) {
+  // Elegir un estado en la tabla solo abre la confirmación; el cambio se
+  // aplica al confirmar.
+  async function confirmarCambioEstado() {
+    if (!cambioPendiente) return;
+    const { bodega, estado: nuevoEstado } = cambioPendiente;
+    setCambiandoEstado(true);
     try {
       const actualizada = await cambiarEstadoBodega(bodega.id, nuevoEstado);
       setBodegas((previas) =>
         previas.map((b) => (b.id === bodega.id ? { ...b, estado: actualizada.estado } : b)),
       );
+      toast.success(`Bodega ${bodega.nombre} ahora está ${actualizada.estado}.`);
     } catch (e) {
-      setError(interpretarErrorHttp(e, {
+      toast.error(interpretarErrorHttp(e, {
         404: "La bodega no existe o fue eliminada.",
       }, "No se pudo cambiar el estado de la bodega."));
+    } finally {
+      setCambiandoEstado(false);
+      setCambioPendiente(null);
     }
   }
 
@@ -148,9 +176,9 @@ export function BodegasVista() {
           />
         </div>
         <div className={styles.campoFiltro}>
-          <Label>Estado</Label>
+          <Label htmlFor="fEstado">Estado</Label>
           <Select value={fEstado} onValueChange={setFEstado}>
-            <SelectTrigger>
+            <SelectTrigger id="fEstado">
               <SelectValue placeholder="Todos" />
             </SelectTrigger>
             <SelectContent>
@@ -164,9 +192,9 @@ export function BodegasVista() {
           </Select>
         </div>
         <div className={styles.campoFiltro}>
-          <Label>Tipo de organización</Label>
+          <Label htmlFor="fTipo">Tipo de organización</Label>
           <Select value={fTipo} onValueChange={setFTipo}>
-            <SelectTrigger>
+            <SelectTrigger id="fTipo">
               <SelectValue placeholder="Todos" />
             </SelectTrigger>
             <SelectContent>
@@ -193,7 +221,7 @@ export function BodegasVista() {
         {cargando ? (
           <div className={styles.estado}>Cargando bodegas...</div>
         ) : error ? (
-          <div className={styles.estado}>{error}</div>
+          <div className={styles.estado} role="alert">{error}</div>
         ) : bodegas.length === 0 ? (
           <div className={styles.estado}>No se encontraron bodegas.</div>
         ) : (
@@ -231,9 +259,14 @@ export function BodegasVista() {
                               <div className={styles.selectEstado}>
                                 <Select
                                   value={bodega.estado}
-                                  onValueChange={(v) => cambiarEstado(bodega, v as EstadoBodega)}
+                                  disabled={cambiandoEstado && cambioPendiente?.bodega.id === bodega.id}
+                                  onValueChange={(v) => {
+                                    if (v !== bodega.estado) {
+                                      setCambioPendiente({ bodega, estado: v as EstadoBodega });
+                                    }
+                                  }}
                                 >
-                                  <SelectTrigger>
+                                  <SelectTrigger aria-label={`Estado de la bodega ${bodega.nombre}`}>
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -260,10 +293,10 @@ export function BodegasVista() {
                 {totalElementos} bodegas · Página {pagina + 1} de {Math.max(totalPaginas, 1)}
               </span>
               <div className={styles.controlesPagina}>
-                <Button variant="outline" size="sm" disabled={pagina <= 0 || cargando} onClick={() => cargar(pagina - 1)}>
+                <Button variant="outline" size="sm" disabled={pagina <= 0 || cargando} onClick={() => cargar(pagina - 1, filtrosAplicados)}>
                   Anterior
                 </Button>
-                <Button variant="outline" size="sm" disabled={pagina >= totalPaginas - 1 || cargando} onClick={() => cargar(pagina + 1)}>
+                <Button variant="outline" size="sm" disabled={pagina >= totalPaginas - 1 || cargando} onClick={() => cargar(pagina + 1, filtrosAplicados)}>
                   Siguiente
                 </Button>
               </div>
@@ -271,6 +304,22 @@ export function BodegasVista() {
           </>
         )}
       </div>
+
+      <DialogoConfirmacion
+        abierto={cambioPendiente !== null}
+        titulo="¿Cambiar el estado de la bodega?"
+        descripcion={
+          cambioPendiente
+            ? `La bodega ${cambioPendiente.bodega.nombre} pasará de ${cambioPendiente.bodega.estado} a ${cambioPendiente.estado}.`
+            : ""
+        }
+        textoConfirmar="Cambiar estado"
+        textoProcesando="Cambiando..."
+        destructivo={cambioPendiente !== null && cambioPendiente.estado !== "ACTIVA"}
+        procesando={cambiandoEstado}
+        alConfirmar={confirmarCambioEstado}
+        alCancelar={() => setCambioPendiente(null)}
+      />
 
       <Dialog open={modalAbierto} onOpenChange={setModalAbierto}>
         <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">

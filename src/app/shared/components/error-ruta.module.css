@@ -1,0 +1,44 @@
+.contenedor {
+  font-family: var(--font-sans);
+  max-width: 480px;
+  margin: 64px auto;
+  padding: 32px 24px;
+  background-color: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.icono {
+  color: var(--brand);
+  margin: 0 auto 16px;
+}
+
+.titulo {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0;
+}
+
+.mensaje {
+  margin: 8px 0 0;
+  color: var(--ink-muted);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+@media (max-width: 639px) {
+  .contenedor {
+    margin: 24px 0;
+    padding: 24px 16px;
+  }
+}

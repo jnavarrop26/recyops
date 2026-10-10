@@ -11,7 +11,10 @@ export interface ActividadDia {
 }
 
 // GET /api/dashboard/actividad?dias=N
-export async function obtenerActividadDiaria(dias: number): Promise<ActividadDia[]> {
-  const { data } = await clienteApi.get("/dashboard/actividad", { params: { dias } });
+export async function obtenerActividadDiaria(
+  dias: number,
+  signal?: AbortSignal,
+): Promise<ActividadDia[]> {
+  const { data } = await clienteApi.get("/dashboard/actividad", { params: { dias }, signal });
   return Array.isArray(data) ? data : [];
 }

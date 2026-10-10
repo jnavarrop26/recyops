@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/app/components/ui/button";
 import {
   Dialog,
@@ -16,6 +17,7 @@ import {
   type Trabajador,
   type RespuestaTrabajadorCreado,
 } from "@/app/modules/trabajadores/trabajadoresApi";
+import { DialogoConfirmacion } from "@/app/shared/components/dialogo-confirmacion";
 import styles from "@/app/modules/trabajadores/trabajadores-vista.module.css";
 
 export function TrabajadoresVista() {
@@ -26,6 +28,7 @@ export function TrabajadoresVista() {
   const [credenciales, setCredenciales] = useState<RespuestaTrabajadorCreado | null>(null);
   const [editando, setEditando] = useState<Trabajador | null>(null);
   const [cambiandoEstado, setCambiandoEstado] = useState<string | null>(null);
+  const [porCambiar, setPorCambiar] = useState<Trabajador | null>(null);
 
   async function cargarTrabajadores() {
     setCargando(true);
@@ -60,27 +63,31 @@ export function TrabajadoresVista() {
     setTrabajadores((lista) => lista.map((t) => (t.id === actualizado.id ? actualizado : t)));
   }
 
-  async function alternarEstado(trabajador: Trabajador) {
+  async function confirmarCambioEstado() {
+    if (!porCambiar) return;
+    const trabajador = porCambiar;
     const desactivar = trabajador.estado === "ACTIVO";
-    const confirmacion = desactivar
-      ? `¿Desactivar a ${trabajador.nombreCompleto}? No podrá iniciar sesión hasta reactivarlo.`
-      : `¿Reactivar a ${trabajador.nombreCompleto}? Podrá volver a iniciar sesión.`;
-    if (!window.confirm(confirmacion)) return;
-
     setCambiandoEstado(trabajador.id);
-    setError(null);
     try {
       const actualizado = await cambiarEstadoTrabajador(
         trabajador.id,
         desactivar ? "INACTIVO" : "ACTIVO",
       );
       setTrabajadores((lista) => lista.map((t) => (t.id === actualizado.id ? actualizado : t)));
+      toast.success(
+        desactivar
+          ? `${trabajador.nombreCompleto} fue desactivado.`
+          : `${trabajador.nombreCompleto} fue reactivado.`,
+      );
     } catch {
-      setError("No se pudo cambiar el estado del trabajador. Intenta de nuevo.");
+      toast.error("No se pudo cambiar el estado del trabajador. Intenta de nuevo.");
     } finally {
       setCambiandoEstado(null);
+      setPorCambiar(null);
     }
   }
+
+  const desactivandoPendiente = porCambiar?.estado === "ACTIVO";
 
   return (
     <div className={styles.contenedor}>
@@ -96,7 +103,7 @@ export function TrabajadoresVista() {
         {cargando ? (
           <div className={styles.estado}>Cargando trabajadores...</div>
         ) : error ? (
-          <div className={styles.estado}>{error}</div>
+          <div className={styles.estado} role="alert">{error}</div>
         ) : trabajadores.length === 0 ? (
           <div className={styles.estado}>No hay trabajadores registrados.</div>
         ) : (
@@ -135,7 +142,7 @@ export function TrabajadoresVista() {
                           variant="outline"
                           size="sm"
                           disabled={cambiandoEstado === trabajador.id}
-                          onClick={() => alternarEstado(trabajador)}
+                          onClick={() => setPorCambiar(trabajador)}
                         >
                           {cambiandoEstado === trabajador.id
                             ? "..."
@@ -152,6 +159,24 @@ export function TrabajadoresVista() {
           </div>
         )}
       </div>
+
+      <DialogoConfirmacion
+        abierto={porCambiar !== null}
+        titulo={desactivandoPendiente ? "¿Desactivar trabajador?" : "¿Reactivar trabajador?"}
+        descripcion={
+          porCambiar
+            ? desactivandoPendiente
+              ? `${porCambiar.nombreCompleto} no podrá iniciar sesión hasta que lo reactives.`
+              : `${porCambiar.nombreCompleto} podrá volver a iniciar sesión.`
+            : ""
+        }
+        textoConfirmar={desactivandoPendiente ? "Desactivar" : "Reactivar"}
+        textoProcesando={desactivandoPendiente ? "Desactivando..." : "Reactivando..."}
+        destructivo={desactivandoPendiente}
+        procesando={porCambiar !== null && cambiandoEstado === porCambiar.id}
+        alConfirmar={confirmarCambioEstado}
+        alCancelar={() => setPorCambiar(null)}
+      />
 
       {/* Modal: formulario de registro */}
       <Dialog open={modalRegistroAbierto} onOpenChange={setModalRegistroAbierto}>

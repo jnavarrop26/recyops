@@ -144,9 +144,9 @@ function ReporteEntregas() {
             <Input id="r-hasta" type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} />
           </div>
           <div className={styles.campoConfig}>
-            <Label>Estado</Label>
+            <Label htmlFor="r-estado-entregas">Estado</Label>
             <Select value={fEstado} onValueChange={setFEstado}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger id="r-estado-entregas"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value={TODOS}>Todos</SelectItem>
                 {ESTADOS_ENTREGA.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}
@@ -275,9 +275,9 @@ function ReporteProveedores() {
         <p className={styles.tarjetaConfigTitulo}>Parámetros del reporte</p>
         <div className={styles.filaConfig}>
           <div className={styles.campoConfig}>
-            <Label>Estado</Label>
+            <Label htmlFor="r-estado-proveedores">Estado</Label>
             <Select value={fEstado} onValueChange={setFEstado}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger id="r-estado-proveedores"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value={TODOS}>Todos</SelectItem>
                 {["ACTIVO", "INACTIVO", "BLOQUEADO"].map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}

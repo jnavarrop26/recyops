@@ -97,8 +97,8 @@ export async function obtenerIngresoPorId(id: number): Promise<Ingreso> {
 }
 
 // GET /api/ingresos/uuid/{uuid} — identificador público no enumerable
-export async function obtenerIngresoPorUuid(uuid: string): Promise<Ingreso> {
-  const respuesta = await clienteApi.get<Ingreso>(`/ingresos/uuid/${uuid}`);
+export async function obtenerIngresoPorUuid(uuid: string, signal?: AbortSignal): Promise<Ingreso> {
+  const respuesta = await clienteApi.get<Ingreso>(`/ingresos/uuid/${uuid}`, { signal });
   return respuesta.data;
 }
 

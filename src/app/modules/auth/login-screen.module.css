@@ -49,7 +49,7 @@
   font-size: 0.75rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #6b8c77;
+  color: var(--ink-muted);
   animation: fadeUp 1s 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -117,7 +117,7 @@
   background: none;
   border: none;
   font-size: 0.85rem;
-  color: #9eb8a6;
+  color: var(--ink-muted);
   cursor: pointer;
   padding: 8px 10px;
   border-radius: 8px;
@@ -162,7 +162,7 @@
   font-size: 0.68rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #9eb8a6;
+  color: var(--ink-muted);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -175,7 +175,7 @@
 
 .footerLink {
   font-size: 0.78rem;
-  color: #9eb8a6;
+  color: var(--ink-muted);
   text-decoration: none;
   transition: color 0.15s;
 }

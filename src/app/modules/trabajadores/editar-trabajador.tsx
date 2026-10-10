@@ -94,16 +94,16 @@ export function EditarTrabajador({
 
   return (
     <form className={styles.formulario} onSubmit={handleSubmit(onSubmit)}>
-      {errorGeneral && <div className={styles.alertaError}>{errorGeneral}</div>}
+      {errorGeneral && <div className={styles.alertaError} role="alert">{errorGeneral}</div>}
 
       <div className={styles.fila}>
         <div className={styles.campo}>
-          <Label>Username</Label>
-          <Input value={trabajador.username} disabled />
+          <Label htmlFor="editUsername">Username</Label>
+          <Input id="editUsername" value={trabajador.username} disabled />
         </div>
         <div className={styles.campo}>
-          <Label>Email</Label>
-          <Input value={trabajador.email} disabled />
+          <Label htmlFor="editEmail">Email</Label>
+          <Input id="editEmail" value={trabajador.email} disabled />
         </div>
       </div>
 
@@ -111,40 +111,46 @@ export function EditarTrabajador({
         <Label htmlFor="editNombre">Nombre completo *</Label>
         <Input
           id="editNombre"
+          aria-invalid={!!errors.nombreCompleto}
+          aria-describedby={errors.nombreCompleto ? "nombreCompleto-error" : undefined}
           {...register("nombreCompleto")}
         />
-        {errors.nombreCompleto && <span className={styles.errorCampo}>{errors.nombreCompleto.message}</span>}
+        {errors.nombreCompleto && <span id="nombreCompleto-error" role="alert" className={styles.errorCampo}>{errors.nombreCompleto.message}</span>}
       </div>
 
       <div className={styles.campo}>
         <Label htmlFor="editCedula">Cédula *</Label>
         <Input
           id="editCedula"
+          aria-invalid={!!errors.cedula}
+          aria-describedby={errors.cedula ? "cedula-error" : undefined}
           inputMode="numeric"
           {...register("cedula")}
         />
-        {errors.cedula && <span className={styles.errorCampo}>{errors.cedula.message}</span>}
+        {errors.cedula && <span id="cedula-error" role="alert" className={styles.errorCampo}>{errors.cedula.message}</span>}
       </div>
 
       <div className={styles.campo}>
         <Label htmlFor="editTelefono">Teléfono</Label>
         <Input
           id="editTelefono"
+          aria-invalid={!!errors.telefono}
+          aria-describedby={errors.telefono ? "telefono-error" : undefined}
           inputMode="numeric"
           {...register("telefono")}
         />
-        {errors.telefono && <span className={styles.errorCampo}>{errors.telefono.message}</span>}
+        {errors.telefono && <span id="telefono-error" role="alert" className={styles.errorCampo}>{errors.telefono.message}</span>}
       </div>
 
       <div className={styles.fila}>
         <div className={styles.campo}>
-          <Label>Bodega *</Label>
+          <Label htmlFor="bodegaId">Bodega *</Label>
           <Controller
             name="bodegaId"
             control={control}
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger>
+                <SelectTrigger id="bodegaId" aria-invalid={!!errors.bodegaId} aria-describedby={errors.bodegaId ? "bodegaId-error" : undefined}>
                   <SelectValue placeholder="Selecciona bodega" />
                 </SelectTrigger>
                 <SelectContent>
@@ -157,16 +163,16 @@ export function EditarTrabajador({
               </Select>
             )}
           />
-          {errors.bodegaId && <span className={styles.errorCampo}>{errors.bodegaId.message}</span>}
+          {errors.bodegaId && <span id="bodegaId-error" role="alert" className={styles.errorCampo}>{errors.bodegaId.message}</span>}
         </div>
         <div className={styles.campo}>
-          <Label>Rol *</Label>
+          <Label htmlFor="rolId">Rol *</Label>
           <Controller
             name="rolId"
             control={control}
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger>
+                <SelectTrigger id="rolId" aria-invalid={!!errors.rolId} aria-describedby={errors.rolId ? "rolId-error" : undefined}>
                   <SelectValue placeholder="Selecciona rol" />
                 </SelectTrigger>
                 <SelectContent>
@@ -179,7 +185,7 @@ export function EditarTrabajador({
               </Select>
             )}
           />
-          {errors.rolId && <span className={styles.errorCampo}>{errors.rolId.message}</span>}
+          {errors.rolId && <span id="rolId-error" role="alert" className={styles.errorCampo}>{errors.rolId.message}</span>}
         </div>
       </div>
 

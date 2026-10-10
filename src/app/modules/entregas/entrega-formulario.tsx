@@ -165,16 +165,16 @@ export function EntregaFormulario({
 
   return (
     <form className={styles.formulario} onSubmit={handleSubmit(onSubmit)}>
-      {errorGeneral && <div className={styles.alertaError}>{errorGeneral}</div>}
+      {errorGeneral && <div className={styles.alertaError} role="alert">{errorGeneral}</div>}
 
       <div className={styles.campo}>
-        <Label>Convenio *</Label>
+        <Label htmlFor="convenioId">Convenio *</Label>
         <Controller
           name="convenioId"
           control={control}
           render={({ field }) => (
             <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger>
+              <SelectTrigger id="convenioId" aria-invalid={!!errors.convenioId} aria-describedby={errors.convenioId ? "convenioId-error" : undefined}>
                 <SelectValue placeholder="Selecciona convenio (solo activos)" />
               </SelectTrigger>
               <SelectContent>
@@ -187,17 +187,17 @@ export function EntregaFormulario({
             </Select>
           )}
         />
-        {errors.convenioId && <span className={styles.errorCampo}>{errors.convenioId.message}</span>}
+        {errors.convenioId && <span id="convenioId-error" role="alert" className={styles.errorCampo}>{errors.convenioId.message}</span>}
       </div>
 
       <div className={styles.campo}>
-        <Label>Bodega de origen *</Label>
+        <Label htmlFor="bodegaId">Bodega de origen *</Label>
         <Controller
           name="bodegaId"
           control={control}
           render={({ field }) => (
             <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger>
+              <SelectTrigger id="bodegaId" aria-invalid={!!errors.bodegaId} aria-describedby={errors.bodegaId ? "bodegaId-error" : undefined}>
                 <SelectValue placeholder="Selecciona bodega" />
               </SelectTrigger>
               <SelectContent>
@@ -210,18 +210,18 @@ export function EntregaFormulario({
             </Select>
           )}
         />
-        {errors.bodegaId && <span className={styles.errorCampo}>{errors.bodegaId.message}</span>}
+        {errors.bodegaId && <span id="bodegaId-error" role="alert" className={styles.errorCampo}>{errors.bodegaId.message}</span>}
       </div>
 
       <div className={styles.fila}>
         <div className={styles.campo}>
-          <Label>Persona que entrega *</Label>
+          <Label htmlFor="personaEntregaId">Persona que entrega *</Label>
           <Controller
             name="personaEntregaId"
             control={control}
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger>
+                <SelectTrigger id="personaEntregaId" aria-invalid={!!errors.personaEntregaId} aria-describedby={errors.personaEntregaId ? "personaEntregaId-error" : undefined}>
                   <SelectValue placeholder="Selecciona trabajador" />
                 </SelectTrigger>
                 <SelectContent>
@@ -235,7 +235,7 @@ export function EntregaFormulario({
             )}
           />
           {errors.personaEntregaId && (
-            <span className={styles.errorCampo}>{errors.personaEntregaId.message}</span>
+            <span id="personaEntregaId-error" role="alert" className={styles.errorCampo}>{errors.personaEntregaId.message}</span>
           )}
         </div>
         <div className={styles.campo}>
@@ -251,7 +251,7 @@ export function EntregaFormulario({
 
       <div className={lineaStyles.seccionLineas}>
         <h3 className={lineaStyles.tituloSeccion}>Líneas de material</h3>
-        {errors.lineas?.message && <div className={styles.errorCampo}>{errors.lineas.message}</div>}
+        {errors.lineas?.message && <div role="alert" className={styles.errorCampo}>{errors.lineas.message}</div>}
 
         {fields.map((field, indice) => {
           const lineaActual = lineasVigentes[indice] ?? LINEA_VACIA;
@@ -274,12 +274,12 @@ export function EntregaFormulario({
               </div>
 
               <div className={styles.campo}>
-                <Label>Categoría *</Label>
+                <Label htmlFor={`linea-${field.id}-categoria`}>Categoría *</Label>
                 <Select
                   value={lineaActual.categoriaCodigo}
                   onValueChange={(v) => manejarCambioCategoriaLinea(indice, v)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id={`linea-${field.id}-categoria`}>
                     <SelectValue placeholder="Selecciona categoría" />
                   </SelectTrigger>
                   <SelectContent>
@@ -295,12 +295,12 @@ export function EntregaFormulario({
               {esPlastico && (
                 <div className={styles.fila}>
                   <div className={styles.campo}>
-                    <Label>Resina *</Label>
+                    <Label htmlFor={`linea-${field.id}-resina`}>Resina *</Label>
                     <Select
                       value={lineaActual.resinaCodigo}
                       onValueChange={(v) => manejarCambioResinaLinea(indice, v)}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger id={`linea-${field.id}-resina`}>
                         <SelectValue placeholder="Selecciona resina" />
                       </SelectTrigger>
                       <SelectContent>
@@ -313,13 +313,13 @@ export function EntregaFormulario({
                     </Select>
                   </div>
                   <div className={styles.campo}>
-                    <Label>Color * <span className={styles.notaRegla}>(independiente de la resina)</span></Label>
+                    <Label htmlFor={`linea-${field.id}-color`}>Color * <span className={styles.notaRegla}>(independiente de la resina)</span></Label>
                     <Controller
                       name={`lineas.${indice}.colorCodigo`}
                       control={control}
                       render={({ field: colorField }) => (
                         <Select value={colorField.value} onValueChange={colorField.onChange}>
-                          <SelectTrigger>
+                          <SelectTrigger id={`linea-${field.id}-color`}>
                             <SelectValue placeholder="Selecciona color" />
                           </SelectTrigger>
                           <SelectContent>
@@ -338,13 +338,13 @@ export function EntregaFormulario({
 
               {!esPlastico && lineaActual.categoriaCodigo && (
                 <div className={styles.campo}>
-                  <Label>Material *</Label>
+                  <Label htmlFor={`linea-${field.id}-material`}>Material *</Label>
                   <Controller
                     name={`lineas.${indice}.materialIdDirecto`}
                     control={control}
                     render={({ field: matField }) => (
                       <Select value={matField.value} onValueChange={matField.onChange}>
-                        <SelectTrigger>
+                        <SelectTrigger id={`linea-${field.id}-material`}>
                           <SelectValue placeholder="Selecciona material" />
                         </SelectTrigger>
                         <SelectContent>
@@ -360,11 +360,14 @@ export function EntregaFormulario({
                 </div>
               )}
 
-              {errorLinea && <span className={lineaStyles.avisoLinea}>⚠ {errorLinea}</span>}
+              {errorLinea && <span role="alert" className={lineaStyles.avisoLinea}>⚠ {errorLinea}</span>}
 
               <div className={styles.campo}>
-                <Label>Cantidad (kg) *</Label>
+                <Label htmlFor={`linea-${field.id}-peso`}>Cantidad (kg) *</Label>
                 <Input
+                  id={`linea-${field.id}-peso`}
+                  aria-invalid={!!errors.lineas?.[indice]?.pesoKg}
+                  aria-describedby={errors.lineas?.[indice]?.pesoKg ? `linea-${field.id}-peso-error` : undefined}
                   type="number"
                   step="0.01"
                   min="0"
@@ -372,7 +375,7 @@ export function EntregaFormulario({
                   placeholder="0.00"
                 />
                 {errors.lineas?.[indice]?.pesoKg && (
-                  <span className={styles.errorCampo}>{errors.lineas[indice]?.pesoKg?.message}</span>
+                  <span id={`linea-${field.id}-peso-error`} role="alert" className={styles.errorCampo}>{errors.lineas[indice]?.pesoKg?.message}</span>
                 )}
               </div>
             </div>

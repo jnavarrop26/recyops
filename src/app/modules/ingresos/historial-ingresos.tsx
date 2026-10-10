@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
-import { Printer } from "lucide-react";
+import { Eye, Printer } from "lucide-react";
+import { toast } from "sonner";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Button } from "@/app/components/ui/button";
@@ -12,7 +13,10 @@ import {
   type MetodoPago,
 } from "@/app/modules/ingresos/ingresosApi";
 import { ChipEstadoPago, ETIQUETA_METODO } from "@/app/modules/ingresos/chip-estado-pago";
-import { abrirReciboIngresoPorUuid } from "@/app/modules/ingresos/recibo-ingreso";
+import { abrirReciboIngresoPorUuid, cargarHtmlReciboIngreso } from "@/app/modules/ingresos/recibo-ingreso";
+import { VisorRecibo } from "@/app/shared/components/visor-recibo";
+import { notificarErrorRecibo } from "@/app/shared/ventana-emergente";
+import { DialogoConfirmacion } from "@/app/shared/components/dialogo-confirmacion";
 import styles from "@/app/modules/ingresos/historial-ingresos.module.css";
 
 const formatearMoneda = (valor: number) =>
@@ -38,9 +42,19 @@ const esDeHoy = (iso: string) => {
 
 const TAMANO_PAGINA = 50;
 
+interface FiltrosIngresos {
+  fechaDesde: string;
+  fechaHasta: string;
+}
+
+const FILTROS_VACIOS: FiltrosIngresos = { fechaDesde: "", fechaHasta: "" };
+
 export function HistorialIngresos() {
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
+  // Filtros con los que se cargó la lista: la paginación usa estos, no los
+  // que el usuario está editando sin aplicar.
+  const [filtrosAplicados, setFiltrosAplicados] = useState<FiltrosIngresos>(FILTROS_VACIOS);
   const [ingresos, setIngresos] = useState<Ingreso[]>([]);
   const [totalElementos, setTotalElementos] = useState(0);
   const [totalPaginas, setTotalPaginas] = useState(0);
@@ -48,16 +62,18 @@ export function HistorialIngresos() {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [actualizandoId, setActualizandoId] = useState<number | null>(null);
-  const [errorCambio, setErrorCambio] = useState<string | null>(null);
+  const [pagoPendiente, setPagoPendiente] = useState<{ ingreso: Ingreso; metodo: MetodoPago } | null>(null);
+  const [visorAbierto, setVisorAbierto] = useState(false);
+  const [ingresoRecibo, setIngresoRecibo] = useState<Ingreso | null>(null);
 
   const cargarIngresos = useCallback(
-    async (paginaSolicitada: number) => {
+    async (paginaSolicitada: number, filtros: FiltrosIngresos) => {
       setCargando(true);
       setError(null);
       try {
         const datos = await obtenerHistorialIngresos({
-          fechaDesde,
-          fechaHasta,
+          fechaDesde: filtros.fechaDesde,
+          fechaHasta: filtros.fechaHasta,
           page: paginaSolicitada,
           size: TAMANO_PAGINA,
         });
@@ -72,33 +88,36 @@ export function HistorialIngresos() {
         setCargando(false);
       }
     },
-    [fechaDesde, fechaHasta],
+    [],
   );
 
   // Carga inicial al montar la página.
   useEffect(() => {
-    cargarIngresos(0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    cargarIngresos(0, FILTROS_VACIOS);
+  }, [cargarIngresos]);
 
   const aplicarFiltros = (evento: React.FormEvent) => {
     evento.preventDefault();
-    cargarIngresos(0);
+    const filtros = { fechaDesde, fechaHasta };
+    setFiltrosAplicados(filtros);
+    cargarIngresos(0, filtros);
   };
 
   const limpiarFiltros = () => {
     setFechaDesde("");
     setFechaHasta("");
+    setFiltrosAplicados(FILTROS_VACIOS);
+    cargarIngresos(0, FILTROS_VACIOS);
   };
 
   // Ejecuta un cambio sobre una fila y sincroniza solo esa fila con la respuesta.
   const ejecutarCambio = async (
     id: number,
     operacion: () => Promise<Ingreso>,
+    mensajeExito: string,
     mensajeError: string,
   ) => {
     setActualizandoId(id);
-    setErrorCambio(null);
     try {
       const actualizado = await operacion();
       setIngresos((previos) =>
@@ -112,19 +131,26 @@ export function HistorialIngresos() {
             : ingreso,
         ),
       );
+      toast.success(mensajeExito);
     } catch {
-      setErrorCambio(mensajeError);
+      toast.error(mensajeError);
     } finally {
       setActualizandoId(null);
     }
   };
 
-  const pagarIngreso = (id: number, metodo: MetodoPago) =>
-    ejecutarCambio(
-      id,
-      () => registrarPagoIngreso(id, metodo),
+  // El pago no se puede deshacer: elegir el método solo abre la confirmación.
+  const confirmarPago = async () => {
+    if (!pagoPendiente) return;
+    const { ingreso, metodo } = pagoPendiente;
+    await ejecutarCambio(
+      ingreso.id,
+      () => registrarPagoIngreso(ingreso.id, metodo),
+      `Pago de ${ingreso.cliente} registrado (${ETIQUETA_METODO[metodo]}).`,
       "No se pudo registrar el pago. Intenta de nuevo.",
     );
+    setPagoPendiente(null);
+  };
 
   // Separa lo registrado hoy del resto del historial (solo aplica a la página 0)
   const ingresosHoy = ingresos.filter((ingreso) => esDeHoy(ingreso.fecha));
@@ -134,7 +160,11 @@ export function HistorialIngresos() {
 
   const propsTabla = {
     actualizandoId,
-    onPagar: pagarIngreso,
+    onPagar: (ingreso: Ingreso, metodo: MetodoPago) => setPagoPendiente({ ingreso, metodo }),
+    onVerRecibo: (ingreso: Ingreso) => {
+      setIngresoRecibo(ingreso);
+      setVisorAbierto(true);
+    },
   };
 
   return (
@@ -185,11 +215,6 @@ export function HistorialIngresos() {
         </div>
       ) : (
         <>
-          {errorCambio && (
-            <div className={`${styles.estado} ${styles.error}`} role="alert">
-              {errorCambio}
-            </div>
-          )}
           {/* La separación hoy/histórico solo tiene sentido en la primera página:
               en páginas siguientes ya no hay garantía de que "hoy" quede completo en esta página. */}
           {pagina === 0 && (
@@ -235,7 +260,7 @@ export function HistorialIngresos() {
                 variant="outline"
                 size="sm"
                 disabled={pagina <= 0 || cargando}
-                onClick={() => cargarIngresos(pagina - 1)}
+                onClick={() => cargarIngresos(pagina - 1, filtrosAplicados)}
               >
                 Anterior
               </Button>
@@ -243,7 +268,7 @@ export function HistorialIngresos() {
                 variant="outline"
                 size="sm"
                 disabled={pagina >= totalPaginas - 1 || cargando}
-                onClick={() => cargarIngresos(pagina + 1)}
+                onClick={() => cargarIngresos(pagina + 1, filtrosAplicados)}
               >
                 Siguiente
               </Button>
@@ -251,14 +276,48 @@ export function HistorialIngresos() {
           </div>
         </>
       )}
+
+      <DialogoConfirmacion
+        abierto={pagoPendiente !== null}
+        titulo="¿Registrar el pago?"
+        descripcion={
+          pagoPendiente
+            ? `Se registrará el pago de ${formatearMoneda(pagoPendiente.ingreso.total)} a ${pagoPendiente.ingreso.cliente} por ${ETIQUETA_METODO[pagoPendiente.metodo]}. Una vez registrado no se puede cambiar.`
+            : ""
+        }
+        textoConfirmar="Registrar pago"
+        textoProcesando="Registrando..."
+        procesando={pagoPendiente !== null && actualizandoId === pagoPendiente.ingreso.id}
+        alConfirmar={confirmarPago}
+        alCancelar={() => setPagoPendiente(null)}
+      />
+
+      <VisorRecibo
+        abierto={visorAbierto}
+        onOpenChange={setVisorAbierto}
+        titulo={`Recibo del ingreso de ${ingresoRecibo?.cliente ?? ""}`}
+        cargarHtml={(signal) =>
+          ingresoRecibo ? cargarHtmlReciboIngreso(ingresoRecibo.uuid, signal) : Promise.reject(new Error("Sin ingreso"))
+        }
+        onAbrirEnPestana={() => ingresoRecibo && imprimirRecibo(ingresoRecibo.uuid)}
+      />
     </div>
   );
+}
+
+async function imprimirRecibo(uuid: string) {
+  try {
+    await abrirReciboIngresoPorUuid(uuid);
+  } catch (e) {
+    notificarErrorRecibo(e);
+  }
 }
 
 interface PropsTablaIngresos {
   ingresos: Ingreso[];
   actualizandoId: number | null;
-  onPagar: (id: number, metodo: MetodoPago) => void;
+  onPagar: (ingreso: Ingreso, metodo: MetodoPago) => void;
+  onVerRecibo: (ingreso: Ingreso) => void;
 }
 
 /** Tabla compartida por las dos secciones (hoy / historial general). */
@@ -266,6 +325,7 @@ function TablaIngresos({
   ingresos,
   actualizandoId,
   onPagar,
+  onVerRecibo,
 }: PropsTablaIngresos) {
   return (
     <div className={styles.tablaScroll}>
@@ -306,12 +366,12 @@ function TablaIngresos({
                     <ChipEstadoPago estadoPago={ingreso.estadoPago} metodoPago={ingreso.metodoPago} />
                     <select
                       className={styles.selectFila}
-                      aria-label="Registrar método de pago"
+                      aria-label={`Método de pago del ingreso de ${ingreso.cliente}`}
                       value={ingreso.metodoPago ?? ""}
                       disabled={ocupada || ingreso.metodoPago !== null}
                       onChange={(e) => {
                         const metodo = e.target.value;
-                        if (esMetodoPago(metodo)) onPagar(ingreso.id, metodo);
+                        if (esMetodoPago(metodo)) onPagar(ingreso, metodo);
                       }}
                     >
                       <option value="" disabled>
@@ -330,10 +390,21 @@ function TablaIngresos({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    title="Imprimir recibo"
-                    onClick={() => abrirReciboIngresoPorUuid(ingreso.uuid)}
+                    title="Ver recibo"
+                    onClick={() => onVerRecibo(ingreso)}
+                    aria-label={`Ver recibo del ingreso de ${ingreso.cliente}`}
                   >
-                    <Printer size={15} />
+                    <Eye size={15} aria-hidden="true" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    title="Imprimir recibo (abre una pestaña nueva)"
+                    aria-label={`Imprimir recibo del ingreso de ${ingreso.cliente} en una pestaña nueva`}
+                    onClick={() => imprimirRecibo(ingreso.uuid)}
+                  >
+                    <Printer size={15} aria-hidden="true" />
                   </Button>
                 </td>
               </tr>

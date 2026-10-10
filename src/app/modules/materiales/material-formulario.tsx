@@ -135,22 +135,22 @@ export function MaterialFormulario({
 
   return (
     <form className={styles.formulario} onSubmit={handleSubmit(onSubmit)}>
-      {errorGeneral && <div className={styles.alertaError}>{errorGeneral}</div>}
+      {errorGeneral && <div className={styles.alertaError} role="alert">{errorGeneral}</div>}
 
       <div className={styles.campo}>
         <Label htmlFor="nombre">Nombre *</Label>
-        <Input id="nombre" {...register("nombre")} placeholder="PET Cristal" />
-        {errors.nombre && <span className={styles.errorCampo}>{errors.nombre.message}</span>}
+        <Input id="nombre" aria-invalid={!!errors.nombre} aria-describedby={errors.nombre ? "nombre-error" : undefined} {...register("nombre")} placeholder="PET Cristal" />
+        {errors.nombre && <span id="nombre-error" role="alert" className={styles.errorCampo}>{errors.nombre.message}</span>}
       </div>
 
       <div className={styles.campo}>
-        <Label>Categoría *</Label>
+        <Label htmlFor="categoriaCodigo">Categoría *</Label>
         <Controller
           name="categoriaCodigo"
           control={control}
           render={({ field }) => (
             <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger>
+              <SelectTrigger id="categoriaCodigo" aria-invalid={!!errors.categoriaCodigo} aria-describedby={errors.categoriaCodigo ? "categoriaCodigo-error" : undefined}>
                 <SelectValue placeholder="Selecciona categoría" />
               </SelectTrigger>
               <SelectContent>
@@ -164,19 +164,19 @@ export function MaterialFormulario({
           )}
         />
         {errors.categoriaCodigo && (
-          <span className={styles.errorCampo}>{errors.categoriaCodigo.message}</span>
+          <span id="categoriaCodigo-error" role="alert" className={styles.errorCampo}>{errors.categoriaCodigo.message}</span>
         )}
       </div>
 
       <div className={styles.fila}>
         <div className={styles.campo}>
-          <Label>Resina</Label>
+          <Label htmlFor="resinaCodigo">Resina</Label>
           <Controller
             name="resinaCodigo"
             control={control}
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange} disabled={!esPlastico}>
-                <SelectTrigger>
+                <SelectTrigger id="resinaCodigo">
                   <SelectValue placeholder={esPlastico ? "Selecciona resina" : "Solo para plástico"} />
                 </SelectTrigger>
                 <SelectContent>
@@ -191,13 +191,13 @@ export function MaterialFormulario({
           />
         </div>
         <div className={styles.campo}>
-          <Label>Color</Label>
+          <Label htmlFor="colorCodigo">Color</Label>
           <Controller
             name="colorCodigo"
             control={control}
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange} disabled={!esPlastico}>
-                <SelectTrigger>
+                <SelectTrigger id="colorCodigo">
                   <SelectValue placeholder={esPlastico ? "Selecciona color" : "Solo para plástico"} />
                 </SelectTrigger>
                 <SelectContent>
@@ -220,13 +220,13 @@ export function MaterialFormulario({
 
       <div className={styles.fila}>
         <div className={styles.campo}>
-          <Label>Unidad de medida *</Label>
+          <Label htmlFor="unidadMedida">Unidad de medida *</Label>
           <Controller
             name="unidadMedida"
             control={control}
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger>
+                <SelectTrigger id="unidadMedida" aria-invalid={!!errors.unidadMedida} aria-describedby={errors.unidadMedida ? "unidadMedida-error" : undefined}>
                   <SelectValue placeholder="Selecciona unidad" />
                 </SelectTrigger>
                 <SelectContent>
@@ -240,17 +240,17 @@ export function MaterialFormulario({
             )}
           />
           {errors.unidadMedida && (
-            <span className={styles.errorCampo}>{errors.unidadMedida.message}</span>
+            <span id="unidadMedida-error" role="alert" className={styles.errorCampo}>{errors.unidadMedida.message}</span>
           )}
         </div>
         <div className={styles.campo}>
-          <Label>Unidad de empaque *</Label>
+          <Label htmlFor="unidadEmpaque">Unidad de empaque *</Label>
           <Controller
             name="unidadEmpaque"
             control={control}
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger>
+                <SelectTrigger id="unidadEmpaque" aria-invalid={!!errors.unidadEmpaque} aria-describedby={errors.unidadEmpaque ? "unidadEmpaque-error" : undefined}>
                   <SelectValue placeholder="Selecciona empaque" />
                 </SelectTrigger>
                 <SelectContent>
@@ -264,7 +264,7 @@ export function MaterialFormulario({
             )}
           />
           {errors.unidadEmpaque && (
-            <span className={styles.errorCampo}>{errors.unidadEmpaque.message}</span>
+            <span id="unidadEmpaque-error" role="alert" className={styles.errorCampo}>{errors.unidadEmpaque.message}</span>
           )}
         </div>
       </div>
@@ -274,18 +274,22 @@ export function MaterialFormulario({
           <Label htmlFor="precioBase">Precio base *</Label>
           <Input
             id="precioBase"
+            aria-invalid={!!errors.precioBase}
+            aria-describedby={errors.precioBase ? "precioBase-error" : undefined}
             type="number"
             step="0.01"
             min="0"
             {...register("precioBase")}
             placeholder="1200.00"
           />
-          {errors.precioBase && <span className={styles.errorCampo}>{errors.precioBase.message}</span>}
+          {errors.precioBase && <span id="precioBase-error" role="alert" className={styles.errorCampo}>{errors.precioBase.message}</span>}
         </div>
         <div className={styles.campo}>
           <Label htmlFor="factorCalidad">Factor de calidad *</Label>
           <Input
             id="factorCalidad"
+            aria-invalid={!!errors.factorCalidad}
+            aria-describedby={errors.factorCalidad ? "factorCalidad-error" : undefined}
             type="number"
             step="0.01"
             min="0"
@@ -293,7 +297,7 @@ export function MaterialFormulario({
             placeholder="1.00"
           />
           {errors.factorCalidad && (
-            <span className={styles.errorCampo}>{errors.factorCalidad.message}</span>
+            <span id="factorCalidad-error" role="alert" className={styles.errorCampo}>{errors.factorCalidad.message}</span>
           )}
         </div>
       </div>
@@ -302,6 +306,8 @@ export function MaterialFormulario({
         <Label htmlFor="umbralMerma">Umbral de merma (%)</Label>
         <Input
           id="umbralMerma"
+          aria-invalid={!!errors.umbralMerma}
+          aria-describedby={errors.umbralMerma ? "umbralMerma-error" : undefined}
           type="number"
           step="0.01"
           min="0"
@@ -309,7 +315,7 @@ export function MaterialFormulario({
           {...register("umbralMerma")}
           placeholder="5.00"
         />
-        {errors.umbralMerma && <span className={styles.errorCampo}>{errors.umbralMerma.message}</span>}
+        {errors.umbralMerma && <span id="umbralMerma-error" role="alert" className={styles.errorCampo}>{errors.umbralMerma.message}</span>}
       </div>
 
       <div className={styles.acciones}>

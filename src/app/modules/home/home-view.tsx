@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/app/components/ui/select";
 import { obtenerActividadDiaria, type ActividadDia } from "@/app/modules/home/dashboardApi";
+import { usePeticionCancelable } from "@/app/shared/hooks/use-peticion-cancelable";
 import styles from "@/app/modules/home/home-view.module.css";
 
 const RANGOS = [
@@ -57,17 +58,25 @@ export function HomeView() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const nuevaPeticion = usePeticionCancelable();
+
+  // Cambiar el rango rápido (7 → 30 → 15) cancela la petición anterior, así
+  // una respuesta lenta no pinta datos de otro rango.
   const cargar = useCallback(async () => {
+    const signal = nuevaPeticion();
     setCargando(true);
     setError(null);
     try {
-      setActividad(await obtenerActividadDiaria(Number(dias)));
+      const datos = await obtenerActividadDiaria(Number(dias), signal);
+      if (!signal.aborted) setActividad(datos);
     } catch {
-      setError("No se pudo cargar la actividad. Revisa la conexión con el servidor.");
+      if (!signal.aborted) {
+        setError("No se pudo cargar la actividad. Revisa la conexión con el servidor.");
+      }
     } finally {
-      setCargando(false);
+      if (!signal.aborted) setCargando(false);
     }
-  }, [dias]);
+  }, [dias, nuevaPeticion]);
 
   useEffect(() => {
     cargar();
@@ -93,9 +102,9 @@ export function HomeView() {
 
       <div className={styles.filtros}>
         <div className={styles.campo}>
-          <Label>Rango</Label>
+          <Label htmlFor="rango-dias">Rango</Label>
           <Select value={dias} onValueChange={setDias}>
-            <SelectTrigger>
+            <SelectTrigger id="rango-dias">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

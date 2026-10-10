@@ -216,6 +216,14 @@
   margin: 0;
 }
 
+.modalCambioEstado p.errorEstado {
+  padding: 10px 12px;
+  border: 1px solid #f3c1bb;
+  border-radius: 8px;
+  background-color: #fdecea;
+  color: #b42318;
+}
+
 .opcionesEstado {
   display: flex;
   flex-direction: column;

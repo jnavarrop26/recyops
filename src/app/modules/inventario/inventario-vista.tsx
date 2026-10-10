@@ -125,9 +125,9 @@ export function InventarioVista() {
 
       <div className={styles.barraControles}>
         <div className={styles.campo}>
-          <Label>Bodega</Label>
+          <Label htmlFor="inv-bodega">Bodega</Label>
           <Select value={bodegaId} onValueChange={setBodegaId}>
-            <SelectTrigger>
+            <SelectTrigger id="inv-bodega">
               <SelectValue placeholder="Selecciona bodega" />
             </SelectTrigger>
             <SelectContent>

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { Printer } from "lucide-react";
+import { Eye, Printer } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Label } from "@/app/components/ui/label";
 import { Input } from "@/app/components/ui/input";
@@ -19,7 +19,9 @@ import {
 } from "@/app/components/ui/dialog";
 import { EntregaFormulario } from "@/app/modules/entregas/entrega-formulario";
 import { listarEntregas, ESTADOS_ENTREGA, type Entrega } from "@/app/modules/entregas/entregasApi";
-import { abrirReciboEntrega } from "@/app/modules/entregas/recibo-entrega";
+import { abrirReciboEntrega, cargarHtmlReciboEntrega } from "@/app/modules/entregas/recibo-entrega";
+import { VisorRecibo } from "@/app/shared/components/visor-recibo";
+import { notificarErrorRecibo } from "@/app/shared/ventana-emergente";
 import { listarConvenios, type Convenio } from "@/app/modules/convenios/conveniosApi";
 import { listarBodegas, type Bodega } from "@/app/modules/bodega/bodegasApi";
 import styles from "@/app/modules/entregas/entregas-vista.module.css";
@@ -30,6 +32,22 @@ const TODOS = "__todos__";
 const formatearFecha = (iso: string) => {
   const f = new Date(iso);
   return Number.isNaN(f.getTime()) ? iso : f.toLocaleString("es-CO");
+};
+
+interface FiltrosEntregas {
+  bodega: string;
+  convenio: string;
+  estado: string;
+  desde: string;
+  hasta: string;
+}
+
+const FILTROS_INICIALES: FiltrosEntregas = {
+  bodega: TODOS,
+  convenio: TODOS,
+  estado: TODOS,
+  desde: "",
+  hasta: "",
 };
 
 export function EntregasVista() {
@@ -45,25 +63,30 @@ export function EntregasVista() {
   const [fEstado, setFEstado] = useState(TODOS);
   const [fDesde, setFDesde] = useState("");
   const [fHasta, setFHasta] = useState("");
+  // Filtros con los que se cargó la lista: paginar y recargar usan estos,
+  // no los que el usuario está editando sin aplicar.
+  const [filtrosAplicados, setFiltrosAplicados] = useState<FiltrosEntregas>(FILTROS_INICIALES);
 
   const [bodegas, setBodegas] = useState<Bodega[]>([]);
   const [convenios, setConvenios] = useState<Convenio[]>([]);
 
   const [modalForm, setModalForm] = useState(false);
+  const [visorAbierto, setVisorAbierto] = useState(false);
+  const [entregaRecibo, setEntregaRecibo] = useState<Entrega | null>(null);
 
   const valor = (v: string) => (v === TODOS ? undefined : v);
 
   const cargar = useCallback(
-    async (paginaSolicitada: number) => {
+    async (paginaSolicitada: number, filtros: FiltrosEntregas) => {
       setCargando(true);
       setError(null);
       try {
         const datos = await listarEntregas({
-          bodegaId: valor(fBodega),
-          convenioId: valor(fConvenio),
-          estado: valor(fEstado),
-          fechaDesde: fDesde || undefined,
-          fechaHasta: fHasta || undefined,
+          bodegaId: valor(filtros.bodega),
+          convenioId: valor(filtros.convenio),
+          estado: valor(filtros.estado),
+          fechaDesde: filtros.desde || undefined,
+          fechaHasta: filtros.hasta || undefined,
           page: paginaSolicitada,
           size: TAMANO_PAGINA,
         });
@@ -78,7 +101,7 @@ export function EntregasVista() {
         setCargando(false);
       }
     },
-    [fBodega, fConvenio, fEstado, fDesde, fHasta],
+    [],
   );
 
   useEffect(() => {
@@ -94,13 +117,14 @@ export function EntregasVista() {
         /* filtros quedarán vacíos */
       }
     })();
-    cargar(0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    cargar(0, FILTROS_INICIALES);
+  }, [cargar]);
 
   function aplicarFiltros(evento: React.FormEvent) {
     evento.preventDefault();
-    cargar(0);
+    const filtros = { bodega: fBodega, convenio: fConvenio, estado: fEstado, desde: fDesde, hasta: fHasta };
+    setFiltrosAplicados(filtros);
+    cargar(0, filtros);
   }
 
   function limpiarFiltros() {
@@ -109,19 +133,26 @@ export function EntregasVista() {
     setFEstado(TODOS);
     setFDesde("");
     setFHasta("");
+    setFiltrosAplicados(FILTROS_INICIALES);
+    cargar(0, FILTROS_INICIALES);
   }
 
   // El listado se refresca apenas se registra; el modal se cierra al terminar la animación.
   function alRegistrar() {
-    cargar(0);
+    cargar(0, filtrosAplicados);
   }
 
   async function descargarRecibo(entrega: Entrega) {
     try {
       await abrirReciboEntrega(entrega.id);
-    } catch {
-      setError("No se pudo generar el recibo.");
+    } catch (e) {
+      notificarErrorRecibo(e);
     }
+  }
+
+  function verRecibo(entrega: Entrega) {
+    setEntregaRecibo(entrega);
+    setVisorAbierto(true);
   }
 
   return (
@@ -136,9 +167,9 @@ export function EntregasVista() {
 
       <form className={styles.filtros} onSubmit={aplicarFiltros}>
         <div className={styles.campoFiltro}>
-          <Label>Bodega</Label>
+          <Label htmlFor="fBodega">Bodega</Label>
           <Select value={fBodega} onValueChange={setFBodega}>
-            <SelectTrigger>
+            <SelectTrigger id="fBodega">
               <SelectValue placeholder="Todas" />
             </SelectTrigger>
             <SelectContent>
@@ -152,9 +183,9 @@ export function EntregasVista() {
           </Select>
         </div>
         <div className={styles.campoFiltro}>
-          <Label>Convenio</Label>
+          <Label htmlFor="fConvenio">Convenio</Label>
           <Select value={fConvenio} onValueChange={setFConvenio}>
-            <SelectTrigger>
+            <SelectTrigger id="fConvenio">
               <SelectValue placeholder="Todos" />
             </SelectTrigger>
             <SelectContent>
@@ -168,9 +199,9 @@ export function EntregasVista() {
           </Select>
         </div>
         <div className={styles.campoFiltro}>
-          <Label>Estado</Label>
+          <Label htmlFor="fEstado">Estado</Label>
           <Select value={fEstado} onValueChange={setFEstado}>
-            <SelectTrigger>
+            <SelectTrigger id="fEstado">
               <SelectValue placeholder="Todos" />
             </SelectTrigger>
             <SelectContent>
@@ -239,10 +270,21 @@ export function EntregasVista() {
                           type="button"
                           variant="ghost"
                           size="sm"
-                          title="Ver e imprimir recibo"
-                          onClick={() => descargarRecibo(entrega)}
+                          title="Ver recibo"
+                          onClick={() => verRecibo(entrega)}
+                          aria-label={`Ver recibo de la entrega ${entrega.codigo}`}
                         >
-                          <Printer size={15} />
+                          <Eye size={15} aria-hidden="true" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          title="Imprimir recibo (abre una pestaña nueva)"
+                          onClick={() => descargarRecibo(entrega)}
+                          aria-label={`Imprimir recibo de la entrega ${entrega.codigo} en una pestaña nueva`}
+                        >
+                          <Printer size={15} aria-hidden="true" />
                         </Button>
                       </td>
                     </tr>
@@ -256,10 +298,10 @@ export function EntregasVista() {
                 {totalElementos} entregas · Página {pagina + 1} de {Math.max(totalPaginas, 1)}
               </span>
               <div className={styles.controlesPagina}>
-                <Button variant="outline" size="sm" disabled={pagina <= 0 || cargando} onClick={() => cargar(pagina - 1)}>
+                <Button variant="outline" size="sm" disabled={pagina <= 0 || cargando} onClick={() => cargar(pagina - 1, filtrosAplicados)}>
                   Anterior
                 </Button>
-                <Button variant="outline" size="sm" disabled={pagina >= totalPaginas - 1 || cargando} onClick={() => cargar(pagina + 1)}>
+                <Button variant="outline" size="sm" disabled={pagina >= totalPaginas - 1 || cargando} onClick={() => cargar(pagina + 1, filtrosAplicados)}>
                   Siguiente
                 </Button>
               </div>
@@ -283,6 +325,16 @@ export function EntregasVista() {
           />
         </DialogContent>
       </Dialog>
+
+      <VisorRecibo
+        abierto={visorAbierto}
+        onOpenChange={setVisorAbierto}
+        titulo={`Recibo de la entrega ${entregaRecibo?.codigo ?? ""}`}
+        cargarHtml={(signal) =>
+          entregaRecibo ? cargarHtmlReciboEntrega(entregaRecibo.id, signal) : Promise.reject(new Error("Sin entrega"))
+        }
+        onAbrirEnPestana={() => entregaRecibo && descargarRecibo(entregaRecibo)}
+      />
     </div>
   );
 }

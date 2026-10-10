@@ -83,8 +83,8 @@ export async function listarEntregas(filtros: FiltrosEntregas = {}): Promise<Pag
 }
 
 // GET /api/entregas/{id} — trae las líneas de material.
-export async function obtenerEntrega(id: string): Promise<Entrega> {
-  const { data } = await clienteApi.get<Entrega>(`/entregas/${id}`);
+export async function obtenerEntrega(id: string, signal?: AbortSignal): Promise<Entrega> {
+  const { data } = await clienteApi.get<Entrega>(`/entregas/${id}`, { signal });
   return data;
 }
 
