@@ -111,8 +111,8 @@ export function EntregasVista() {
     setFHasta("");
   }
 
-  function alGuardar() {
-    setModalForm(false);
+  // El listado se refresca apenas se registra; el modal se cierra al terminar la animación.
+  function alRegistrar() {
     cargar(0);
   }
 
@@ -210,44 +210,46 @@ export function EntregasVista() {
           <div className={styles.estado}>No se encontraron entregas.</div>
         ) : (
           <>
-            <table className={styles.tabla}>
-              <thead>
-                <tr>
-                  <th>Código</th>
-                  <th>Convenio</th>
-                  <th>Persona que entrega</th>
-                  <th className={styles.derecha}>Total (kg)</th>
-                  <th>Bodega</th>
-                  <th>Fecha</th>
-                  <th>Recibo</th>
-                </tr>
-              </thead>
-              <tbody>
-                {entregas.map((entrega) => (
-                  <tr key={entrega.id}>
-                    <td className={styles.mono}>{entrega.codigo}</td>
-                    <td>{entrega.convenioNombre ?? "—"}</td>
-                    <td>{entrega.personaEntregaNombre ?? "—"}</td>
-                    <td className={`${styles.mono} ${styles.derecha}`}>
-                      {entrega.totalKg.toLocaleString("es-CO")}
-                    </td>
-                    <td>{entrega.bodegaNombre}</td>
-                    <td className={styles.mono}>{formatearFecha(entrega.fechaRecepcion)}</td>
-                    <td>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        title="Ver e imprimir recibo"
-                        onClick={() => descargarRecibo(entrega)}
-                      >
-                        <Printer size={15} />
-                      </Button>
-                    </td>
+            <div className={styles.tablaScroll}>
+              <table className={styles.tabla}>
+                <thead>
+                  <tr>
+                    <th>Código</th>
+                    <th>Convenio</th>
+                    <th>Persona que entrega</th>
+                    <th className={styles.derecha}>Total (kg)</th>
+                    <th>Bodega</th>
+                    <th>Fecha</th>
+                    <th>Recibo</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {entregas.map((entrega) => (
+                    <tr key={entrega.id}>
+                      <td className={styles.mono}>{entrega.codigo}</td>
+                      <td>{entrega.convenioNombre ?? "—"}</td>
+                      <td>{entrega.personaEntregaNombre ?? "—"}</td>
+                      <td className={`${styles.mono} ${styles.derecha}`}>
+                        {entrega.totalKg.toLocaleString("es-CO")}
+                      </td>
+                      <td>{entrega.bodegaNombre}</td>
+                      <td className={styles.mono}>{formatearFecha(entrega.fechaRecepcion)}</td>
+                      <td>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          title="Ver e imprimir recibo"
+                          onClick={() => descargarRecibo(entrega)}
+                        >
+                          <Printer size={15} />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             <div className={styles.paginacion}>
               <span>
@@ -267,14 +269,18 @@ export function EntregasVista() {
       </div>
 
       <Dialog open={modalForm} onOpenChange={setModalForm}>
-        <DialogContent>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Registrar entrega</DialogTitle>
             <DialogDescription>
               Solo se listan convenios, bodegas y trabajadores activos.
             </DialogDescription>
           </DialogHeader>
-          <EntregaFormulario alGuardar={alGuardar} alCerrar={() => setModalForm(false)} />
+          <EntregaFormulario
+            alRegistrar={alRegistrar}
+            alGuardar={() => setModalForm(false)}
+            alCerrar={() => setModalForm(false)}
+          />
         </DialogContent>
       </Dialog>
     </div>

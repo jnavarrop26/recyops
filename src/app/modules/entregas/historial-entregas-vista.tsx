@@ -231,46 +231,48 @@ export function HistorialEntregasVista() {
                 </div>
 
                 <div className={styles.tarjeta}>
-                  <table className={styles.tabla}>
-                    <thead>
-                      <tr>
-                        <th>Código</th>
-                        <th>Convenio</th>
-                        <th>Persona que entrega</th>
-                        <th className={styles.derecha}>Total (kg)</th>
-                        <th>Bodega</th>
-                        <th>Fecha</th>
-                        <th>Recibo</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {grupo.map((entrega) => (
-                        <tr key={entrega.id}>
-                          <td className={styles.mono}>{entrega.codigo}</td>
-                          <td>{entrega.convenioNombre ?? "—"}</td>
-                          <td>{entrega.personaEntregaNombre ?? "—"}</td>
-                          <td className={`${styles.mono} ${styles.derecha}`}>
-                            {fmtPeso.format(entrega.totalKg)}
-                          </td>
-                          <td>{entrega.bodegaNombre}</td>
-                          <td className={styles.mono} style={{ fontSize: 12 }}>
-                            {fmt.format(new Date(entrega.fechaRecepcion))}
-                          </td>
-                          <td>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              title="Ver e imprimir recibo"
-                              onClick={() => verRecibo(entrega)}
-                            >
-                              <Printer size={15} />
-                            </Button>
-                          </td>
+                  <div className={styles.tablaScroll}>
+                    <table className={styles.tabla}>
+                      <thead>
+                        <tr>
+                          <th>Código</th>
+                          <th>Convenio</th>
+                          <th>Persona que entrega</th>
+                          <th className={styles.derecha}>Total (kg)</th>
+                          <th>Bodega</th>
+                          <th>Fecha</th>
+                          <th>Recibo</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {grupo.map((entrega) => (
+                          <tr key={entrega.id}>
+                            <td className={styles.mono}>{entrega.codigo}</td>
+                            <td>{entrega.convenioNombre ?? "—"}</td>
+                            <td>{entrega.personaEntregaNombre ?? "—"}</td>
+                            <td className={`${styles.mono} ${styles.derecha}`}>
+                              {fmtPeso.format(entrega.totalKg)}
+                            </td>
+                            <td>{entrega.bodegaNombre}</td>
+                            <td className={styles.mono} style={{ fontSize: 12 }}>
+                              {fmt.format(new Date(entrega.fechaRecepcion))}
+                            </td>
+                            <td>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                title="Ver e imprimir recibo"
+                                onClick={() => verRecibo(entrega)}
+                              >
+                                <Printer size={15} />
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             );

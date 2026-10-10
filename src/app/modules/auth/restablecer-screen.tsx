@@ -59,7 +59,7 @@ export function RestablecerScreen() {
 
   return (
     <AuthLayout>
-      <div style={{ background: "#fff", border: "1px solid #dbe7de", borderRadius: 16, padding: 32 }}>
+      <div style={{ background: "#fff", border: "1px solid #dbe7de", borderRadius: 16, padding: "clamp(20px, 5vw, 32px)" }}>
         <div style={{ marginBottom: 24 }}>
           <h1 style={{ fontSize: "1.4rem", fontWeight: 700, marginBottom: 6, color: "#0F5132" }}>
             Nueva contraseña

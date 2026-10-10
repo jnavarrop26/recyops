@@ -129,3 +129,36 @@
   color: var(--ink-muted, #6b8c77);
   margin-top: 4px;
 }
+
+/* ── Responsive ── */
+.campo {
+  min-width: 0;
+}
+
+.fila-dato span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 639px) {
+  .pagina {
+    padding: 16px 0;
+    gap: 24px;
+  }
+
+  .tarjeta {
+    padding: 20px 16px;
+  }
+
+  .fila {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .resultado {
+    padding: 16px;
+  }
+
+  .fila-dato {
+    flex-wrap: wrap;
+  }
+}

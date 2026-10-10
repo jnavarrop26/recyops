@@ -88,12 +88,14 @@
 .tabla th {
   padding: 12px 20px;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .tabla td {
   padding: 12px 20px;
   border-top: 1px solid var(--line);
   color: var(--ink);
+  vertical-align: middle;
 }
 
 .tabla tbody tr:hover {
@@ -106,6 +108,12 @@
 
 .mono {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Atomic values (dates, IDs, plates, amounts) must never break across lines */
+.tabla td.mono {
+  white-space: nowrap;
 }
 
 .estado {
@@ -177,7 +185,7 @@
 }
 
 /* ── Móvil ─────────────────────────────────────────────── */
-@media (max-width: 700px) {
+@media (max-width: 639px) {
   .subtitulo {
     margin-bottom: 20px;
   }
@@ -205,6 +213,18 @@
   .tabla th,
   .tabla td {
     padding: 10px 12px;
+  }
+
+  /* 16px avoids iOS zoom on focus */
+  .selectFila {
+    font-size: 16px;
+    min-height: 44px;
+  }
+
+  .paginacion {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 16px;
   }
 }
 

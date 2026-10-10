@@ -260,59 +260,61 @@ export function MaterialesVista() {
           <div className={styles.estado}>No se encontraron materiales.</div>
         ) : (
           <>
-            <table className={styles.tabla}>
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>Categoría</th>
-                  <th>Resina</th>
-                  <th>Color</th>
-                  <th>Empaque</th>
-                  <th className={styles.derecha}>Precio base</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {materiales.map((material) => (
-                  <tr key={material.id}>
-                    <td>{material.nombre}</td>
-                    <td>{material.categoriaNombre}</td>
-                    <td>{material.resinaNombre ?? "—"}</td>
-                    <td>{material.colorNombre ?? "—"}</td>
-                    <td>{material.unidadEmpaque}</td>
-                    <td className={`${styles.mono} ${styles.derecha}`}>
-                      {formatearPrecio(material.precioBase)}
-                    </td>
-                    <td>
-                      <span
-                        className={`${styles.badge} ${
-                          material.activo ? styles.badgeActivo : styles.badgeInactivo
-                        }`}
-                      >
-                        {material.activo ? "Activo" : "Inactivo"}
-                      </span>
-                    </td>
-                    <td>
-                      {admin ? (
-                        <div className={styles.acciones}>
-                          <Button variant="outline" size="sm" onClick={() => abrirEditar(material)}>
-                            Editar
-                          </Button>
-                          <Switch
-                            checked={material.activo}
-                            onCheckedChange={() => alternarEstado(material)}
-                            aria-label="Activar o desactivar material"
-                          />
-                        </div>
-                      ) : (
-                        <span className={styles.subtitulo}>—</span>
-                      )}
-                    </td>
+            <div className={styles.tablaScroll}>
+              <table className={styles.tabla}>
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Categoría</th>
+                    <th>Resina</th>
+                    <th>Color</th>
+                    <th>Empaque</th>
+                    <th className={styles.derecha}>Precio base</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {materiales.map((material) => (
+                    <tr key={material.id}>
+                      <td>{material.nombre}</td>
+                      <td>{material.categoriaNombre}</td>
+                      <td>{material.resinaNombre ?? "—"}</td>
+                      <td>{material.colorNombre ?? "—"}</td>
+                      <td>{material.unidadEmpaque}</td>
+                      <td className={`${styles.mono} ${styles.derecha}`}>
+                        {formatearPrecio(material.precioBase)}
+                      </td>
+                      <td>
+                        <span
+                          className={`${styles.badge} ${
+                            material.activo ? styles.badgeActivo : styles.badgeInactivo
+                          }`}
+                        >
+                          {material.activo ? "Activo" : "Inactivo"}
+                        </span>
+                      </td>
+                      <td>
+                        {admin ? (
+                          <div className={styles.acciones}>
+                            <Button variant="outline" size="sm" onClick={() => abrirEditar(material)}>
+                              Editar
+                            </Button>
+                            <Switch
+                              checked={material.activo}
+                              onCheckedChange={() => alternarEstado(material)}
+                              aria-label="Activar o desactivar material"
+                            />
+                          </div>
+                        ) : (
+                          <span className={styles.subtitulo}>—</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             <div className={styles.paginacion}>
               <span>
@@ -342,7 +344,7 @@ export function MaterialesVista() {
       </div>
 
       <Dialog open={modalAbierto} onOpenChange={setModalAbierto}>
-        <DialogContent>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{materialEditando ? "Editar material" : "Nuevo material"}</DialogTitle>
             <DialogDescription>

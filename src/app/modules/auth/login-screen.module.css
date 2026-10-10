@@ -183,3 +183,32 @@
 .footerLink:hover {
   color: #0F5132;
 }
+
+/* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 639px) {
+  .splash {
+    padding: 24px 16px;
+  }
+
+  .formBody {
+    padding: 32px 16px;
+  }
+
+  .formFooter {
+    padding: 14px 16px;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .footerCopy {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .footerLinks {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px 16px;
+  }
+}

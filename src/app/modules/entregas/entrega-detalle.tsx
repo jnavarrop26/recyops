@@ -82,7 +82,7 @@ export function EntregaDetalle() {
           <h1 className={styles.titulo}>{entrega.codigo}</h1>
           <ChipEstadoEntrega estado={entrega.estado} />
         </div>
-        <div style={{ display: "flex", gap: 10 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
           <Button variant="outline" onClick={recibo}>
             Generar recibo
           </Button>
@@ -129,24 +129,26 @@ export function EntregaDetalle() {
 
       <div className={styles.tarjeta}>
         <h2 className={styles.tarjetaTitulo}>Líneas de material</h2>
-        <table className={styles.tabla}>
-          <thead>
-            <tr>
-              <th>Material</th>
-              <th className={styles.derecha}>Peso (kg)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {entrega.lineas.map((linea) => (
-              <tr key={linea.tipoMaterialId}>
-                <td>{linea.tipoMaterialNombre}</td>
-                <td className={`${styles.mono} ${styles.derecha}`}>
-                  {linea.pesoKg.toLocaleString("es-CO")}
-                </td>
+        <div className={styles.tablaScroll}>
+          <table className={styles.tabla}>
+            <thead>
+              <tr>
+                <th>Material</th>
+                <th className={styles.derecha}>Peso (kg)</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {entrega.lineas.map((linea) => (
+                <tr key={linea.tipoMaterialId}>
+                  <td>{linea.tipoMaterialNombre}</td>
+                  <td className={`${styles.mono} ${styles.derecha}`}>
+                    {linea.pesoKg.toLocaleString("es-CO")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

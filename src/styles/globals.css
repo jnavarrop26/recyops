@@ -100,3 +100,15 @@ input[type="number"]:disabled::-webkit-inner-spin-button {
   opacity: 0.45;
   cursor: not-allowed;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Touch targets — punteros gruesos (móvil/tablet)
+   Controles shadcn alcanzan 44px de alto en pantallas táctiles.
+   ═══════════════════════════════════════════════════════════ */
+@media (pointer: coarse) {
+  [data-slot="button"],
+  [data-slot="select-trigger"],
+  [data-slot="input"] {
+    min-height: 44px;
+  }
+}

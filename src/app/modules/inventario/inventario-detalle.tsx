@@ -116,48 +116,50 @@ export function InventarioDetalle() {
           <div className={styles.estado}>No hay movimientos registrados.</div>
         ) : (
           <>
-            <table className={styles.tabla}>
-              <thead>
-                <tr>
-                  <th>Operación</th>
-                  <th className={styles.derecha}>Cantidad</th>
-                  <th className={styles.derecha}>Anterior</th>
-                  <th className={styles.derecha}>Nueva</th>
-                  <th>Referencia</th>
-                  <th>Usuario</th>
-                  <th>Fecha</th>
-                </tr>
-              </thead>
-              <tbody>
-                {movimientos.map((m) => (
-                  <tr key={m.id}>
-                    <td>
-                      <span className={`${styles.opChip} ${CLASE_OP[m.tipoOperacion]}`}>
-                        {m.tipoOperacion}
-                      </span>
-                    </td>
-                    <td className={`${styles.mono} ${styles.derecha}`}>{m.cantidad.toLocaleString("es-CO")}</td>
-                    <td className={`${styles.mono} ${styles.derecha}`}>{m.cantidadAnterior.toLocaleString("es-CO")}</td>
-                    <td className={`${styles.mono} ${styles.derecha}`}>{m.cantidadNueva.toLocaleString("es-CO")}</td>
-                    <td>
-                      {m.referencia ? (
-                        m.referencia.startsWith("ENT-") || m.referencia.startsWith("CNV-") ? (
-                          <button type="button" className={styles.refLink} onClick={() => abrirReferencia(m.referencia)}>
-                            {m.referencia}
-                          </button>
-                        ) : (
-                          <span className={styles.mono}>{m.referencia}</span>
-                        )
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    <td>{m.usuarioNombre}</td>
-                    <td className={styles.mono}>{formatearFecha(m.fechaRegistro)}</td>
+            <div className={styles.tablaScroll}>
+              <table className={styles.tabla}>
+                <thead>
+                  <tr>
+                    <th>Operación</th>
+                    <th className={styles.derecha}>Cantidad</th>
+                    <th className={styles.derecha}>Anterior</th>
+                    <th className={styles.derecha}>Nueva</th>
+                    <th>Referencia</th>
+                    <th>Usuario</th>
+                    <th>Fecha</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {movimientos.map((m) => (
+                    <tr key={m.id}>
+                      <td>
+                        <span className={`${styles.opChip} ${CLASE_OP[m.tipoOperacion]}`}>
+                          {m.tipoOperacion}
+                        </span>
+                      </td>
+                      <td className={`${styles.mono} ${styles.derecha}`}>{m.cantidad.toLocaleString("es-CO")}</td>
+                      <td className={`${styles.mono} ${styles.derecha}`}>{m.cantidadAnterior.toLocaleString("es-CO")}</td>
+                      <td className={`${styles.mono} ${styles.derecha}`}>{m.cantidadNueva.toLocaleString("es-CO")}</td>
+                      <td>
+                        {m.referencia ? (
+                          m.referencia.startsWith("ENT-") || m.referencia.startsWith("CNV-") ? (
+                            <button type="button" className={styles.refLink} onClick={() => abrirReferencia(m.referencia)}>
+                              {m.referencia}
+                            </button>
+                          ) : (
+                            <span className={styles.mono}>{m.referencia}</span>
+                          )
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td>{m.usuarioNombre}</td>
+                      <td className={styles.mono}>{formatearFecha(m.fechaRegistro)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             <div className={styles.paginacion}>
               <span>Página {pagina + 1} de {Math.max(totalPaginas, 1)}</span>

@@ -25,6 +25,7 @@ import {
   type OpcionCatalogo,
   type Material,
 } from "@/app/modules/materiales/materialesApi";
+import { ExitoEntrega } from "@/app/modules/entregas/exito-entrega";
 import { interpretarErrorHttp } from "@/app/http/errores";
 import {
   crearEntregaSchema,
@@ -44,9 +45,13 @@ const LINEA_VACIA = {
 };
 
 export function EntregaFormulario({
+  alRegistrar,
   alGuardar,
   alCerrar,
 }: {
+  /** Se invoca apenas el backend confirma el registro (antes de la animación). */
+  alRegistrar?: (resultado: Entrega) => void;
+  /** Se invoca cuando termina (o se salta) la animación de éxito. */
   alGuardar: (resultado: Entrega) => void;
   alCerrar: () => void;
 }) {
@@ -60,6 +65,7 @@ export function EntregaFormulario({
 
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [registrada, setRegistrada] = useState<Entrega | null>(null);
 
   const {
     register,
@@ -142,7 +148,8 @@ export function EntregaFormulario({
     setEnviando(true);
     try {
       const resultado = await registrarEntrega(cuerpo);
-      alGuardar(resultado);
+      alRegistrar?.(resultado);
+      setRegistrada(resultado);
     } catch (error) {
       setErrorGeneral(interpretarErrorHttp(error, {
         409: "El convenio no está activo o la operación no es válida.",
@@ -150,6 +157,10 @@ export function EntregaFormulario({
     } finally {
       setEnviando(false);
     }
+  }
+
+  if (registrada) {
+    return <ExitoEntrega entrega={registrada} alTerminar={() => alGuardar(registrada)} />;
   }
 
   return (

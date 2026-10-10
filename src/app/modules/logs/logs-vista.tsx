@@ -135,46 +135,48 @@ export function LogsVista() {
         ) : visibles.length === 0 ? (
           <div className={styles.estado}>No hay entradas para el filtro seleccionado.</div>
         ) : (
-          <table className={styles.tabla}>
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Nivel</th>
-                <th>Usuario</th>
-                <th>Empresa</th>
-                <th>Mensaje</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visibles.map((l, i) => (
-                <Fragment key={`${l.fecha}-${i}`}>
-                  <tr
-                    className={l.detalle ? styles.filaClicable : undefined}
-                    onClick={() => l.detalle && setExpandida(expandida === i ? null : i)}
-                    title={l.detalle ? "Clic para ver el detalle completo" : undefined}
-                  >
-                    <td className={styles.mono}>{l.fecha}</td>
-                    <td>
-                      <span className={`${styles.nivel} ${claseNivel(l.nivel)}`}>{l.nivel}</span>
-                    </td>
-                    <td className={styles.mono}>{l.usuario || "—"}</td>
-                    <td className={styles.mono}>{l.empresa || "—"}</td>
-                    <td className={styles.mensaje}>
-                      {l.mensaje}
-                      {l.detalle && expandida !== i && " …"}
-                    </td>
-                  </tr>
-                  {l.detalle && expandida === i && (
-                    <tr>
-                      <td colSpan={5} style={{ padding: 0 }}>
-                        <pre className={styles.detalle}>{l.detalle}</pre>
+          <div className={styles.tablaScroll}>
+            <table className={styles.tabla}>
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Nivel</th>
+                  <th>Usuario</th>
+                  <th>Empresa</th>
+                  <th>Mensaje</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibles.map((l, i) => (
+                  <Fragment key={`${l.fecha}-${i}`}>
+                    <tr
+                      className={l.detalle ? styles.filaClicable : undefined}
+                      onClick={() => l.detalle && setExpandida(expandida === i ? null : i)}
+                      title={l.detalle ? "Clic para ver el detalle completo" : undefined}
+                    >
+                      <td className={styles.mono}>{l.fecha}</td>
+                      <td>
+                        <span className={`${styles.nivel} ${claseNivel(l.nivel)}`}>{l.nivel}</span>
+                      </td>
+                      <td className={styles.mono}>{l.usuario || "—"}</td>
+                      <td className={styles.mono}>{l.empresa || "—"}</td>
+                      <td className={styles.mensaje}>
+                        {l.mensaje}
+                        {l.detalle && expandida !== i && " …"}
                       </td>
                     </tr>
-                  )}
-                </Fragment>
-              ))}
-            </tbody>
-          </table>
+                    {l.detalle && expandida === i && (
+                      <tr>
+                        <td colSpan={5} style={{ padding: 0 }}>
+                          <pre className={styles.detalle}>{l.detalle}</pre>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

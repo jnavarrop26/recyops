@@ -198,60 +198,62 @@ export function BodegasVista() {
           <div className={styles.estado}>No se encontraron bodegas.</div>
         ) : (
           <>
-            <table className={styles.tabla}>
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>Tipo</th>
-                  <th>Dirección</th>
-                  <th>Teléfono</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {bodegas.map((bodega) => (
-                  <tr key={bodega.id}>
-                    <td>{bodega.nombre}</td>
-                    <td>{bodega.tipoOrganizacion}</td>
-                    <td>{bodega.direccion}</td>
-                    <td className={styles.mono}>{bodega.telefono || "—"}</td>
-                    <td><ChipEstado estado={bodega.estado} /></td>
-                    <td>
-                      <div className={styles.acciones}>
-                        <Button variant="outline" size="sm" onClick={() => navegar(`/bodegas/${bodega.id}`)}>
-                          Ver
-                        </Button>
-                        {admin && (
-                          <>
-                            <Button variant="outline" size="sm" onClick={() => abrirEditar(bodega)}>
-                              Editar
-                            </Button>
-                            <div className={styles.selectEstado}>
-                              <Select
-                                value={bodega.estado}
-                                onValueChange={(v) => cambiarEstado(bodega, v as EstadoBodega)}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {ESTADOS_BODEGA.map((e) => (
-                                    <SelectItem key={e} value={e}>
-                                      {e}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </td>
+            <div className={styles.tablaScroll}>
+              <table className={styles.tabla}>
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Tipo</th>
+                    <th>Dirección</th>
+                    <th>Teléfono</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {bodegas.map((bodega) => (
+                    <tr key={bodega.id}>
+                      <td>{bodega.nombre}</td>
+                      <td>{bodega.tipoOrganizacion}</td>
+                      <td>{bodega.direccion}</td>
+                      <td className={styles.mono}>{bodega.telefono || "—"}</td>
+                      <td><ChipEstado estado={bodega.estado} /></td>
+                      <td>
+                        <div className={styles.acciones}>
+                          <Button variant="outline" size="sm" onClick={() => navegar(`/bodegas/${bodega.id}`)}>
+                            Ver
+                          </Button>
+                          {admin && (
+                            <>
+                              <Button variant="outline" size="sm" onClick={() => abrirEditar(bodega)}>
+                                Editar
+                              </Button>
+                              <div className={styles.selectEstado}>
+                                <Select
+                                  value={bodega.estado}
+                                  onValueChange={(v) => cambiarEstado(bodega, v as EstadoBodega)}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {ESTADOS_BODEGA.map((e) => (
+                                      <SelectItem key={e} value={e}>
+                                        {e}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             <div className={styles.paginacion}>
               <span>
@@ -271,7 +273,7 @@ export function BodegasVista() {
       </div>
 
       <Dialog open={modalAbierto} onOpenChange={setModalAbierto}>
-        <DialogContent>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{bodegaEditando ? "Editar bodega" : "Nueva bodega"}</DialogTitle>
             <DialogDescription>

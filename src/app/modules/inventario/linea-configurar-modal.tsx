@@ -116,7 +116,7 @@ export function LineaConfigurarModal({
 
   return (
     <Dialog open onOpenChange={(abierto) => !abierto && alCerrar()}>
-      <DialogContent>
+      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{esEdicion ? "Editar topes de la línea" : "Dar de alta material en bodega"}</DialogTitle>
           <DialogDescription>

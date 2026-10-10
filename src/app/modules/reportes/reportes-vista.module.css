@@ -309,3 +309,54 @@
   color: var(--ink-muted);
   font-size: 14px;
 }
+
+/* ── Responsive ── */
+.tablaScroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.tablaScroll .tabla {
+  min-width: 720px;
+}
+
+@media (max-width: 1023px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .panelSelector {
+    position: static;
+  }
+
+  .listaTipos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+}
+
+@media (max-width: 639px) {
+  .campoConfig {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .tarjetaConfig {
+    padding: 16px;
+  }
+
+  .tarjetaTablaHeader {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 14px 16px;
+  }
+
+  .exportar > button {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .separadorExport {
+    display: none;
+  }
+}

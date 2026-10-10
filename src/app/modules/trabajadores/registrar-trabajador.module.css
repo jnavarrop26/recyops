@@ -69,3 +69,23 @@
   font-size: 13px;
   color: var(--ink-muted);
 }
+
+/* ── Responsive ── */
+.campo {
+  min-width: 0;
+}
+
+@media (max-width: 639px) {
+  .fila {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .credLinea {
+    flex-wrap: wrap;
+  }
+
+  .credLinea span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}

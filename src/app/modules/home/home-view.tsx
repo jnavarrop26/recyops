@@ -173,46 +173,48 @@ export function HomeView() {
         ) : error ? (
           <div className={`${styles.estado} ${styles.error}`}>{error}</div>
         ) : (
-          <table className={styles.tabla}>
-            <thead>
-              <tr>
-                <th>Día</th>
-                <th className={styles.derecha}>Ingresos</th>
-                <th className={styles.derecha}>Peso ingresado (kg)</th>
-                <th className={styles.derecha}>Valor ingresos ($)</th>
-                <th className={styles.derecha}>Entregas</th>
-                <th className={styles.derecha}>Peso recibido (kg)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {actividad.map((dia) => {
-                const sinActividad = dia.ingresos === 0 && dia.entregas === 0;
-                return (
-                  <tr key={dia.fecha} className={sinActividad ? styles.sinActividad : undefined}>
-                    <td className={`${styles.mono} ${esHoy(dia.fecha) ? styles.hoy : ""}`}>
-                      {formatearDia(dia.fecha)}
-                      {esHoy(dia.fecha) && " · hoy"}
-                    </td>
-                    <td className={`${styles.mono} ${styles.derecha}`}>{dia.ingresos}</td>
-                    <td className={`${styles.mono} ${styles.derecha}`}>{fmtPeso.format(dia.pesoIngresadoKg)}</td>
-                    <td className={`${styles.mono} ${styles.derecha}`}>{fmtMoneda.format(dia.valorIngresos)}</td>
-                    <td className={`${styles.mono} ${styles.derecha}`}>{dia.entregas}</td>
-                    <td className={`${styles.mono} ${styles.derecha}`}>{fmtPeso.format(dia.pesoRecibidoKg)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-            <tfoot>
-              <tr>
-                <td>Total del rango</td>
-                <td className={`${styles.mono} ${styles.derecha}`}>{totales.ingresos}</td>
-                <td className={`${styles.mono} ${styles.derecha}`}>{fmtPeso.format(totales.pesoIngresado)}</td>
-                <td className={`${styles.mono} ${styles.derecha}`}>{fmtMoneda.format(totales.valor)}</td>
-                <td className={`${styles.mono} ${styles.derecha}`}>{totales.entregas}</td>
-                <td className={`${styles.mono} ${styles.derecha}`}>{fmtPeso.format(totales.pesoRecibido)}</td>
-              </tr>
-            </tfoot>
-          </table>
+          <div className={styles.tablaScroll}>
+            <table className={styles.tabla}>
+              <thead>
+                <tr>
+                  <th>Día</th>
+                  <th className={styles.derecha}>Ingresos</th>
+                  <th className={styles.derecha}>Peso ingresado (kg)</th>
+                  <th className={styles.derecha}>Valor ingresos ($)</th>
+                  <th className={styles.derecha}>Entregas</th>
+                  <th className={styles.derecha}>Peso recibido (kg)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {actividad.map((dia) => {
+                  const sinActividad = dia.ingresos === 0 && dia.entregas === 0;
+                  return (
+                    <tr key={dia.fecha} className={sinActividad ? styles.sinActividad : undefined}>
+                      <td className={`${styles.mono} ${esHoy(dia.fecha) ? styles.hoy : ""}`}>
+                        {formatearDia(dia.fecha)}
+                        {esHoy(dia.fecha) && " · hoy"}
+                      </td>
+                      <td className={`${styles.mono} ${styles.derecha}`}>{dia.ingresos}</td>
+                      <td className={`${styles.mono} ${styles.derecha}`}>{fmtPeso.format(dia.pesoIngresadoKg)}</td>
+                      <td className={`${styles.mono} ${styles.derecha}`}>{fmtMoneda.format(dia.valorIngresos)}</td>
+                      <td className={`${styles.mono} ${styles.derecha}`}>{dia.entregas}</td>
+                      <td className={`${styles.mono} ${styles.derecha}`}>{fmtPeso.format(dia.pesoRecibidoKg)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td>Total del rango</td>
+                  <td className={`${styles.mono} ${styles.derecha}`}>{totales.ingresos}</td>
+                  <td className={`${styles.mono} ${styles.derecha}`}>{fmtPeso.format(totales.pesoIngresado)}</td>
+                  <td className={`${styles.mono} ${styles.derecha}`}>{fmtMoneda.format(totales.valor)}</td>
+                  <td className={`${styles.mono} ${styles.derecha}`}>{totales.entregas}</td>
+                  <td className={`${styles.mono} ${styles.derecha}`}>{fmtPeso.format(totales.pesoRecibido)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         )}
       </div>
     </div>

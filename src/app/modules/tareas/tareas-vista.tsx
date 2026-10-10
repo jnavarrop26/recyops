@@ -227,7 +227,7 @@ export function TareasVista() {
 
       {/* Modal: detalle con bitácora de avances */}
       <Dialog open={detalle !== null} onOpenChange={(abierto) => !abierto && setDetalle(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{detalle?.titulo}</DialogTitle>
             <DialogDescription>
@@ -247,7 +247,7 @@ export function TareasVista() {
           }
         }}
       >
-        <DialogContent>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editando ? "Editar tarea" : "Nueva tarea"}</DialogTitle>
             <DialogDescription>

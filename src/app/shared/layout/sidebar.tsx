@@ -228,7 +228,7 @@ export function Sidebar({ abierto = false, onNavegar }: SidebarProps) {
   }
 
   return (
-    <aside className={`${styles.sidebar} ${abierto ? styles.abierta : ""}`}>
+    <aside id="menu-lateral" className={`${styles.sidebar} ${abierto ? styles.abierta : ""}`}>
       <div className={styles.brand}>
         <div className={styles.brandRow}>
           <RecyOPSIcon size={28} variant="light" />

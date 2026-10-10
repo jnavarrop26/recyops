@@ -29,7 +29,7 @@
   align-items: start;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1023px) {
   .grid {
     grid-template-columns: 1fr;
   }
@@ -157,4 +157,34 @@
   padding: 32px;
   text-align: center;
   color: var(--ink-muted);
+}
+
+/* ── Responsive ── */
+.tablaScroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.tablaScroll .tabla {
+  min-width: 480px;
+}
+
+@media (max-width: 639px) {
+  .cabecera {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tarjeta {
+    padding: 18px 16px;
+  }
+
+  .datos {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .datoValor {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
 }

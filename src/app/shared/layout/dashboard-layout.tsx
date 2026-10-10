@@ -36,9 +36,10 @@ export function DashboardLayout() {
         <button
           type="button"
           className={styles.botonMenu}
-          aria-label="Abrir menú"
+          aria-label={menuAbierto ? "Cerrar menú" : "Abrir menú"}
           aria-expanded={menuAbierto}
-          onClick={() => setMenuAbierto(true)}
+          aria-controls="menu-lateral"
+          onClick={() => setMenuAbierto((abierto) => !abierto)}
         >
           <Menu size={20} aria-hidden="true" />
         </button>
@@ -46,18 +47,19 @@ export function DashboardLayout() {
         <span className={styles.marcaMovil}>RecyOPS</span>
       </header>
 
-      {menuAbierto && (
-        <div
-          className={styles.overlay}
-          role="presentation"
-          onClick={() => setMenuAbierto(false)}
-        />
-      )}
+      <div
+        className={`${styles.overlay} ${menuAbierto ? styles.overlayVisible : ""}`}
+        role="presentation"
+        aria-hidden="true"
+        onClick={() => setMenuAbierto(false)}
+      />
 
       <div className={styles.body}>
         <Sidebar abierto={menuAbierto} onNavegar={() => setMenuAbierto(false)} />
         <main className={styles.content}>
-          <Outlet />
+          <div className={styles.contenido}>
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

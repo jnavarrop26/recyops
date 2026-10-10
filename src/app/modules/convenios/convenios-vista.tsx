@@ -247,91 +247,93 @@ export function ConveniosVista() {
           <div className={styles.estado}>No se encontraron convenios con los filtros aplicados.</div>
         ) : (
           <>
-            <table className={styles.tabla}>
-              <thead>
-                <tr>
-                  <th>Código</th>
-                  <th>Nombre</th>
-                  <th>Tipo</th>
-                  <th>Proveedor</th>
-                  <th>Bodega</th>
-                  <th>Vigencia</th>
-                  <th>Valor</th>
-                  <th>Estado</th>
-                  {admin && <th>Acciones</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {convenios.map((c) => (
-                  <tr key={c.id}>
-                    <td>
-                      <span className={styles.codigo}>{c.codigo}</span>
-                    </td>
-                    <td>
-                      <div className={styles.nombreConvenio} title={c.nombre}>
-                        {c.nombre}
-                      </div>
-                      {c.responsable && (
-                        <div className={styles.parteNombre} title={c.responsable}>
-                          {c.responsable}
-                        </div>
-                      )}
-                    </td>
-                    <td>
-                      <span className={styles.chipTipo}>{ETIQUETAS_TIPO[c.tipo] ?? c.tipo}</span>
-                    </td>
-                    <td>
-                      {c.proveedorNombre ? (
-                        <span className={styles.parteNombre} title={c.proveedorNombre}>
-                          {c.proveedorNombre}
-                        </span>
-                      ) : (
-                        <span className={styles.sinDato}>—</span>
-                      )}
-                    </td>
-                    <td>
-                      {c.bodegaNombre ? (
-                        <span className={styles.parteNombre} title={c.bodegaNombre}>
-                          {c.bodegaNombre}
-                        </span>
-                      ) : (
-                        <span className={styles.sinDato}>—</span>
-                      )}
-                    </td>
-                    <td>
-                      <div className={styles.fecha}>{formatearFecha(c.fechaInicio)}</div>
-                      {c.fechaFin && (
-                        <div className={styles.fecha}>→ {formatearFecha(c.fechaFin)}</div>
-                      )}
-                    </td>
-                    <td>
-                      <span className={styles.valor}>{formatearValor(c.valorTotal)}</span>
-                    </td>
-                    <td>{chipEstado(c.estado)}</td>
-                    {admin && (
-                      <td>
-                        <div className={styles.acciones}>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => abrirEditar(c)}
-                          >
-                            Editar
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => abrirCambiarEstado(c)}
-                          >
-                            Estado
-                          </Button>
-                        </div>
-                      </td>
-                    )}
+            <div className={styles.tablaScroll}>
+              <table className={styles.tabla}>
+                <thead>
+                  <tr>
+                    <th>Código</th>
+                    <th>Nombre</th>
+                    <th>Tipo</th>
+                    <th>Proveedor</th>
+                    <th>Bodega</th>
+                    <th>Vigencia</th>
+                    <th>Valor</th>
+                    <th>Estado</th>
+                    {admin && <th>Acciones</th>}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {convenios.map((c) => (
+                    <tr key={c.id}>
+                      <td>
+                        <span className={styles.codigo}>{c.codigo}</span>
+                      </td>
+                      <td>
+                        <div className={styles.nombreConvenio} title={c.nombre}>
+                          {c.nombre}
+                        </div>
+                        {c.responsable && (
+                          <div className={styles.parteNombre} title={c.responsable}>
+                            {c.responsable}
+                          </div>
+                        )}
+                      </td>
+                      <td>
+                        <span className={styles.chipTipo}>{ETIQUETAS_TIPO[c.tipo] ?? c.tipo}</span>
+                      </td>
+                      <td>
+                        {c.proveedorNombre ? (
+                          <span className={styles.parteNombre} title={c.proveedorNombre}>
+                            {c.proveedorNombre}
+                          </span>
+                        ) : (
+                          <span className={styles.sinDato}>—</span>
+                        )}
+                      </td>
+                      <td>
+                        {c.bodegaNombre ? (
+                          <span className={styles.parteNombre} title={c.bodegaNombre}>
+                            {c.bodegaNombre}
+                          </span>
+                        ) : (
+                          <span className={styles.sinDato}>—</span>
+                        )}
+                      </td>
+                      <td>
+                        <div className={styles.fecha}>{formatearFecha(c.fechaInicio)}</div>
+                        {c.fechaFin && (
+                          <div className={styles.fecha}>→ {formatearFecha(c.fechaFin)}</div>
+                        )}
+                      </td>
+                      <td>
+                        <span className={styles.valor}>{formatearValor(c.valorTotal)}</span>
+                      </td>
+                      <td>{chipEstado(c.estado)}</td>
+                      {admin && (
+                        <td>
+                          <div className={styles.acciones}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => abrirEditar(c)}
+                            >
+                              Editar
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => abrirCambiarEstado(c)}
+                            >
+                              Estado
+                            </Button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             <div className={styles.paginacion}>
               <span>
@@ -363,7 +365,7 @@ export function ConveniosVista() {
 
       {/* Modal formulario */}
       <Dialog open={modalFormAbierto} onOpenChange={setModalFormAbierto}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>
               {convenioEditando ? "Editar convenio" : "Nuevo convenio"}
@@ -384,7 +386,7 @@ export function ConveniosVista() {
 
       {/* Modal cambio de estado */}
       <Dialog open={modalEstadoAbierto} onOpenChange={setModalEstadoAbierto}>
-        <DialogContent>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Cambiar estado del convenio</DialogTitle>
             <DialogDescription>

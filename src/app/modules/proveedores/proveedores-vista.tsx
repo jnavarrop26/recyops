@@ -206,57 +206,59 @@ export function ProveedoresVista() {
           <div className={styles.estado}>No se encontraron proveedores.</div>
         ) : (
           <>
-            <table className={styles.tabla}>
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>NIT</th>
-                  <th>Contacto</th>
-                  <th>Teléfono</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {proveedores.map((p) => (
-                  <tr key={p.id}>
-                    <td>{p.nombre}</td>
-                    <td className={styles.mono}>{p.nit}</td>
-                    <td>{p.contacto ?? "—"}</td>
-                    <td className={styles.mono}>{p.telefono ?? "—"}</td>
-                    <td><ChipEstadoProveedor estado={p.estado} /></td>
-                    <td>
-                      <div className={styles.acciones}>
-                        <Button variant="outline" size="sm" onClick={() => abrirEntregas(p)}>
-                          Entregas
-                        </Button>
-                        {admin && (
-                          <>
-                            <Button variant="outline" size="sm" onClick={() => abrirEditar(p)}>
-                              Editar
-                            </Button>
-                            <div className={styles.selectEstado}>
-                              <Select value={p.estado} onValueChange={(v) => cambiarEstado(p, v as EstadoProveedor)}>
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {ESTADOS_PROVEEDOR.map((e) => (
-                                    <SelectItem key={e} value={e}>
-                                      {e}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </td>
+            <div className={styles.tablaScroll}>
+              <table className={styles.tabla}>
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>NIT</th>
+                    <th>Contacto</th>
+                    <th>Teléfono</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {proveedores.map((p) => (
+                    <tr key={p.id}>
+                      <td>{p.nombre}</td>
+                      <td className={styles.mono}>{p.nit}</td>
+                      <td>{p.contacto ?? "—"}</td>
+                      <td className={styles.mono}>{p.telefono ?? "—"}</td>
+                      <td><ChipEstadoProveedor estado={p.estado} /></td>
+                      <td>
+                        <div className={styles.acciones}>
+                          <Button variant="outline" size="sm" onClick={() => abrirEntregas(p)}>
+                            Entregas
+                          </Button>
+                          {admin && (
+                            <>
+                              <Button variant="outline" size="sm" onClick={() => abrirEditar(p)}>
+                                Editar
+                              </Button>
+                              <div className={styles.selectEstado}>
+                                <Select value={p.estado} onValueChange={(v) => cambiarEstado(p, v as EstadoProveedor)}>
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {ESTADOS_PROVEEDOR.map((e) => (
+                                      <SelectItem key={e} value={e}>
+                                        {e}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             <div className={styles.paginacion}>
               <span>
@@ -277,7 +279,7 @@ export function ProveedoresVista() {
 
       {/* Modal crear/editar */}
       <Dialog open={modalForm} onOpenChange={setModalForm}>
-        <DialogContent>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{proveedorEditando ? "Editar proveedor" : "Nuevo proveedor"}</DialogTitle>
             <DialogDescription>
@@ -294,7 +296,7 @@ export function ProveedoresVista() {
 
       {/* Modal entregas */}
       <Dialog open={modalEntregas !== null} onOpenChange={(abierto) => !abierto && setModalEntregas(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Historial de entregas</DialogTitle>
             <DialogDescription>{modalEntregas?.nombre}</DialogDescription>

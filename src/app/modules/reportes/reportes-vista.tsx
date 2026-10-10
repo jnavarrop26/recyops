@@ -198,32 +198,34 @@ function ReporteEntregas() {
           {datos.length === 0 ? (
             <div className={styles.alertaVacia}>No hay entregas en el período seleccionado.</div>
           ) : (
-            <table className={styles.tabla}>
-              <thead>
-                <tr>
-                  <th>Código</th>
-                  <th>Convenio</th>
-                  <th>Persona que entrega</th>
-                  <th className={styles.derecha}>Total (kg)</th>
-                  <th>Bodega</th>
-                  <th>Estado</th>
-                  <th>Fecha</th>
-                </tr>
-              </thead>
-              <tbody>
-                {datos.slice(0, 50).map((e) => (
-                  <tr key={e.id}>
-                    <td className={styles.mono}>{e.codigo}</td>
-                    <td>{e.convenioNombre ?? "—"}</td>
-                    <td>{e.personaEntregaNombre ?? "—"}</td>
-                    <td className={`${styles.mono} ${styles.derecha}`}>{fmtPeso.format(e.totalKg)}</td>
-                    <td>{e.bodegaNombre}</td>
-                    <td><ChipEstadoEntrega estado={e.estado} /></td>
-                    <td className={styles.mono}>{fmtFecha(e.fechaRecepcion)}</td>
+            <div className={styles.tablaScroll}>
+              <table className={styles.tabla}>
+                <thead>
+                  <tr>
+                    <th>Código</th>
+                    <th>Convenio</th>
+                    <th>Persona que entrega</th>
+                    <th className={styles.derecha}>Total (kg)</th>
+                    <th>Bodega</th>
+                    <th>Estado</th>
+                    <th>Fecha</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {datos.slice(0, 50).map((e) => (
+                    <tr key={e.id}>
+                      <td className={styles.mono}>{e.codigo}</td>
+                      <td>{e.convenioNombre ?? "—"}</td>
+                      <td>{e.personaEntregaNombre ?? "—"}</td>
+                      <td className={`${styles.mono} ${styles.derecha}`}>{fmtPeso.format(e.totalKg)}</td>
+                      <td>{e.bodegaNombre}</td>
+                      <td><ChipEstadoEntrega estado={e.estado} /></td>
+                      <td className={styles.mono}>{fmtFecha(e.fechaRecepcion)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
           {datos.length > 50 && (
             <div style={{ padding: "12px 20px", borderTop: "1px solid var(--line)", fontSize: 13, color: "var(--ink-muted)" }}>
@@ -319,36 +321,38 @@ function ReporteProveedores() {
           {datos.length === 0 ? (
             <div className={styles.alertaVacia}>No hay proveedores con los filtros seleccionados.</div>
           ) : (
-            <table className={styles.tabla}>
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>NIT</th>
-                  <th>Contacto</th>
-                  <th>Teléfono</th>
-                  <th>Email</th>
-                  <th>Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {datos.slice(0, 50).map((p) => (
-                  <tr key={p.id}>
-                    <td style={{ fontWeight: 500 }}>{p.nombre}</td>
-                    <td className={styles.mono}>{p.nit}</td>
-                    <td>{p.contacto ?? "—"}</td>
-                    <td className={styles.mono}>{p.telefono ?? "—"}</td>
-                    <td>{p.email ?? "—"}</td>
-                    <td>
-                      <span style={{
-                        padding: "2px 8px", borderRadius: 999, fontSize: 11, fontWeight: 600,
-                        background: p.estado === "ACTIVO" ? "#dcf2e3" : p.estado === "BLOQUEADO" ? "#fbe3e0" : "#f1efe9",
-                        color: p.estado === "ACTIVO" ? "#166534" : p.estado === "BLOQUEADO" ? "#b42318" : "#6b6257",
-                      }}>{p.estado}</span>
-                    </td>
+            <div className={styles.tablaScroll}>
+              <table className={styles.tabla}>
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>NIT</th>
+                    <th>Contacto</th>
+                    <th>Teléfono</th>
+                    <th>Email</th>
+                    <th>Estado</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {datos.slice(0, 50).map((p) => (
+                    <tr key={p.id}>
+                      <td style={{ fontWeight: 500 }}>{p.nombre}</td>
+                      <td className={styles.mono}>{p.nit}</td>
+                      <td>{p.contacto ?? "—"}</td>
+                      <td className={styles.mono}>{p.telefono ?? "—"}</td>
+                      <td>{p.email ?? "—"}</td>
+                      <td>
+                        <span style={{
+                          padding: "2px 8px", borderRadius: 999, fontSize: 11, fontWeight: 600,
+                          background: p.estado === "ACTIVO" ? "#dcf2e3" : p.estado === "BLOQUEADO" ? "#fbe3e0" : "#f1efe9",
+                          color: p.estado === "ACTIVO" ? "#166534" : p.estado === "BLOQUEADO" ? "#b42318" : "#6b6257",
+                        }}>{p.estado}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )}
@@ -426,32 +430,34 @@ function ReporteBodegas() {
           {datos.length === 0 ? (
             <div className={styles.alertaVacia}>No hay bodegas registradas.</div>
           ) : (
-            <table className={styles.tabla}>
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>Tipo</th>
-                  <th>Dirección</th>
-                  <th>Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {datos.map((b) => (
-                  <tr key={b.id}>
-                    <td style={{ fontWeight: 500 }}>{b.nombre}</td>
-                    <td><span className={styles.mono} style={{ fontSize: 11 }}>{b.tipoOrganizacion}</span></td>
-                    <td>{b.direccion}</td>
-                    <td>
-                      <span style={{
-                        padding: "2px 8px", borderRadius: 999, fontSize: 11, fontWeight: 600,
-                        background: b.estado === "ACTIVA" ? "#dcf2e3" : b.estado === "MANTENIMIENTO" ? "#fdf0d5" : "#f1efe9",
-                        color: b.estado === "ACTIVA" ? "#166534" : b.estado === "MANTENIMIENTO" ? "#92600a" : "#6b6257",
-                      }}>{b.estado}</span>
-                    </td>
+            <div className={styles.tablaScroll}>
+              <table className={styles.tabla}>
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Tipo</th>
+                    <th>Dirección</th>
+                    <th>Estado</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {datos.map((b) => (
+                    <tr key={b.id}>
+                      <td style={{ fontWeight: 500 }}>{b.nombre}</td>
+                      <td><span className={styles.mono} style={{ fontSize: 11 }}>{b.tipoOrganizacion}</span></td>
+                      <td>{b.direccion}</td>
+                      <td>
+                        <span style={{
+                          padding: "2px 8px", borderRadius: 999, fontSize: 11, fontWeight: 600,
+                          background: b.estado === "ACTIVA" ? "#dcf2e3" : b.estado === "MANTENIMIENTO" ? "#fdf0d5" : "#f1efe9",
+                          color: b.estado === "ACTIVA" ? "#166534" : b.estado === "MANTENIMIENTO" ? "#92600a" : "#6b6257",
+                        }}>{b.estado}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )}

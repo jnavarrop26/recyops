@@ -34,7 +34,7 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
   gap: 16px;
 }
 
@@ -99,4 +99,24 @@
 
 .summary strong {
   font-weight: 600;
+}
+
+/* ── Responsive ── */
+.field {
+  min-width: 0;
+}
+
+@media (max-width: 639px) {
+  .section {
+    padding: 18px 16px;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .actions > * {
+    width: 100%;
+  }
 }

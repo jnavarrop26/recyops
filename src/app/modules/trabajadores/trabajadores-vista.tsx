@@ -100,60 +100,62 @@ export function TrabajadoresVista() {
         ) : trabajadores.length === 0 ? (
           <div className={styles.estado}>No hay trabajadores registrados.</div>
         ) : (
-          <table className={styles.tabla}>
-            <thead>
-              <tr>
-                <th>Nombre completo</th>
-                <th>Username</th>
-                <th>Email</th>
-                <th>Rol</th>
-                <th>Bodega</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {trabajadores.map((trabajador) => (
-                <tr key={trabajador.id}>
-                  <td>{trabajador.nombreCompleto}</td>
-                  <td className={styles.mono}>{trabajador.username}</td>
-                  <td>{trabajador.email}</td>
-                  <td>{trabajador.rolNombre}</td>
-                  <td>{trabajador.bodegaNombre ?? "—"}</td>
-                  <td>{trabajador.estado}</td>
-                  <td>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setEditando(trabajador)}
-                      >
-                        Editar
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={cambiandoEstado === trabajador.id}
-                        onClick={() => alternarEstado(trabajador)}
-                      >
-                        {cambiandoEstado === trabajador.id
-                          ? "..."
-                          : trabajador.estado === "ACTIVO"
-                            ? "Desactivar"
-                            : "Reactivar"}
-                      </Button>
-                    </div>
-                  </td>
+          <div className={styles.tablaScroll}>
+            <table className={styles.tabla}>
+              <thead>
+                <tr>
+                  <th>Nombre completo</th>
+                  <th>Username</th>
+                  <th>Email</th>
+                  <th>Rol</th>
+                  <th>Bodega</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {trabajadores.map((trabajador) => (
+                  <tr key={trabajador.id}>
+                    <td>{trabajador.nombreCompleto}</td>
+                    <td className={styles.mono}>{trabajador.username}</td>
+                    <td>{trabajador.email}</td>
+                    <td>{trabajador.rolNombre}</td>
+                    <td>{trabajador.bodegaNombre ?? "—"}</td>
+                    <td>{trabajador.estado}</td>
+                    <td>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditando(trabajador)}
+                        >
+                          Editar
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={cambiandoEstado === trabajador.id}
+                          onClick={() => alternarEstado(trabajador)}
+                        >
+                          {cambiandoEstado === trabajador.id
+                            ? "..."
+                            : trabajador.estado === "ACTIVO"
+                              ? "Desactivar"
+                              : "Reactivar"}
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
       {/* Modal: formulario de registro */}
       <Dialog open={modalRegistroAbierto} onOpenChange={setModalRegistroAbierto}>
-        <DialogContent>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Registrar trabajador</DialogTitle>
             <DialogDescription>
@@ -169,7 +171,7 @@ export function TrabajadoresVista() {
 
       {/* Modal: edición de trabajador */}
       <Dialog open={editando !== null} onOpenChange={(abierto) => !abierto && setEditando(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar trabajador</DialogTitle>
             <DialogDescription>
@@ -188,7 +190,7 @@ export function TrabajadoresVista() {
 
       {/* Modal: credenciales temporales (se muestran una sola vez) */}
       <Dialog open={credenciales !== null} onOpenChange={(abierto) => !abierto && setCredenciales(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Credenciales del trabajador</DialogTitle>
             <DialogDescription>
